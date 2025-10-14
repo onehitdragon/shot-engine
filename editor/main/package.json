@@ -10,6 +10,7 @@
     "dev:react": "cd ../renderer/react-app && npm run dev",
     "dev:electron": "tsc && wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
     "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
+    
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
