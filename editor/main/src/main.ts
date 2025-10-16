@@ -20,9 +20,22 @@ const createWindow = () => {
 
 app.whenReady()
 .then(() => {
-    ipcMain.handle("ping", async () => {
-        return await setTimeout(4000, "pongg");
+    ipcMain.on("window:close", (e) => {
+        const win = BrowserWindow.fromWebContents(e.sender);
+        if(win == null) return;
+        win.close();
     });
+    ipcMain.on("window:maximize", (e) => {
+        const win = BrowserWindow.fromWebContents(e.sender);
+        if(win == null) return;
+        win.isMaximized() ? win.unmaximize() : win.maximize();
+    });
+    ipcMain.on("window:minimize", (e) => {
+        const win = BrowserWindow.fromWebContents(e.sender);
+        if(win == null) return;
+        win.minimize();
+    });
+
     createWindow();
     app.on("activate", () => {
         if(BrowserWindow.getAllWindows().length == 0) createWindow();
