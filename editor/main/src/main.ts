@@ -1,6 +1,6 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import path from "path";
-import { setTimeout } from "timers/promises";
+import fs from "fs/promises";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -34,6 +34,42 @@ app.whenReady()
         const win = BrowserWindow.fromWebContents(e.sender);
         if(win == null) return;
         win.minimize();
+    });
+    ipcMain.handle("folder:open", async () => {
+        const result = await dialog.showOpenDialog({
+            properties: ["openDirectory"]
+        });
+        if(result.canceled) return null;
+        return result.filePaths[0];
+    });
+    ipcMain.handle("folder:load", async (e, folderPath: string) => {
+        async function read(dirPath: string){
+            const directory: DirectoryTree.Directory = {
+                type: "Directory",
+                name: path.basename(dirPath),
+                path: dirPath,
+                children: []
+            };
+            const entries = await fs.readdir(dirPath, { withFileTypes: true });
+            for(const entry of entries){
+                if(entry.name.startsWith('.')) continue;
+                const fullPath = path.join(dirPath, entry.name);
+                if(entry.isFile()){
+                    directory.children.push({
+                        type: "File",
+                        name: entry.name,
+                        path: fullPath
+                    });
+                }
+                else{
+                    directory.children.push(
+                        await read(fullPath)
+                    );
+                }
+            }
+            return directory;
+        }
+        return await read(folderPath);
     });
 
     createWindow();

@@ -1,4 +1,4 @@
-import { FolderManager } from './components/folder-manager/FolderManager';
+import { ProjectTab } from './components/project-tab/ProjectTab';
 import { ActivedTabButton, DectivedTabButton } from './components/tab-buttons';
 import { TabManager } from './components/TabManager';
 import { CommandLineIcon, InformationCircleIcon, Bars4Icon, Square3Stack3DIcon,
@@ -40,27 +40,21 @@ const projectTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
 ];
 export function MainPage(){
     return (
-        <div className="flex-1 flex">
-            <div className="flex-2 flex flex-col">
-                <div className="flex-2 flex">
-                    <div className='flex-2 flex'>
+        <div className="flex-1 flex overflow-hidden">
+            <div className="flex-2 flex flex-col overflow-hidden">
+                <div className="flex-1 flex overflow-hidden">
+                    <div className='flex-2 flex overflow-hidden'>
                         <TabManager tabs={objectTabs}/>
                     </div>
-                    <div className='flex-4 flex'>
+                    <div className='flex-4 flex overflow-hidden'>
                         <TabManager tabs={sceneTabs}/>
                     </div>
                 </div>
                 <TabManager tabs={projectTabs}/>
             </div>
-            <div className="flex-1 flex">
+            <div className="flex-1 flex overflow-hidden">
                 <TabManager tabs={propertyTabs}/>
             </div>
         </div>
     );
 }
-function ProjectTab(){
-    return (
-        <FolderManager />
-    );
-}
-

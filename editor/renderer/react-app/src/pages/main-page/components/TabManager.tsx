@@ -13,7 +13,7 @@ export function TabManager(props: TabManagerProps){
     const activedTab = activedTabIndex < 0 || activedTabIndex >= tabs.length ? null : tabs[activedTabIndex];
 
     return (
-        <div className="flex-1 flex flex-col bg-gray-800 p-0.5">
+        <div className='flex-1 flex flex-col bg-gray-800 p-0.5 overflow-hidden'>
             <div className='flex'>
                 {
                     tabs.map(
@@ -26,7 +26,7 @@ export function TabManager(props: TabManagerProps){
             {
                 activedTab
                 &&
-                <div className='bg-gray-500 h-full w-full rounded-b-sm flex'>
+                <div className='bg-gray-500 rounded-b-sm flex-1 flex overflow-hidden'>
                     {
                         <activedTab.Tab />
                     }
