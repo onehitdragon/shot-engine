@@ -5,6 +5,9 @@ export type ApiType = {
     folder: {
         open: () => Promise<string | null>,
         load: (path: string) => Promise<DirectoryTree.Directory>
+    },
+    file: {
+        delete: (path: string, recycle: boolean) => Promise<boolean>
     }
 }
 

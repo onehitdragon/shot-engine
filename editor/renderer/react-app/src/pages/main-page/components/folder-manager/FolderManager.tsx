@@ -1,17 +1,22 @@
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Folder } from "./Folder";
+import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
+import { selectSelectedFolder, updateDirectory } from "../../../../global-state/slices/folder-manager-slice";
+import { SelectedFolder } from "./selected-folder";
 
 export function FolderManager(props: { folderPath: string }){
     const { folderPath } = props;
-    const [directory, setDirectory] = useState<DirectoryTree.Directory | null>(null);
+    const directory = useAppSelector(state => state.folderManager.directory);
+    const selectedDirectory = useAppSelector(selectSelectedFolder);
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         const loadDirectory = async () => {
             const directory = await window.api.folder.load(folderPath);
-            setDirectory(directory);
+            dispatch(updateDirectory({ directory: directory }));
         }
-        loadDirectory();
+        if(!directory) loadDirectory();
     }, []);
 
     return (
@@ -19,11 +24,7 @@ export function FolderManager(props: { folderPath: string }){
             <div className='flex-2 flex flex-col overflow-hidden'>
                 {/* button bar */}
                 <div className='flex shadow-lg/10 shadow-black'>
-                    <ul className='flex-1 flex'>
-                        <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'>
-                            <ArrowPathIcon className='size-4 text-white'/>
-                        </button>
-                    </ul>
+                    <ul className='flex-1 flex'></ul>
                     <ul className='flex-1 flex justify-end'>
                         <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'>
                             <ArrowPathIcon className='size-4 text-white'/>
@@ -40,8 +41,12 @@ export function FolderManager(props: { folderPath: string }){
                     }
                 </div>
             </div>
-            <div className='flex-4 bg-gray-400'></div>
-            
+            <div className="w-0.5 bg-gray-400"></div>
+            {
+                selectedDirectory ?
+                <SelectedFolder directory={selectedDirectory}/> :
+                <div className='flex-4 bg-gray-500 flex flex-col'></div>
+            }
         </div>
     );
 }

@@ -1,47 +1,51 @@
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { ChevronRightIcon, FolderIcon, FolderOpenIcon } from "@heroicons/react/24/solid";
-import { useState } from 'react';
+import { selectDirectory, selectSelectedFolder, toggleExpandDirectory, type FolderManager } from '../../../../global-state/slices/folder-manager-slice';
+import { useAppDispatch, useAppSelector } from '../../../../global-state/hooks';
 
 type FolderProps = {
-    directory: DirectoryTree.Directory
+    directory: FolderManager.DirectoryState,
+    level?: number
 }
 export function Folder(props: FolderProps){
-    const { directory } = props;
+    const { directory, level = 0 } = props;
     const { children: entries } = directory;
     const isEmpty = entries.length == 0;
     const isOnlyFile = !isEmpty && entries.every(entry => entry.type == "File");
-    const [collapsed, setSollapsed] = useState(true);
+    const dispatch = useAppDispatch();
+    const selectedDirectory = useAppSelector(selectSelectedFolder);
+    const isSelected = selectedDirectory && selectedDirectory.path == directory.path;
+    const click = () => {
+        if(!isOnlyFile) dispatch(toggleExpandDirectory({ path: directory.path }));
+        dispatch(selectDirectory({ path: directory.path }));
+    }
 
     return (
-        <div className='flex-col'>
+        <div className='flex flex-col'>
+            <div style={{ paddingLeft: level * 16 }} className={`flex items-center hover:bg-gray-600 hover:cursor-pointer
+                ${isSelected && "bg-gray-600"}`}
+                onClick={click}
+            >
+                {
+                    isEmpty ? (
+                        <EmptyEntry directory={directory} />
+                    )
+                    : isOnlyFile ? (
+                        <OnlyFileEntry directory={directory} />
+                    )
+                    : (
+                        <OpenableEntry  directory={directory}/>
+                    ) 
+                }
+            </div>
             {
-                isEmpty ? (
-                    <EmptyEntry
-                        directory={directory}
-                        click={() => {}}
-                    />
-                )
-                : isOnlyFile ? (
-                    <OnlyFileEntry
-                        directory={directory}
-                        click={() => {}}
-                    />
-                )
-                : (
-                    <OpenableEntry 
-                        directory={directory}
-                        click={() => { setSollapsed(!collapsed) }}
-                        collapsed={collapsed}
-                    />
-                ) 
-            }
-            {
-                !collapsed &&
-                <ul className='ml-4 flex flex-col'>
+                directory.expanding
+                &&
+                <ul className='flex flex-col'>
                     {
                         entries.map(entry => {
                             if(entry.type == 'Directory'){
-                                return <Folder key={entry.name} directory={entry}/>
+                                return <Folder key={entry.path} directory={entry} level={level + 1}/>
                             }
                         })
                     }
@@ -52,44 +56,30 @@ export function Folder(props: FolderProps){
 }
 
 type EntryProps = {
-    directory: DirectoryTree.Directory,
-    click: () => void
+    directory: FolderManager.DirectoryState
 }
 function EmptyEntry(props: EntryProps){
-    const { directory, click } = props;
+    const { directory } = props;
 
     return (
-        <div className='flex items-center hover:opacity-50 hover:cursor-pointer transition duration-200'
-            onClick={click}>
-            <Empty name={directory.name}/>
-        </div>
+        <Empty name={directory.name}/>
     );
 }
 function OnlyFileEntry(props: EntryProps){
-    const { directory, click } = props;
+    const { directory } = props;
 
     return (
-        <div className='flex items-center hover:opacity-50 hover:cursor-pointer transition duration-200'
-            onClick={click}>
-            <OnlyFile name={directory.name}/>
-        </div>
+        <OnlyFile name={directory.name}/>
     );
 }
-type OpenableEntryProps = EntryProps & {
-    collapsed: boolean
-}
+type OpenableEntryProps = EntryProps & {}
 function OpenableEntry(props: OpenableEntryProps){
-    const { directory, click, collapsed } = props;
+    const { directory } = props;
 
     return (
-        <div className='flex items-center hover:opacity-50 hover:cursor-pointer transition duration-200'
-            onClick={click}>
-            {
-                collapsed ? 
-                <Collapsed name={directory.name}/> :
-                <Expanding name={directory.name}/>
-            }
-        </div>
+        directory.expanding ? 
+        <Expanding name={directory.name}/> :
+        <Collapsed name={directory.name}/>
     );
 }
 function Empty(props: { name: string }){
@@ -122,7 +112,7 @@ function Collapsed(props: { name: string }){
 function Expanding(props: { name: string }){
     return (
         <>
-            <ChevronRightIcon className='size-4 text-white animate-rotateOnce'/>
+            <ChevronRightIcon className='size-4 text-white rotate-90'/>
             <FolderOpenIcon className='size-4 text-white'/>
             <span className='text-sm ml-2 text-white select-none'>{props.name}</span>
         </> 

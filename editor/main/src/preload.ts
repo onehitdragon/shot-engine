@@ -7,5 +7,8 @@ contextBridge.exposeInMainWorld("api", {
     folder: {
         open: () => ipcRenderer.invoke("folder:open"),
         load: (path: string) => ipcRenderer.invoke("folder:load", path)
+    },
+    file: {
+        delete: (path: string, recycle: boolean) => ipcRenderer.invoke("file:delete", path, recycle),
     }
 });

@@ -1,6 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import path from "path";
 import fs from "fs/promises";
+import { showConfirmDialog } from "./message-boxes";
+import trash from "trash";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -70,6 +72,24 @@ app.whenReady()
             return directory;
         }
         return await read(folderPath);
+    });
+    ipcMain.handle("file:delete", async (e, path: string, recycle: boolean) => {
+        try{
+            if(recycle){
+                await trash([path]);
+                return true;
+            }
+            else{
+                if(await showConfirmDialog("Delete permanent?")){
+                    await fs.rm(path, { recursive: true, force: true });
+                    return true;
+                }
+            }
+        }
+        catch(err){
+            return false;
+        }
+        return false;
     });
 
     createWindow();
