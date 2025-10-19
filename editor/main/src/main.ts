@@ -91,6 +91,37 @@ app.whenReady()
         }
         return false;
     });
+    ipcMain.handle("folder:create", async (e, parentPath: string, name: string) => {
+        try{
+            const fullPath = path.join(parentPath, name);
+            await fs.mkdir(fullPath);
+            const created: DirectoryTree.Directory = {
+                type: "Directory",
+                name: name,
+                path: fullPath,
+                children: []
+            }
+            return created;
+        }
+        catch(err){
+            return null;
+        }
+    });
+    ipcMain.handle("file:create", async (e, parentPath: string, name: string) => {
+        try{
+            const fullPath = path.join(parentPath, name);
+            await fs.writeFile(fullPath, "");
+            const created: DirectoryTree.File = {
+                type: "File",
+                name: name,
+                path: fullPath
+            }
+            return created;
+        }
+        catch(err){
+            return false;
+        }
+    });
 
     createWindow();
     app.on("activate", () => {

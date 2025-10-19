@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 type FileMenuProps = {
-    items: Omit<MenuItemProps, "click" | "highlighted">[]
+    items: Omit<MenuItemProps, "click" | "highlighted" | "hover" | "ref">[]
 }
 type MenuItemProps = {
     label: string,
     options: MenuOptionItemProps[],
     highlighted: boolean | null,
-    click: () => void;
+    click: () => void,
+    hover: () => void
 }
 type MenuOptionsProps = {
     options: MenuOptionItemProps[],
@@ -20,15 +21,29 @@ type MenuOptionItemProps = {
 export function FileMenu(props: FileMenuProps){
     const { items } = props;
     const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
-
+    const menuButtonsRef = useRef<HTMLUListElement>(null);
+    const menuItemClick = (index: number) => {
+        if(highlightIdx === null) setHighlightIdx(index);
+        else setHighlightIdx(null);
+    }
+    const menuItemHover = (index: number) => {
+        if(highlightIdx !== null) setHighlightIdx(index);
+    }
     useEffect(() => {
-        const removeHighlight = () => setHighlightIdx(null);
-        document.addEventListener("click", removeHighlight);
-        return () => document.removeEventListener("click", removeHighlight);
+        const handler = (e: PointerEvent) => {
+            const target = e.target as HTMLElement | null;
+            const wraper = menuButtonsRef.current;
+            if(!target || !wraper) return;
+            if(!wraper.contains(target) || target.id != "in-wraper"){
+                setHighlightIdx(null);
+            }
+        }
+        document.addEventListener("click", handler);
+        return () => document.removeEventListener("click", handler);
     }, []);
 
     return (
-        <ul className='flex'>
+        <ul ref={menuButtonsRef} className='flex'>
             {
                 items.map(
                     ({ label, options }, index) => 
@@ -37,7 +52,8 @@ export function FileMenu(props: FileMenuProps){
                         label={label}
                         options={options}
                         highlighted={highlightIdx == null ? null : highlightIdx == index}
-                        click={() => setHighlightIdx(index)}
+                        click={() => menuItemClick(index)}
+                        hover={() => menuItemHover(index)}
                     />
                 )
             }
@@ -45,19 +61,15 @@ export function FileMenu(props: FileMenuProps){
     );
 }
 function MenuItem(props: MenuItemProps){
-    const { label, options, highlighted, click } = props;
+    const { label, options, highlighted, click, hover } = props;
     return (
         <div className='relative'>
-            <button className={`px-2 py-1 rounded-md flex transition duration-200
+            <button id="in-wraper" className={`px-2 py-1 rounded-md flex transition duration-200
                 ${highlighted ? "bg-gray-500" : "hover:bg-gray-500"}`}
-                onClick={(e) => {
-                    if(highlighted === null){
-                        click();
-                        e.stopPropagation();
-                    }
-                }}
-                onMouseEnter={() => { highlighted !== null && click() }}>
-                <span className='text-white text-xs'>{label}</span>
+                onClick={click}
+                onMouseEnter={hover}
+            >
+                <span id="in-wraper" className='text-white text-xs'>{label}</span>
             </button>
             {
                 highlighted

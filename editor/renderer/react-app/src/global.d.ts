@@ -4,10 +4,12 @@ export type ApiType = {
     minimize: () => void,
     folder: {
         open: () => Promise<string | null>,
-        load: (path: string) => Promise<DirectoryTree.Directory>
+        load: (path: string) => Promise<DirectoryTree.Directory>,
+        create: (parentPath: string, name: string) => Promise<DirectoryTree.Directory | null>,
     },
     file: {
-        delete: (path: string, recycle: boolean) => Promise<boolean>
+        delete: (path: string, recycle: boolean) => Promise<boolean>,
+        create: (parentPath: string, name: string) => Promise<DirectoryTree.File | null>,
     }
 }
 

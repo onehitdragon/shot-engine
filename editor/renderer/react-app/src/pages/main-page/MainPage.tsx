@@ -21,8 +21,8 @@ const sceneTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
 ];
 const propertyTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
     {
-        ActivedButton: () => <ActivedTabButton Icon={InformationCircleIcon} label='Property'/>,
-        DectivedButton: ({ click }) => <DectivedTabButton Icon={InformationCircleIcon} label='Property' click={click}/>,
+        ActivedButton: () => <ActivedTabButton Icon={InformationCircleIcon} label='Inspector'/>,
+        DectivedButton: ({ click }) => <DectivedTabButton Icon={InformationCircleIcon} label='Inspector' click={click}/>,
         Tab: () => <div></div>
     }
 ];

@@ -1,8 +1,8 @@
-import { ArrowPathIcon, FolderPlusIcon, DocumentPlusIcon, TrashIcon, FolderIcon, DocumentTextIcon } from "@heroicons/react/24/solid";
-import { deleteFocusedEntry, focusEntry, selectDirectory, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, type FolderManager } from "../../../../global-state/slices/folder-manager-slice";
+import { FolderPlusIcon, DocumentPlusIcon, FolderIcon, DocumentTextIcon } from "@heroicons/react/24/solid";
+import { addEntry, deleteFocusedEntry, focusEntry, selectDirectory, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, type FolderManager } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SelectedFolderProps = {
     directory: FolderManager.DirectoryState
@@ -11,10 +11,16 @@ export function SelectedFolder(props: SelectedFolderProps){
     const { directory } = props;
     const { children: entries } = directory;
     const dispatch = useAppDispatch();
+    const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        const handler = () => {
-            dispatch(unfocusEntry());
-        };
+        const handler = (e: PointerEvent) => {
+            const wrapper = ref.current;
+            const target = e.target as HTMLElement | null;
+            if(!wrapper || !target) return;
+            if(!wrapper.contains(target)){
+                dispatch(unfocusEntry());
+            }
+        }
         window.addEventListener("click", handler);
         return () => window.removeEventListener("click", handler);
     }, []);
@@ -22,12 +28,13 @@ export function SelectedFolder(props: SelectedFolderProps){
     return (
         <div className='flex-4 bg-gray-500 flex flex-col overflow-hidden'>
             <ButtonBar selectedDirectory={directory}/>
-            <div className='flex-1 p-1 flex flex-col overflow-auto
+            <div ref={ref} className='p-1 flex flex-col overflow-auto
                 scrollbar-thin'>
                 {
                     entries.map(entry => <Entry key={entry.path} entry={entry} parentDirectory={directory}/>)
                 }
             </div>
+            <div className="flex-1"></div>
             <Footer />
         </div>
     );
@@ -55,7 +62,7 @@ function Entry(props: EntryProps){
 
     return (
         <div className={`flex items-center ${!isFoucused ? "hover:opacity-70" : "bg-gray-600"} hover:cursor-pointer`}
-            onClick={(e) => { click(); e.stopPropagation(); }}
+            onClick={click}
             onDoubleClick={doubleClick}
         >
             {
@@ -119,35 +126,133 @@ function ButtonBar(props: ButtonBarProps){
     const { selectedDirectory } = props;
     const focused = useAppSelector(selectFocusedEntry);
     const dispatch = useAppDispatch();
-    const deleteHandler = async () => {
-        if(!focused) return;
-        const success = await window.api.file.delete(focused.path, true);
-        if(success) dispatch(deleteFocusedEntry());
-    }
+    useEffect(() => {
+        const handler = async (e: KeyboardEvent) => {
+            if(!focused) return;
+            if(!e.shiftKey && e.key == "Delete"){
+                const success = await window.api.file.delete(focused.path, true);
+                if(success) dispatch(deleteFocusedEntry());
+            }
+            if(e.shiftKey && e.key == "Delete"){
+                const success = await window.api.file.delete(focused.path, false);
+                if(success) dispatch(deleteFocusedEntry());
+            }
+        }
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, [focused]);
 
     return (
         <div className='flex shadow-lg/10 shadow-black'>
-            <ul className='flex-1 flex'>
-                <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'>
-                    <FolderPlusIcon className='size-4 text-white'/>
-                </button>
-                <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'>
-                    <DocumentPlusIcon className='size-4 text-white'/>
-                </button>
-                {
-                    focused
-                    &&
-                    <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'
-                        onClick={(e) => { deleteHandler(); e.stopPropagation() }}>
-                        <TrashIcon className='size-4 text-red-500'/>
-                    </button>
-                }
+            <ul className='flex-1 flex items-center'>
+                <CreateFolderButton selectedDirectory={selectedDirectory}/>
+                <CreateFileButton selectedDirectory={selectedDirectory}/>
             </ul>
             <ul className='flex-1 flex justify-end'>
-                <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'>
+                {/* <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'>
                     <ArrowPathIcon className='size-4 text-white'/>
-                </button>
+                </button> */}
             </ul>
+        </div>
+    );
+}
+function CreateFolderButton(props: { selectedDirectory: FolderManager.DirectoryState }){
+    const { selectedDirectory } = props;
+    const [enteringName, setEnteringName] = useState(false);
+    const dispatch = useAppDispatch();
+    const create = async (name: string) => {
+        const created = await window.api.folder.create(selectedDirectory.path, name);
+        if(created) dispatch(addEntry({ entry: created }))
+    }
+    const close = () => {
+        setEnteringName(false);
+    }
+
+    return (
+        !enteringName ?
+        <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'
+            onClick={() => { setEnteringName(true); }}>
+            <FolderPlusIcon className='size-4 text-white'/>
+        </button>
+        :
+        <EntryNameInput
+            entries={selectedDirectory.children}
+            create={create}
+            close={close}
+        />
+    );
+}
+function CreateFileButton(props: { selectedDirectory: FolderManager.DirectoryState }){
+    const { selectedDirectory } = props;
+    const [enteringName, setEnteringName] = useState(false);
+    const dispatch = useAppDispatch();
+    const create = async (name: string) => {
+        const created = await window.api.file.create(selectedDirectory.path, name);
+        if(created) dispatch(addEntry({ entry: created }))
+    }
+    const close = () => {
+        setEnteringName(false);
+    }
+
+    return (
+        !enteringName ?
+        <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'
+            onClick={() => { setEnteringName(true); }}>
+            <DocumentPlusIcon className='size-4 text-white'/>
+        </button>
+        :
+        <EntryNameInput
+            entries={selectedDirectory.children}
+            create={create}
+            close={close}
+        />
+    );
+}
+type EntryNameInputProps = {
+    entries: (DirectoryTree.Directory | DirectoryTree.File)[],
+    create: (name: string) => void,
+    close: () => void
+}
+function EntryNameInput(props: EntryNameInputProps){
+    const { entries, close, create } = props;
+    const [name, setName] = useState("");
+    const isValid = () => {
+        const nameTrim = name.trim();
+        if(nameTrim == "") return false;
+        return !entries.some(entry => entry.name == nameTrim);
+    }
+    const keyDown = async (value: string) => {
+        if(/^[^/\\:*?"<>|]$/.test(value)){
+            setName(name + value);
+        }
+        else if(value == "Backspace") setName(name.slice(0, name.length - 1));
+        else if(value == "Enter" && isValid()){
+            create(name);
+            close();
+        }
+    }
+    const ref = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const handler = (e: PointerEvent) => {
+            const wrapper = ref.current;
+            const target = e.target as HTMLElement | null;
+            if(!wrapper || !target) return;
+            if(!wrapper.contains(target)){
+                close();
+            }
+        };
+        setTimeout(() => window.addEventListener("click", handler), 0);
+        return () => window.removeEventListener("click", handler);
+    }, []);
+
+    return (
+        <div ref={ref} className="flex">
+            <input className={`ml-2 outline-none h-5 text-sm text-white border
+                ${isValid() ? "border-blue-500" : "border-red-500"}`}
+                autoFocus spellCheck={false} value={name}
+                onKeyDown={(e) => { keyDown(e.key); }}
+                onChange={() => {}}
+            />
         </div>
     );
 }
@@ -156,7 +261,7 @@ function Footer(){
     const isFileFoused = focused && focused.type == "File";
 
     return (
-        <div className="bg-gray-600 flex items-center px-2 py-1 h-7">
+        <div className="bg-gray-600 flex items-center px-2 py-1 min-h-7">
             <span className="text-white text-sm select-none truncate">
                 {isFileFoused && focused.path}
             </span>

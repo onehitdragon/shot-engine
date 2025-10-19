@@ -49,6 +49,14 @@ const slice = createSlice({
             const index = selectedFolder.children.findIndex((entry) => entry.path == focusedPath);
             if(index == -1) return;
             selectedFolder.children.splice(index, 1);
+        },
+        addEntry(state, action: PayloadAction<{ entry: DirectoryTree.Directory | DirectoryTree.File }>){
+            const { directory, selectedPath } = state;
+            if(directory == null) return;
+            if(selectedPath == null) return;
+            const selectedFolder = findDirectory(directory, selectedPath);
+            if(selectedFolder == null) return;
+            selectedFolder.children.push(action.payload.entry);
         }
     }
 });
@@ -83,7 +91,7 @@ function selectFocusedEntry(state: RootState){
     return findEntry(directory, focusedPath);
 }
 export const { updateDirectory, toggleExpandDirectory, selectDirectory,
-    focusEntry, unfocusEntry, deleteFocusedEntry
+    focusEntry, unfocusEntry, deleteFocusedEntry, addEntry
 } = slice.actions;
 export { selectSelectedFolder, selectFocusedEntry }
 export default slice.reducer;
