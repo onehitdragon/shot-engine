@@ -1,4 +1,5 @@
 import { ProjectTab } from './components/project-tab/ProjectTab';
+import { SceneTab } from './components/scene-tab/SceneTab';
 import { ActivedTabButton, DectivedTabButton } from './components/tab-buttons';
 import { TabManager } from './components/TabManager';
 import { CommandLineIcon, InformationCircleIcon, Bars4Icon, Square3Stack3DIcon,
@@ -16,7 +17,7 @@ const sceneTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
     {
         ActivedButton: () => <ActivedTabButton Icon={Square3Stack3DIcon} label='Scene'/>,
         DectivedButton: ({ click }) => <DectivedTabButton Icon={Square3Stack3DIcon} label='Scene' click={click}/>,
-        Tab: () => <div></div>
+        Tab: () => <SceneTab />
     }
 ];
 const propertyTabs: React.ComponentProps<typeof TabManager>["tabs"] = [

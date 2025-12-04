@@ -1,0 +1,88 @@
+{
+  "objectNodes": [
+    {
+      "id": "180434421",
+      "name": "Cone.001Geometry",
+      "type": "Geometry",
+      "childs": [],
+      "vertices": [],
+      "polygonVertexIndex": []
+    },
+    {
+      "id": "983855718",
+      "name": "Cube.002Geometry",
+      "type": "Geometry",
+      "childs": [],
+      "vertices": [],
+      "polygonVertexIndex": []
+    },
+    {
+      "id": "655457358",
+      "name": "Sphere.001Geometry",
+      "type": "Geometry",
+      "childs": [],
+      "vertices": [],
+      "polygonVertexIndex": []
+    },
+    {
+      "id": "904295097",
+      "name": "VinhConeModel",
+      "type": "Model",
+      "childs": [
+        {
+          "id": "180434421",
+          "name": "Cone.001Geometry",
+          "type": "Geometry",
+          "childs": [],
+          "vertices": [],
+          "polygonVertexIndex": []
+        }
+      ]
+    },
+    {
+      "id": "798459281",
+      "name": "VinhCubeModel",
+      "type": "Model",
+      "childs": [
+        {
+          "id": "904295097",
+          "name": "VinhConeModel",
+          "type": "Model",
+          "childs": [
+            {
+              "id": "180434421",
+              "name": "Cone.001Geometry",
+              "type": "Geometry",
+              "childs": [],
+              "vertices": [],
+              "polygonVertexIndex": []
+            }
+          ]
+        },
+        {
+          "id": "983855718",
+          "name": "Cube.002Geometry",
+          "type": "Geometry",
+          "childs": [],
+          "vertices": [],
+          "polygonVertexIndex": []
+        }
+      ]
+    },
+    {
+      "id": "818074957",
+      "name": "VinhSphereModel",
+      "type": "Model",
+      "childs": [
+        {
+          "id": "655457358",
+          "name": "Sphere.001Geometry",
+          "type": "Geometry",
+          "childs": [],
+          "vertices": [],
+          "polygonVertexIndex": []
+        }
+      ]
+    }
+  ]
+} 
