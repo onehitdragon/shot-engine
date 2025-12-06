@@ -1,8 +1,9 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import path from "path";
 import fs from "fs/promises";
-import { showConfirmDialog } from "./message-boxes";
+import { showConfirmDialog, showErrorDialog } from "./message-boxes";
 import trash from "trash";
+import { importFbx } from "./importer/fbx-test";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -121,6 +122,46 @@ app.whenReady()
         catch(err){
             return false;
         }
+    });
+    ipcMain.handle("file:open", async () => {
+        const result = await dialog.showOpenDialog({
+            properties: ["openFile"]
+        });
+        if(result.canceled) return null;
+        return result.filePaths[0];
+    });
+    ipcMain.handle("file:import", async (e, importPath: string, destFolder: string) => {
+        try{
+            const importExt = path.extname(importPath);
+            if(importExt.toLowerCase() === ".fbx"){
+                const jsonImportFile: Importer.JsonImportFile = {
+                    type: "fbx",
+                    data: await importFbx(importPath)
+                }
+                const importName = path.basename(importPath) + ".json";
+                const fullPath = path.join(destFolder, importName);
+                const outFile = await fs.open(fullPath, "w");
+                await outFile.write(`${JSON.stringify(jsonImportFile, (key, value) => {
+                    return typeof value === "bigint" ? value.toString() : value;
+                }, 2)} \n`);
+                await outFile.close();
+                const created: DirectoryTree.File = {
+                    type: "File",
+                    name: importName,
+                    path: fullPath
+                }
+                return created;
+            }
+            else throw(`file extension ${importExt} dont support`);
+        }
+        catch(err){
+            await showErrorDialog(String(err));
+            return false;
+        }
+    });
+    ipcMain.handle("file:getText", async (e, destPath: string) => {
+        const file = await fs.readFile(destPath);
+        return file.toString();
     });
 
     createWindow();

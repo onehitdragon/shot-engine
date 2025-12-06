@@ -4,8 +4,98 @@ import fShaderSource from "./shaders/fshader?raw";
 import crateImage from "./textures/crate-texture.jpg";
 import { mat4, quat, vec3, vec4 } from "gl-matrix";
 
+const modelTest = {
+    colors: new Float32Array([
+        // 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, // front-red
+        // 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, // right-green
+        // 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, // top-blue
+        // 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, // left-yellow
+        // 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, // down-cyan
+        // 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, // back-magenta
+
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    ]),
+    normals: new Float32Array([
+        0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,     // front
+        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,     // right
+        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,     // up
+        -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, // left
+        0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, // down
+        0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, // back
+    ]),
+    vertices: new Float32Array([
+        -1,
+        -1,
+        1,
+        -1,
+        1,
+        1,
+        -1,
+        -1,
+        -1,
+        -1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        -1,
+        -1,
+        1,
+        1,
+        -1
+    ]),
+    triangles: new Uint32Array([
+        1,
+        2,
+        0,
+        3,
+        6,
+        2,
+        7,
+        4,
+        6,
+        5,
+        0,
+        4,
+        6,
+        0,
+        2,
+        3,
+        5,
+        7,
+        1,
+        3,
+        2,
+        3,
+        7,
+        6,
+        7,
+        5,
+        4,
+        5,
+        1,
+        0,
+        6,
+        4,
+        0,
+        3,
+        1,
+        5
+    ])
+}
+
 const cube = {
-    pos: vec3.fromValues(0, -2, 0),
+    pos: vec3.fromValues(0, 0, 0),
     rot: vec3.fromValues(0, -30, 0),
     scale: vec3.fromValues(1, 1, 1)
 }
@@ -29,19 +119,19 @@ const cubeModel = {
         ...v4, ...v7, ...v6, ...v5, // back
     ]),
     colors: new Float32Array([
-        // 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, // front-red
-        // 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, // right-green
-        // 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, // top-blue
-        // 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, // left-yellow
-        // 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, // down-cyan
-        // 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, // back-magenta
+        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, // front-red
+        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, // right-green
+        0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, // top-blue
+        1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, // left-yellow
+        0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, // down-cyan
+        1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, // back-magenta
 
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        // 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        // 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        // 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        // 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        // 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        // 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     ]),
     triangles: new Uint32Array([
         0, 1, 2, 0, 2, 3,       // front
@@ -151,10 +241,10 @@ function initShaders(gl: WebGLRenderingContext){
     return program;
 }
 function initVertexBuffer(gl: WebGLRenderingContext, glProgram: WebGLProgram){
-    const vertices = cubeModel.vertices;
-    const colors = cubeModel.colors;
-    const triangles = cubeModel.triangles;
-    const normals = cubeModel.normals;
+    const vertices = modelTest.vertices;
+    const colors = modelTest.colors;
+    const triangles = modelTest.triangles;
+    const normals = modelTest.normals;
     const n = triangles.length;
 
     const vertexBuffer = gl.createBuffer();

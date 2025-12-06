@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld("api", {
     file: {
         // can delele both folder and file
         delete: (path: string, recycle: boolean) => ipcRenderer.invoke("file:delete", path, recycle),
-        create: (parentPath: string, name: string) => ipcRenderer.invoke("file:create", parentPath, name)
+        create: (parentPath: string, name: string) => ipcRenderer.invoke("file:create", parentPath, name),
+        open: () => ipcRenderer.invoke("file:open"),
+        import: (importPath: string, destFolder: string) => ipcRenderer.invoke("file:import", importPath, destFolder),
+        getText: (destPath: string) => ipcRenderer.invoke("file:getText", destPath),
     }
 });

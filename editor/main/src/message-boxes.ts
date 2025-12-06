@@ -13,4 +13,16 @@ async function showConfirmDialog(message: string) {
     });
     return result.response === 0;
 }
-export { showConfirmDialog }
+async function showErrorDialog(message: string) {
+    const window = BrowserWindow.getFocusedWindow();
+    if(!window) return false;
+    await dialog.showMessageBox(window, {
+        message,
+        type: 'error',
+        buttons: ["Yes"],
+        defaultId: 1,
+        cancelId: 1,
+        title: 'Error'
+    });
+}
+export { showConfirmDialog, showErrorDialog }

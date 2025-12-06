@@ -1,41 +1,6 @@
 import fs from "fs/promises";
 import zlib from "zlib";
-
-namespace FBXFormat{
-    export type NodeRecord = {
-        name: string,
-        properties: Property[],
-        nestedList: NodeRecord[]
-    }
-    export type Property = {
-        typeCode: string
-    }
-    export type PrimitiveProperty = {
-        data: number | bigint
-    } & Property
-    export type ArrayProperty = {
-        data: number[]
-    } & Property
-    export type SpecialProperty = {
-        data: string
-    } & Property
-    export type FBX = {
-        objectNodes: ObjectNode[]
-    }
-    export type ObjectNode = {
-        id: bigint,
-        name: string,
-        type: "Model" | "Geometry",
-        childs: ObjectNode[]
-    }
-    export type ModelNode = {
-
-    } & ObjectNode
-    export type GeometryNode = {
-        vertices: number[],
-        polygonVertexIndex: number[]
-    } & ObjectNode
-}
+import path from "path";
 
 async function readNodeRecord(inFile: fs.FileHandle, prevEndOffset: number){
     const results: FBXFormat.NodeRecord[] = [];
@@ -171,9 +136,15 @@ function findNodeRecordByName(nodeRecords: FBXFormat.NodeRecord[], name: string)
     }
     return result;
 }
+function blenderToEngineCoordinate(components: number[]){
+    for(let i = 0; i < components.length; i += 3){
+        const [x, y, z] = [components[i], components[i + 1], components[i + 2]];
+        [components[i], components[i + 1], components[i + 2]] = [x, z, -y];
+    }
+}
 function createFBX(topNodeRecords: FBXFormat.NodeRecord[]){
     const objectsNodeRecord = findNodeRecordByName(topNodeRecords, "Objects");
-    if(!objectsNodeRecord) throw "dont find top level node record with name 'Objects'";
+    if(!objectsNodeRecord) throw "dont find node record with name 'Objects'";
     const objectNodes: FBXFormat.ObjectNode[] = [];
     for(const objectNodeRecord of objectsNodeRecord.nestedList){
         const { name, properties, nestedList } = objectNodeRecord;
@@ -193,36 +164,82 @@ function createFBX(topNodeRecords: FBXFormat.NodeRecord[]){
                 type: "Geometry",
                 childs: [],
                 vertices: [],
-                polygonVertexIndex: []
+                vertexIndices: [],
+                layerElementNormal: {
+                    mappingInformationType: "ByPolygonVertex",
+                    normals: [],
+                    normalIndices: []
+                },
+                layerElementUV: {
+                    mappingInformationType: "ByPolygonVertex",
+                    UVs: [],
+                    UVIndices: []
+                },
             }
             objectNodes.push(geometryNode);
+            const verticesNodeRecord = findNodeRecordByName(nestedList, "Vertices");
+            if(!verticesNodeRecord) throw "dont find node record with name 'Vertices'";
+            geometryNode.vertices = (verticesNodeRecord.properties[0] as FBXFormat.ArrayProperty).data;
+            blenderToEngineCoordinate(geometryNode.vertices);
+            const polygonVertexIndexNodeRecord = findNodeRecordByName(nestedList, "PolygonVertexIndex");
+            if(!polygonVertexIndexNodeRecord) throw "dont find node record with name 'PolygonVertexIndex'";
+            geometryNode.vertexIndices = 
+            (polygonVertexIndexNodeRecord.properties[0] as FBXFormat.ArrayProperty).data.map(value => {
+                if(value >= 0) return value;
+                else return -(value + 1);
+            });
+            
+            const layerElementNormalNodeRecord = findNodeRecordByName(nestedList, "LayerElementNormal");
+            if(!layerElementNormalNodeRecord) throw "dont find node record with name 'LayerElementNormal'";
+            const mappingInformationTypeNodeRecord = findNodeRecordByName(layerElementNormalNodeRecord.nestedList, "MappingInformationType");
+            if(!mappingInformationTypeNodeRecord) throw "dont find node record with name 'MappingInformationType'";
+            geometryNode.layerElementNormal.mappingInformationType =
+            (mappingInformationTypeNodeRecord.properties[0] as FBXFormat.SpecialProperty).data;
+            const normalsNodeRecord = findNodeRecordByName(layerElementNormalNodeRecord.nestedList, "Normals");
+            if(!normalsNodeRecord) throw "dont find node record with name 'Normals'";
+            geometryNode.layerElementNormal.normals = 
+            (normalsNodeRecord.properties[0] as FBXFormat.ArrayProperty).data;
+            blenderToEngineCoordinate(geometryNode.layerElementNormal.normals);
+            const normalsIndexNodeRecord = findNodeRecordByName(layerElementNormalNodeRecord.nestedList, "NormalsIndex");
+            if(!normalsIndexNodeRecord) throw "dont find node record with name 'NormalsIndex'";
+            geometryNode.layerElementNormal.normalIndices =
+            (normalsIndexNodeRecord.properties[0] as FBXFormat.ArrayProperty).data;
+            
+            console.log(
+                geometryNode.name, geometryNode.vertices.length, geometryNode.vertexIndices.length,
+                geometryNode.layerElementNormal.mappingInformationType
+            );
         }
     }
     const connectionsNodeRecord = findNodeRecordByName(topNodeRecords, "Connections");
     if(!connectionsNodeRecord) throw "dont find top level node record with name 'Objects'";
+    const parentObjectNodes: FBXFormat.ObjectNode[] = [];
     for(const connectionNodeRecord of connectionsNodeRecord.nestedList){
         const { name, properties, nestedList } = connectionNodeRecord;
         if(name === "C" && (properties[0] as FBXFormat.SpecialProperty).data === "OO"){
             const childId = (properties[1] as FBXFormat.PrimitiveProperty).data as bigint;
-            const parentId = (properties[2] as FBXFormat.PrimitiveProperty).data as bigint;
-            if(childId === 0n || parentId === 0n) continue;
             const childObjectNode = objectNodes.find((value) => value.id === childId);
-            const parentIdObjectNode = objectNodes.find((value) => value.id === parentId);
             if(!childObjectNode) throw `connection error: dont find child object node with id ${childId}`;
+            const parentId = (properties[2] as FBXFormat.PrimitiveProperty).data as bigint;
+            if(parentId === 0n){
+                parentObjectNodes.push(childObjectNode);
+                continue;
+            }
+            const parentIdObjectNode = objectNodes.find((value) => value.id === parentId);
             if(!parentIdObjectNode) throw `connection error: dont find parent object node with id ${parentId}`;
             parentIdObjectNode.childs.push(childObjectNode);
         }
     }
     const fbx: FBXFormat.FBX = {
-        objectNodes
+        parentObjectNodes
     }
     return fbx;
 }
 
-async function fbx(){
-    const inFile = await fs.open("test/CubeTest.fbx", "r");
-    const outFile1 = await fs.open("test/CubeTest.fbx.out1", "w");
-    const outFile2 = await fs.open("test/CubeTest.fbx.out2", "w");
+async function fbx(inPath: string){
+    const inFile = await fs.open(inPath, "r");
+    const outFile1 = await fs.open(`src/importer/fbx-debug/${path.basename(inPath)}.out1`, "w");
+    const outFile2 = await fs.open(`src/importer/fbx-debug/${path.basename(inPath)}.out2`, "w");
 
     let buffer = Buffer.alloc(27);
     let prevEndOffset = 0;
@@ -243,8 +260,10 @@ async function fbx(){
         return typeof value === "bigint" ? value.toString() : value;
     }, 2)} \n`);
 
-    inFile.close();
-    outFile1.close();
-    outFile2.close();
+    await inFile.close();
+    await outFile1.close();
+    await outFile2.close();
+    return fbx;
 }
-fbx();
+
+export { fbx as importFbx }

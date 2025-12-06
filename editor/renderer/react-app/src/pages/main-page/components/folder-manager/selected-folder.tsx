@@ -1,4 +1,6 @@
-import { FolderPlusIcon, DocumentPlusIcon, FolderIcon, DocumentTextIcon } from "@heroicons/react/24/solid";
+import { FolderPlusIcon, DocumentPlusIcon, FolderIcon, DocumentTextIcon,
+    ArrowDownOnSquareIcon
+ } from "@heroicons/react/24/solid";
 import { addEntry, deleteFocusedEntry, focusEntry, selectDirectory, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, type FolderManager } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
@@ -17,6 +19,7 @@ export function SelectedFolder(props: SelectedFolderProps){
             const wrapper = ref.current;
             const target = e.target as HTMLElement | null;
             if(!wrapper || !target) return;
+            if(target.closest("#inspector")) return;
             if(!wrapper.contains(target)){
                 dispatch(unfocusEntry());
             }
@@ -131,11 +134,17 @@ function ButtonBar(props: ButtonBarProps){
             if(!focused) return;
             if(!e.shiftKey && e.key == "Delete"){
                 const success = await window.api.file.delete(focused.path, true);
-                if(success) dispatch(deleteFocusedEntry());
+                if(success){
+                    dispatch(deleteFocusedEntry());
+                    dispatch(unfocusEntry());
+                }
             }
             if(e.shiftKey && e.key == "Delete"){
                 const success = await window.api.file.delete(focused.path, false);
-                if(success) dispatch(deleteFocusedEntry());
+                if(success){
+                    dispatch(deleteFocusedEntry());
+                    dispatch(unfocusEntry());
+                }
             }
         }
         window.addEventListener("keydown", handler);
@@ -147,6 +156,7 @@ function ButtonBar(props: ButtonBarProps){
             <ul className='flex-1 flex items-center'>
                 <CreateFolderButton selectedDirectory={selectedDirectory}/>
                 <CreateFileButton selectedDirectory={selectedDirectory}/>
+                <ImportFileButton selectedDirectory={selectedDirectory}/>
             </ul>
             <ul className='flex-1 flex justify-end'>
                 {/* <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'>
@@ -206,6 +216,23 @@ function CreateFileButton(props: { selectedDirectory: FolderManager.DirectorySta
             create={create}
             close={close}
         />
+    );
+}
+function ImportFileButton(props: { selectedDirectory: FolderManager.DirectoryState }){
+    const { selectedDirectory } = props;
+    const dispatch = useAppDispatch();
+    const open = async () => {
+        const importPath = await window.api.file.open();
+        if(!importPath) return;
+        const imported = await window.api.file.import(importPath, selectedDirectory.path);
+        if(!imported) return;
+        dispatch(addEntry({ entry: imported }));
+    }
+    return (
+        <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'
+            onClick={open}>
+            <ArrowDownOnSquareIcon className='size-4 text-white'/>
+        </button>
     );
 }
 type EntryNameInputProps = {

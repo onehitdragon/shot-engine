@@ -10,6 +10,9 @@ export type ApiType = {
     file: {
         delete: (path: string, recycle: boolean) => Promise<boolean>,
         create: (parentPath: string, name: string) => Promise<DirectoryTree.File | null>,
+        open: () => Promise<string | null>,
+        import: (importPath: string, destFolder: string) => Promise<DirectoryTree.File | null>,
+        getText: (destPath: string) => Promise<string>
     }
 }
 

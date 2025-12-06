@@ -1,3 +1,4 @@
+import { InspectorTab } from './components/inspector-tab/InspectorTab';
 import { ProjectTab } from './components/project-tab/ProjectTab';
 import { SceneTab } from './components/scene-tab/SceneTab';
 import { ActivedTabButton, DectivedTabButton } from './components/tab-buttons';
@@ -20,11 +21,11 @@ const sceneTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
         Tab: () => <SceneTab />
     }
 ];
-const propertyTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
+const inspectorTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
     {
         ActivedButton: () => <ActivedTabButton Icon={InformationCircleIcon} label='Inspector'/>,
         DectivedButton: ({ click }) => <DectivedTabButton Icon={InformationCircleIcon} label='Inspector' click={click}/>,
-        Tab: () => <div></div>
+        Tab: () => <InspectorTab />
     }
 ];
 const projectTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
@@ -54,7 +55,7 @@ export function MainPage(){
                 <TabManager tabs={projectTabs}/>
             </div>
             <div className="flex-1 flex overflow-hidden">
-                <TabManager tabs={propertyTabs}/>
+                <TabManager tabs={inspectorTabs}/>
             </div>
         </div>
     );
