@@ -1,5 +1,6 @@
 import { InspectorTab } from './components/inspector-tab/InspectorTab';
 import { ProjectTab } from './components/project-tab/ProjectTab';
+import { SceneManagerTab } from './components/scene-manager-tab/SceneManagerTab';
 import { SceneTab } from './components/scene-tab/SceneTab';
 import { ActivedTabButton, DectivedTabButton } from './components/tab-buttons';
 import { TabManager } from './components/TabManager';
@@ -7,11 +8,11 @@ import { CommandLineIcon, InformationCircleIcon, Bars4Icon, Square3Stack3DIcon,
     BookOpenIcon
 } from '@heroicons/react/24/solid';
 
-const objectTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
+const sceneManagerTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
     {
         ActivedButton: () => <ActivedTabButton Icon={Bars4Icon} label='Hierarchy'/>,
         DectivedButton: ({ click }) => <DectivedTabButton Icon={Bars4Icon} label='Hierarchy' click={click}/>,
-        Tab: () => <div></div>
+        Tab: () => <SceneManagerTab />
     }
 ];
 const sceneTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
@@ -46,7 +47,7 @@ export function MainPage(){
             <div className="flex-2 flex flex-col overflow-hidden">
                 <div className="flex-1 flex overflow-hidden">
                     <div className='flex-2 flex overflow-hidden'>
-                        <TabManager tabs={objectTabs}/>
+                        <TabManager tabs={sceneManagerTabs}/>
                     </div>
                     <div className='flex-4 flex overflow-hidden'>
                         <TabManager tabs={sceneTabs}/>

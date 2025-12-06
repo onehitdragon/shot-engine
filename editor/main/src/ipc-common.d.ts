@@ -15,6 +15,9 @@ declare namespace Importer{
     export type JsonImportFile = {
         type: "fbx",
         data: FBXFormat
+    } | {
+        type: "scene",
+        data: SceneFormat.SceneGraph
     }
 }
 declare namespace FBXFormat{

@@ -14,7 +14,10 @@ declare namespace DirectoryTree{
 declare namespace Importer{
     export type JsonImportFile = {
         type: "fbx",
-        data: FBXFormat
+        data: FBXFormat.FBX
+    } | {
+        type: "scene",
+        data: SceneFormat.SceneGraph
     }
 }
 declare namespace FBXFormat{

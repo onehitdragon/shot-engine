@@ -8,8 +8,12 @@ export type FBXInspector = {
     type: "fbx",
     fbx: FBXFormat.FBX
 }
+export type SceneInspector = {
+    type: "scene",
+    sceneGraph: SceneFormat.SceneGraph
+}
 type State = {
-    inspector: null | TextInspector | FBXInspector
+    inspector: null | TextInspector | FBXInspector | SceneInspector
 };
 const initialState: State = {
     inspector: null

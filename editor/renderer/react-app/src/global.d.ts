@@ -12,7 +12,9 @@ export type ApiType = {
         create: (parentPath: string, name: string) => Promise<DirectoryTree.File | null>,
         open: () => Promise<string | null>,
         import: (importPath: string, destFolder: string) => Promise<DirectoryTree.File | null>,
-        getText: (destPath: string) => Promise<string>
+        getText: (destPath: string) => Promise<string>,
+        openSave: (fileName: string, data: string) => Promise<string | null>,
+        save: (destPath: string, data: string) => Promise<void>,
     }
 }
 

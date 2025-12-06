@@ -16,5 +16,7 @@ contextBridge.exposeInMainWorld("api", {
         open: () => ipcRenderer.invoke("file:open"),
         import: (importPath: string, destFolder: string) => ipcRenderer.invoke("file:import", importPath, destFolder),
         getText: (destPath: string) => ipcRenderer.invoke("file:getText", destPath),
+        openSave: (fileName: string, data: string) => ipcRenderer.invoke("file:openSave", fileName, data),
+        save: (destPath: string, data: string) => ipcRenderer.invoke("file:save", destPath, data),
     }
 });

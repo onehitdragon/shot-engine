@@ -163,6 +163,19 @@ app.whenReady()
         const file = await fs.readFile(destPath);
         return file.toString();
     });
+    ipcMain.handle("file:openSave", async (e, fileName: string, data: string) => {
+        const { filePath, canceled } = await dialog.showSaveDialog({
+            defaultPath: fileName
+        });
+        if (canceled || !filePath) return null;
+        await fs.writeFile(filePath, data);
+        return filePath;
+    });
+    ipcMain.handle("file:save", async (e, destPath: string, data: string) => {
+        const outFile = await fs.open(destPath, "w");
+        await outFile.write(data);
+        await outFile.close();
+    });
 
     createWindow();
     app.on("activate", () => {
