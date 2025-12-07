@@ -12,8 +12,12 @@ export type SceneInspector = {
     type: "scene",
     sceneGraph: SceneFormat.SceneGraph
 }
+export type SceneNodeInspector = {
+    type: "scene-node",
+    node: SceneFormat.SceneNode
+}
 type State = {
-    inspector: null | TextInspector | FBXInspector | SceneInspector
+    inspector: null | TextInspector | FBXInspector | SceneInspector | SceneNodeInspector
 };
 const initialState: State = {
     inspector: null

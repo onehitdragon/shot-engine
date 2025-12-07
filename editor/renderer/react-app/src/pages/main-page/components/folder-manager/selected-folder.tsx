@@ -15,7 +15,7 @@ export function SelectedFolder(props: SelectedFolderProps){
     const dispatch = useAppDispatch();
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        const handler = (e: PointerEvent) => {
+        const handler = (e: MouseEvent) => {
             const wrapper = ref.current;
             const target = e.target as HTMLElement | null;
             if(!wrapper || !target) return;
@@ -24,8 +24,8 @@ export function SelectedFolder(props: SelectedFolderProps){
                 dispatch(unfocusEntry());
             }
         }
-        window.addEventListener("click", handler);
-        return () => window.removeEventListener("click", handler);
+        window.addEventListener("mousedown", handler);
+        return () => window.removeEventListener("mousedown", handler);
     }, []);
 
     return (

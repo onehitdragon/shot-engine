@@ -1,16 +1,17 @@
 import { CubeIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, ChevronRightIcon, Square3Stack3DIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
-import { useAppSelector } from "../../../../global-state/hooks";
-import { useDispatch } from "react-redux";
-import { updateSceneModified, updateScenePath } from "../../../../global-state/slices/scene-manager-slice";
+import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
+import { addTopSceneNode, focusSceneNode, unfocusSceneNode, updateSceneModified, updateScenePath } from "../../../../global-state/slices/scene-manager-slice";
+import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
+import { createEmptySceneNode } from "../../helpers/SceneNodeHelper";
 
 export function SceneGraph(props: { sceneGraph: SceneFormat.SceneGraph }){
     const { sceneGraph } = props;
     const { name, nodes } = sceneGraph;
     const modified = useAppSelector(state => state.sceneManager.modified);
     const path = useAppSelector(state => state.sceneManager.path);
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         const handler = async (e: KeyboardEvent) => {
@@ -34,15 +35,26 @@ export function SceneGraph(props: { sceneGraph: SceneFormat.SceneGraph }){
         }
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
-    }, [modified, path]);
+    }, [sceneGraph, modified, path]);
+    const createEmptyChild = () => {
+        dispatch(addTopSceneNode({ node: createEmptySceneNode() }));
+    }
 
     return (
-        <div className="flex flex-1 flex-col p-1 overflow-auto scrollbar-thin">
+        <div className="flex flex-1 flex-col h-full p-1 overflow-auto scrollbar-thin">
             <div className="flex items-center">
                 <Square3Stack3DIcon className="text-white size-4 mr-1"/>
                 <span className="text-sm text-white font-medium select-none">
                     {name + (modified ? "*" : "")}
                 </span>
+                <div className="flex items-center justify-end flex-1">
+                    <button className="flex items-center cursor-pointer transition hover:opacity-80"
+                        onClick={createEmptyChild}
+                    >
+                        <CubeIcon className="size-4 text-white"/>
+                        <span className="text-xs text-white">+</span>
+                    </button>
+                </div>
             </div>
             <SceneNodes nodes={nodes}/>
         </div>
@@ -60,8 +72,10 @@ function SceneNodes(props: { nodes: SceneFormat.SceneNode[]}){
     );
 }
 function SceneNode(props: { node: SceneFormat.SceneNode }){
-    const { name, childs } = props.node;
+    const { node } = props;
+    const { id, childs } = node;
     const [collapsed, setCollapsed] = useState(true);
+    const focusedId = useAppSelector(state => state.sceneManager.focusedId);
 
     return (
         <li className="flex flex-col">
@@ -81,15 +95,73 @@ function SceneNode(props: { node: SceneFormat.SceneNode }){
                         <div className="w-4 h-4"></div>
                     }
                 </div>
-                <div className="flex items-center cursor-pointer transition hover:opacity-80">
-                    <CubeIcon className="text-white size-4 mr-1"/>
-                    <span className="text-sm text-white select-none">{name}</span>
-                </div>
+                {
+                    (!focusedId || focusedId != id) ?
+                    <NonSelected node={node}/> :
+                    <Selected node={node}/>
+                }
             </div>
             {
                 !collapsed &&
                 <SceneNodes nodes={childs}/>
             }
         </li>
+    );
+}
+function NonSelected(props: { node: SceneFormat.SceneNode }){
+    const { node } = props;
+    const dispatch = useAppDispatch();
+    const click = () => {
+        dispatch(focusSceneNode({ id: node.id }));
+    }
+    const rightClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        dispatch(focusSceneNode({ id: node.id }));
+        dispatch(openContextMenu({
+            contextMenu: { type: "scene-node", sceneNode: node },
+            mousePos: { x: e.clientX, y: e.clientY }
+        }));
+    }
+
+    return (
+        <div className="flex flex-1 items-center cursor-pointer transition hover:opacity-80"
+            onClick={click} onContextMenu={rightClick}>
+            <CubeIcon className="text-white size-4 mx-1"/>
+            <span className="text-sm text-white select-none">{node.name}</span>
+        </div>
+    );
+}
+function Selected(props: { node: SceneFormat.SceneNode }){
+    const { node } = props;
+    const { name } = node;
+    const dispatch = useAppDispatch();
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            const target = e.target as HTMLElement | null;
+            if(!target) return;
+            if(target.closest("#scene-node-selected")) return;
+            if(target.closest("#inspector")) return;
+            if(target.closest("#component-context-menu")) return;
+            dispatch(unfocusSceneNode());
+        }
+        window.addEventListener("mousedown", handler);
+        return () => {
+            window.removeEventListener("mousedown", handler);
+        }
+    }, []);
+    const rightClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        dispatch(openContextMenu({
+            contextMenu: { type: "scene-node", sceneNode: node },
+            mousePos: { x: e.clientX, y: e.clientY }
+        }));
+    }
+
+    return (
+        <div id="scene-node-selected" className="flex flex-1 items-center cursor-pointer bg-gray-600"
+            onContextMenu={rightClick}>
+            <CubeIcon className="text-white size-4 mx-1"/>
+            <span className="text-sm text-white select-none">{name}</span>
+        </div>
     );
 }

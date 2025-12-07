@@ -6,30 +6,31 @@ declare namespace SceneFormat{
     export type SceneNode = {
         id: string,
         name: string,
+        components: Components.Component[],
         childs: SceneNode[],
-        components: Components.Component[]
     }
 }
 declare namespace Components{
     type vec3 = import("gl-matrix").vec3;
     type quat = import("gl-matrix").quat;
-    export type Component = {
-        type: string
+    export type Component = Transform | Mesh | Shading;
+    type ComponentBase = {
+        id: string
     }
-    export type Transform = {
+    export type Transform = ComponentBase & {
         type: "Transform"
         position: vec3,
         rotation: quat,
         scale: vec3
-    } & Component;
-    export type Mesh = {
+    }
+    export type Mesh = ComponentBase & {
         type: "Mesh"
-        vertices: Float32Array,
-        vertexIndices: Uint32Array,
-        normals: Float32Array,
-        normalIndices: Uint32Array
-    } & Component;
-    export type Shading = {
+        vertices: number[],
+        vertexIndices: number[],
+        normals: number[],
+        normalIndices: number[]
+    }
+    export type Shading = ComponentBase & {
         type: "Shading"
-    } & Component
+    }
 }

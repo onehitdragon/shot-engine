@@ -14,3 +14,10 @@
 html{
   @apply scrollbar-track-gray-600 scrollbar-thumb-gray-300
 }
+@layer base {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
