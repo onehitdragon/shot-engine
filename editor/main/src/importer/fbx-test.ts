@@ -142,6 +142,30 @@ function blenderToEngineCoordinate(components: number[]){
         [components[i], components[i + 1], components[i + 2]] = [x, z, -y];
     }
 }
+function createNormalFromByPolygonVertex(normals: number[], normalIndices: number[]){
+    const result: number[] = [];
+    for(let i = 0; i < normalIndices.length; i += 3){
+        const index0 = normalIndices[i] * 3;
+        const index1 = normalIndices[i + 1] * 3;
+        const index2 = normalIndices[i + 2] * 3;
+        result.push(normals[index0], normals[index0 + 1], normals[index0 + 2]);
+        result.push(normals[index1], normals[index1 + 1], normals[index1 + 2]);
+        result.push(normals[index2], normals[index2 + 1], normals[index2 + 2]);
+    }
+    return result;
+}
+function createNormalFromByVertice(normals: number[], vertexIndices: number[]){
+    const result: number[] = [];
+    for(let i = 0; i < vertexIndices.length; i += 3){
+        const index0 = vertexIndices[i] * 3;
+        const index1 = vertexIndices[i + 1] * 3;
+        const index2 = vertexIndices[i + 2] * 3;
+        result.push(normals[index0], normals[index0 + 1], normals[index0 + 2]);
+        result.push(normals[index1], normals[index1 + 1], normals[index1 + 2]);
+        result.push(normals[index2], normals[index2 + 1], normals[index2 + 2]);
+    }
+    return result;
+}
 function createFBX(topNodeRecords: FBXFormat.NodeRecord[]){
     const objectsNodeRecord = findNodeRecordByName(topNodeRecords, "Objects");
     if(!objectsNodeRecord) throw "dont find node record with name 'Objects'";
@@ -165,11 +189,7 @@ function createFBX(topNodeRecords: FBXFormat.NodeRecord[]){
                 childs: [],
                 vertices: [],
                 vertexIndices: [],
-                layerElementNormal: {
-                    mappingInformationType: "ByPolygonVertex",
-                    normals: [],
-                    normalIndices: []
-                },
+                normals: [],
                 layerElementUV: {
                     mappingInformationType: "ByPolygonVertex",
                     UVs: [],
@@ -193,21 +213,30 @@ function createFBX(topNodeRecords: FBXFormat.NodeRecord[]){
             if(!layerElementNormalNodeRecord) throw "dont find node record with name 'LayerElementNormal'";
             const mappingInformationTypeNodeRecord = findNodeRecordByName(layerElementNormalNodeRecord.nestedList, "MappingInformationType");
             if(!mappingInformationTypeNodeRecord) throw "dont find node record with name 'MappingInformationType'";
-            geometryNode.layerElementNormal.mappingInformationType =
+            const mappingInformationType =
             (mappingInformationTypeNodeRecord.properties[0] as FBXFormat.SpecialProperty).data;
             const normalsNodeRecord = findNodeRecordByName(layerElementNormalNodeRecord.nestedList, "Normals");
             if(!normalsNodeRecord) throw "dont find node record with name 'Normals'";
-            geometryNode.layerElementNormal.normals = 
-            (normalsNodeRecord.properties[0] as FBXFormat.ArrayProperty).data;
-            blenderToEngineCoordinate(geometryNode.layerElementNormal.normals);
             const normalsIndexNodeRecord = findNodeRecordByName(layerElementNormalNodeRecord.nestedList, "NormalsIndex");
             if(!normalsIndexNodeRecord) throw "dont find node record with name 'NormalsIndex'";
-            geometryNode.layerElementNormal.normalIndices =
+            const normals = (normalsNodeRecord.properties[0] as FBXFormat.ArrayProperty).data;
+            blenderToEngineCoordinate(normals);
+            const normalIndices = 
             (normalsIndexNodeRecord.properties[0] as FBXFormat.ArrayProperty).data;
+            if(mappingInformationType === "ByPolygonVertex"){
+                geometryNode.normals = createNormalFromByPolygonVertex(normals, normalIndices);
+            }
+            else if(mappingInformationType === "ByVertice"){
+                if(Math.max(...geometryNode.vertexIndices) != Math.max(...normalIndices)){
+                    throw `fbx parser internal error`;
+                }
+                geometryNode.normals = createNormalFromByVertice(normals, geometryNode.vertexIndices);
+            }
+            else throw `dont support mappingInformationType: ${mappingInformationType}`;
             
             console.log(
                 geometryNode.name, geometryNode.vertices.length, geometryNode.vertexIndices.length,
-                geometryNode.layerElementNormal.mappingInformationType
+                mappingInformationType
             );
         }
     }

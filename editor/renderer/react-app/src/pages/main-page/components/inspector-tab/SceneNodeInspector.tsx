@@ -23,6 +23,7 @@ function ComponentSection(props: { node: SceneFormat.SceneNode, component: Compo
     return (
         type === "Transform" ? <TransformSection node={node} component={component}/> :
         type === "Mesh" ? <MeshSection node={node} component={component}/> :
+        type === "Shading" ? <ShadingSection node={node} component={component}/> :
         <div>Dont support this component</div>
     );
 }
@@ -123,6 +124,20 @@ function MeshSection(props: { node: SceneFormat.SceneNode, component: Components
             </div>
             <CollapsedList label="Vertices" listGenerator={showVertices}/>
             <CollapsedList label="Triangles" listGenerator={showVertexIndices}/>
+        </div>
+    );
+}
+function ShadingSection(props: { node: SceneFormat.SceneNode, component: Components.Shading }){
+    const { node, component } = props;
+
+    return (
+        <div className="flex flex-col">
+            <Header label="Shading" node={node} component={component}/>
+            <div className="flex gap-2 mb-1">
+                <span className="select-none text-sm text-white">
+                    Shader type: {component.shaderType}
+                </span>
+            </div>
         </div>
     );
 }

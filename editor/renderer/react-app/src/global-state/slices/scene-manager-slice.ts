@@ -55,6 +55,15 @@ const slice = createSlice({
             removeSceneNodeHelper(sceneGraph.nodes, id);
             state.modified = true;
         },
+        renameSceneNode: (state, action: PayloadAction<{ nodeId: string, newName: string }>) => {
+            const sceneGraph = state.sceneGraph;
+            if(!sceneGraph) return;
+            const { nodeId, newName } = action.payload;
+            const nodeFound = findSceneNode(sceneGraph.nodes, nodeId);
+            if(!nodeFound) return;
+            nodeFound.name = newName;
+            state.modified = true;
+        },
         updateComponentOfSceneNode: (
             state,
             action: PayloadAction<{ nodeId: string, component: Components.Component }>
@@ -112,6 +121,7 @@ function removeSceneNodeHelper(sceneNodes: SceneFormat.SceneNode[], id: string){
 
 export const { updateScene, updateSceneModified, updateScenePath, focusSceneNode,
     unfocusSceneNode, addSceneNodeChild, removeSceneNode, addTopSceneNode,
-    updateComponentOfSceneNode, removeComponentOfSceneNode } = slice.actions;
+    updateComponentOfSceneNode, removeComponentOfSceneNode,
+    renameSceneNode } = slice.actions;
 export { selectFocusedSceneNode }
 export default slice.reducer;

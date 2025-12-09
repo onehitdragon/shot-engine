@@ -53,11 +53,7 @@ declare namespace FBXFormat{
     export type GeometryNode = {
         vertices: number[],
         vertexIndices: number[],
-        layerElementNormal: {
-            mappingInformationType: string,
-            normals: number[],
-            normalIndices: number[]
-        },
+        normals: number[],
         layerElementUV: {
             mappingInformationType: string,
             UVs: number[],

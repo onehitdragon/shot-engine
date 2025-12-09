@@ -2,7 +2,7 @@ import { CubeIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, ChevronRightIcon, Square3Stack3DIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import { addTopSceneNode, focusSceneNode, unfocusSceneNode, updateSceneModified, updateScenePath } from "../../../../global-state/slices/scene-manager-slice";
+import { addTopSceneNode, focusSceneNode, renameSceneNode, unfocusSceneNode, updateSceneModified, updateScenePath } from "../../../../global-state/slices/scene-manager-slice";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { createEmptySceneNode } from "../../helpers/SceneNodeHelper";
 
@@ -135,8 +135,10 @@ function Selected(props: { node: SceneFormat.SceneNode }){
     const { node } = props;
     const { name } = node;
     const dispatch = useAppDispatch();
+    const [editing, setEditing] = useState(false);
     useEffect(() => {
         const handler = (e: MouseEvent) => {
+            if(editing) return;
             const target = e.target as HTMLElement | null;
             if(!target) return;
             if(target.closest("#scene-node-selected")) return;
@@ -148,7 +150,7 @@ function Selected(props: { node: SceneFormat.SceneNode }){
         return () => {
             window.removeEventListener("mousedown", handler);
         }
-    }, []);
+    }, [editing]);
     const rightClick = (e: React.MouseEvent) => {
         e.preventDefault();
         dispatch(openContextMenu({
@@ -156,12 +158,44 @@ function Selected(props: { node: SceneFormat.SceneNode }){
             mousePos: { x: e.clientX, y: e.clientY }
         }));
     }
+    const doubleClick = () => {
+        setEditing(true);
+    }
 
     return (
         <div id="scene-node-selected" className="flex flex-1 items-center cursor-pointer bg-gray-600"
-            onContextMenu={rightClick}>
+            onContextMenu={rightClick}
+            onDoubleClick={doubleClick}
+        >
             <CubeIcon className="text-white size-4 mx-1"/>
-            <span className="text-sm text-white select-none">{name}</span>
+            {
+                !editing ?
+                <span className="text-sm text-white select-none">{name}</span> :
+                <Editing node={node} onBlur={() => {
+                    setEditing(false);
+                    dispatch(unfocusSceneNode());
+                }}/>
+            }
         </div>
+    );
+}
+function Editing(props: { node: SceneFormat.SceneNode, onBlur: () => void }){
+    const { node } = props;
+    const { name } = node;
+    const [nameState, setNameState] = useState(name);
+    const dispatch = useAppDispatch();
+    const onBlur = () => {
+        props.onBlur();
+        dispatch(renameSceneNode({ nodeId: node.id, newName: nameState }));
+    }
+
+    return (
+        <input className="outline-none border text-sm px-0.5 w-full text-white" autoFocus spellCheck={false}
+            value={nameState}
+            onBlur={onBlur}
+            onChange={(e) => {
+                setNameState(e.target.value);
+            }}
+        />
     );
 }

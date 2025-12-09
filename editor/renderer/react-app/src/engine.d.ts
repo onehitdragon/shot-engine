@@ -9,10 +9,14 @@ declare namespace SceneFormat{
         components: Components.Component[],
         childs: SceneNode[],
     }
+    export type SceneCamera = {
+        aspect: number,
+        position: vec3,
+        rotation: vec3
+    }
 }
 declare namespace Components{
     type vec3 = import("gl-matrix").vec3;
-    type quat = import("gl-matrix").quat;
     export type Component = Transform | Mesh | Shading;
     type ComponentBase = {
         id: string
@@ -20,17 +24,19 @@ declare namespace Components{
     export type Transform = ComponentBase & {
         type: "Transform"
         position: vec3,
-        rotation: quat,
+        rotation: vec3,
         scale: vec3
     }
     export type Mesh = ComponentBase & {
-        type: "Mesh"
+        type: "Mesh",
+        meshType: "cube" | "sphere" | "other",
+        meshId: string,
         vertices: number[],
         vertexIndices: number[],
         normals: number[],
-        normalIndices: number[]
     }
     export type Shading = ComponentBase & {
-        type: "Shading"
+        type: "Shading",
+        shaderType: "simple"
     }
 }
