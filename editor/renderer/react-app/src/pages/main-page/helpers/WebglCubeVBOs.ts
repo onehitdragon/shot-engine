@@ -33,7 +33,6 @@ export class WebglCubeVBOs{
         return this._normals;
     }
     private constructor(gl: WebGL2RenderingContext){
-        console.log("create cube buffer");
         this._gl = gl;
         this._vertices = new Float32Array(cubeMeshData.vertices);
         this._vertexIndices = new Uint32Array(cubeMeshData.vertexIndices)

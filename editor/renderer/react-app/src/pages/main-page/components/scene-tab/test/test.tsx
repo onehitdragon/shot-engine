@@ -1,103 +1,12 @@
 import { useEffect, useRef } from "react";
-import vShaderSource from "./shaders/vshader?raw";
-import fShaderSource from "./shaders/fshader?raw";
+import vShaderSource from "./vshader.glsl?raw";
+import fShaderSource from "./fshader.glsl?raw";
 import crateImage from "./textures/crate-texture.jpg";
 import { mat4, quat, vec3, vec4 } from "gl-matrix";
-import { useAppSelector } from "../../../../global-state/hooks";
-
-const modelTest = {
-    colors: new Float32Array([
-        // 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, // front-red
-        // 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, // right-green
-        // 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, // top-blue
-        // 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, // left-yellow
-        // 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, // down-cyan
-        // 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, // back-magenta
-
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    ]),
-    normals: new Float32Array([
-        0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,     // front
-        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,     // right
-        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,     // up
-        -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, // left
-        0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, // down
-        0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, // back
-    ]),
-    vertices: new Float32Array([
-        -1,
-        -1,
-        1,
-        -1,
-        1,
-        1,
-        -1,
-        -1,
-        -1,
-        -1,
-        1,
-        -1,
-        1,
-        -1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        -1,
-        -1,
-        1,
-        1,
-        -1
-    ]),
-    triangles: new Uint32Array([
-        1,
-        2,
-        0,
-        3,
-        6,
-        2,
-        7,
-        4,
-        6,
-        5,
-        0,
-        4,
-        6,
-        0,
-        2,
-        3,
-        5,
-        7,
-        1,
-        3,
-        2,
-        3,
-        7,
-        6,
-        7,
-        5,
-        4,
-        5,
-        1,
-        0,
-        6,
-        4,
-        0,
-        3,
-        1,
-        5
-    ])
-}
 
 const cube = {
     pos: vec3.fromValues(0, 0, 0),
-    rot: vec3.fromValues(0, -30, 0),
+    rot: vec3.fromValues(0, 0, 0),
     scale: vec3.fromValues(1, 1, 1)
 }
 const [v0, v1, v2, v3, v4, v5, v6, v7] = [
@@ -135,12 +44,12 @@ const cubeModel = {
         // 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     ]),
     triangles: new Uint32Array([
-        0, 1, 2, 0, 2, 3,       // front
-        4, 5, 6, 4, 6, 7,       // right
-        8, 9, 10, 8, 10, 11,    // up
-        12, 13, 14, 12, 14, 15, // left
+        // 0, 1, 2, 0, 2, 3,       // front
+        // 4, 5, 6, 4, 6, 7,       // right
+        // 8, 9, 10, 8, 10, 11,    // up
+        // 12, 13, 14, 12, 14, 15, // left
         16, 17, 18, 16, 18, 19, // down
-        20, 21, 22, 20, 22, 23, // back
+        // 20, 21, 22, 20, 22, 23, // back
     ]),
     normals: new Float32Array([
         0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,     // front
@@ -152,8 +61,10 @@ const cubeModel = {
     ]),
 }
 const camera = {
-    pos: vec3.fromValues(0, 0, 5),
-    rot: vec3.fromValues(0, 0, 0)
+    // pos: vec3.fromValues(4, 4, 0),
+    // rot: vec3.fromValues(-45, 80, 0),
+    pos: vec3.fromValues(0, 2, 0),
+    rot: vec3.fromValues(-90, 0, 0),
 }
 const light = {
     direction: vec4.fromValues(0, 1, 1, 1),
@@ -175,9 +86,16 @@ const clipMat4 = mat4.create();
 mat4.perspective(clipMat4, 45 * Math.PI / 180, 1, 1, 100);
 const mvpMat4 = mat4.create();
 mat4.multiply(mvpMat4, clipMat4, viewMat4); // P * V
-mat4.multiply(mvpMat4, mvpMat4, modelMat4); // P * V * M
+// mat4.multiply(mvpMat4, mvpMat4, modelMat4); // P * V * M
 
-export function Renderer(){
+// for(let i = 0; i < cubeModel.vertices.length; i+=3){
+//     const vertex = [cubeModel.vertices[i], cubeModel.vertices[i + 1], cubeModel.vertices[i + 2], 1];
+//     vec4.transformMat4(vertex, vertex, mvpMat4);
+//     vec4.scale(vertex, vertex, 1 / vertex[3]);
+//     console.log(vertex);
+// }
+
+export function TestRenderer(){
     const canvasRef = useRef<HTMLCanvasElement>(null);
     useEffect(() => {
         let canceled = false;
@@ -188,26 +106,19 @@ export function Renderer(){
             if(!canvas) return;
             const gl = canvas.getContext("webgl2");
             if(!gl) return;
-            gl.clearColor(0, 0, 0, 1);
             gl.enable(gl.DEPTH_TEST);
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             const glProgram = initShaders(gl);
             const n = initVertexBuffer(gl, glProgram);
 
             const u_MvpMatrix = gl.getUniformLocation(glProgram, "u_MvpMatrix");
             if(!u_MvpMatrix) throw "u_MvpMatrix dont exist";
             gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMat4);
-            const u_LocalModelMatrix = gl.getUniformLocation(glProgram, "u_LocalModelMatrix");
-            if(!u_LocalModelMatrix) throw "u_LocalModelMatrix dont exist";
-            gl.uniformMatrix4fv(u_LocalModelMatrix, false, localModelMat4);
-            const u_LightDirection = gl.getUniformLocation(glProgram, "u_LightDirection");
-            if(!u_LightDirection) throw "u_LightDirection dont exist";
-            gl.uniform4fv(u_LightDirection, light.direction);
-            const u_LightColor = gl.getUniformLocation(glProgram, "u_LightColor");
-            if(!u_LightColor) throw "u_LightColor dont exist";
-            gl.uniform4fv(u_LightColor, light.color);
 
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, 0);
+            gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
         }
         setup();
         return () => {
@@ -215,8 +126,8 @@ export function Renderer(){
         };
     }, []);
 
-    return <div>
-        <canvas ref={canvasRef} id="example" width={300} height={300}>
+    return <div className="flex-1 flex absolute">
+        <canvas ref={canvasRef} id="example" width={600} height={600}>
             Dont supports "canvas"
         </canvas>
     </div>;
@@ -242,10 +153,10 @@ function initShaders(gl: WebGLRenderingContext){
     return program;
 }
 function initVertexBuffer(gl: WebGL2RenderingContext, glProgram: WebGLProgram){
-    const vertices = modelTest.vertices;
-    const colors = modelTest.colors;
-    const triangles = modelTest.triangles;
-    const normals = modelTest.normals;
+    const vertices = cubeModel.vertices;
+    const colors = cubeModel.colors;
+    const triangles = cubeModel.triangles;
+    const normals = cubeModel.normals;
     const n = triangles.length;
 
     const vertexBuffer = gl.createBuffer();
@@ -256,21 +167,21 @@ function initVertexBuffer(gl: WebGL2RenderingContext, glProgram: WebGLProgram){
     gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(a_Position);
 
-    const colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-    const a_Color = gl.getAttribLocation(glProgram, "a_Color");
-    if(a_Color < 0) throw "a_Color dont exist";
-    gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(a_Color);
+    // const colorBuffer = gl.createBuffer();
+    // gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    // gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+    // const a_Color = gl.getAttribLocation(glProgram, "a_Color");
+    // if(a_Color < 0) throw "a_Color dont exist";
+    // gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, 0, 0);
+    // gl.enableVertexAttribArray(a_Color);
 
-    const normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
-    const a_Normal = gl.getAttribLocation(glProgram, "a_Normal");
-    if(a_Normal < 0) throw "a_Normal dont exist";
-    gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(a_Normal);
+    // const normalBuffer = gl.createBuffer();
+    // gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    // gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+    // const a_Normal = gl.getAttribLocation(glProgram, "a_Normal");
+    // if(a_Normal < 0) throw "a_Normal dont exist";
+    // gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
+    // gl.enableVertexAttribArray(a_Normal);
 
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);

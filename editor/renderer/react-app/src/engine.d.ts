@@ -1,4 +1,5 @@
 declare namespace SceneFormat{
+    type vec3 = import("gl-matrix").vec3;
     export type SceneGraph = {
         name: string,
         nodes: SceneNode[]
@@ -9,10 +10,10 @@ declare namespace SceneFormat{
         components: Components.Component[],
         childs: SceneNode[],
     }
-    export type SceneCamera = {
+    export type SceneOrbitCamera = {
         aspect: number,
-        position: vec3,
-        rotation: vec3
+        sphereCoordinate: { r: number, theta: number, phi: number },
+        origin: vec3
     }
 }
 declare namespace Components{

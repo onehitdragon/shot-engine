@@ -198,6 +198,18 @@ function ThreeValueRow(
     const [xState, setX] = useState(x.toString());
     const [yState, setY] = useState(y.toString());
     const [zState, setZ] = useState(z.toString());
+    const onBlurX = () => {
+        setX(stringToNumber(xState).toString());
+        onChange({ x: stringToNumber(xState), y, z });
+    }
+    const onBlurY = () => {
+        setY(stringToNumber(yState).toString());
+        onChange({ x, y: stringToNumber(yState), z });
+    }
+    const onBlurZ = () => {
+        setZ(stringToNumber(zState).toString());
+        onChange({ x, y, z: stringToNumber(zState) });
+    }
     const stringToNumber = (s: string) => {
         return Number(s);
     }
@@ -207,24 +219,18 @@ function ThreeValueRow(
             <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
             <div className="flex items-center justify-evenly w-full gap-1">
                 <input className="outline-none border text-sm px-0.5 w-1/3" type="number" value={xState}
-                    onBlur={() => {
-                        setX(stringToNumber(xState).toString());
-                        onChange({ x: stringToNumber(xState), y, z });
-                    }}
+                    onBlur={onBlurX}
+                    onKeyDown={(e) => e.key === "Enter" && onBlurX()}
                     onChange={(e) => { setX(e.target.value) }}
                 />
                 <input className="outline-none border text-sm px-0.5 w-1/3" type="number" value={yState}
-                    onBlur={() => {
-                        setY(stringToNumber(yState).toString());
-                        onChange({ x, y: stringToNumber(yState), z });
-                    }}
+                    onBlur={onBlurY}
+                    onKeyDown={(e) => e.key === "Enter" && onBlurY()}
                     onChange={(e) => { setY(e.target.value) }}
                 />
                 <input className="outline-none border text-sm px-0.5 w-1/3" type="number" value={zState}
-                    onBlur={() => {
-                        setZ(stringToNumber(zState).toString());
-                        onChange({ x, y, z: stringToNumber(zState) });
-                    }}
+                    onBlur={onBlurZ}
+                    onKeyDown={(e) => e.key === "Enter" && onBlurZ()}
                     onChange={(e) => { setZ(e.target.value) }}
                 />
             </div>
