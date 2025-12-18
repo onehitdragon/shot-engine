@@ -1,22 +1,13 @@
 #version 300 es
 
 precision mediump float;
-const vec3 c_gridColor = vec3(1.0, 1.0, 1.0);
-const vec3 c_lineColor = vec3(1.0, 0.0, 0.0);
-in vec2 v_WorldPosition;
-out vec4 o_fragColor;
+uniform sampler2D u_Texture;
+layout (location = 0) out vec4 o_fragColor;
+layout (location = 1) out vec4 o_fragColor2;
 void main(){
-    vec2 blockSize = vec2(1.0);
-    vec2 blockPos = fract(v_WorldPosition / blockSize);
+    o_fragColor2 = vec4(vec3(1.0), 1.0);
 
-    vec2 changeInWorldPosition = fwidth(v_WorldPosition / blockSize);
-    float w = clamp(changeInWorldPosition.x + changeInWorldPosition.y, 0.01, 1.0);
-
-    vec2 leftBottom = smoothstep(0.0, w, blockPos);
-    vec2 rightTop = smoothstep(0.0, w, vec2(1) - blockPos);
-    vec2 mul = leftBottom * rightTop;
-    float mulValue = mul.x * mul.y;
-    vec3 color = mix(c_lineColor, c_gridColor, mulValue);
-    
-    o_fragColor = vec4(c_lineColor, 1.0 - mulValue);
+    vec2 uv = gl_FragCoord.xy / vec2(600.0);
+    float d = texture(u_Texture, uv).r;
+    o_fragColor = vec4(vec3(d), 1.0);
 }

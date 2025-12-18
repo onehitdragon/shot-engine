@@ -29,6 +29,7 @@ export class WebglHelper{
         const buffer = gl.createBuffer();
         this.bindVertexBuffer(gl, buffer);
         gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+        this.unbindVertexBuffer(gl);
         return buffer;
     }
     static createIndexBuffer(
@@ -38,13 +39,20 @@ export class WebglHelper{
         const buffer = gl.createBuffer();
         this.bindIndexBuffer(gl, buffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, gl.STATIC_DRAW);
+        this.unbindIndexBuffer(gl);
         return buffer;
     }
     static bindVertexBuffer(gl: WebGL2RenderingContext, buffer: WebGLBuffer){
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     }
+    static unbindVertexBuffer(gl: WebGL2RenderingContext){
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    }
     static bindIndexBuffer(gl: WebGL2RenderingContext, buffer: WebGLBuffer){
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+    }
+    static unbindIndexBuffer(gl: WebGL2RenderingContext){
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     }
     static getUniformLocation(gl: WebGL2RenderingContext, program: WebGLProgram, name: string){
         const u_Loc = gl.getUniformLocation(program, name);

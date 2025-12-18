@@ -1,8 +1,11 @@
 import { useEffect, useRef } from "react";
 import vShaderSource from "./vshader.glsl?raw";
 import fShaderSource from "./fshader.glsl?raw";
+import shadowMapVShaderSource from "./shadowMapVShader.glsl?raw";
+import shadowMapFShaderSource from "./shadowMapFShader.glsl?raw";
 import crateImage from "./textures/crate-texture.jpg";
 import { mat4, quat, vec3, vec4 } from "gl-matrix";
+import { WebglHelper } from "../../../helpers/WebglHelper";
 
 const cube = {
     pos: vec3.fromValues(0, 0, 0),
@@ -61,22 +64,13 @@ const cubeModel = {
     ]),
 }
 const camera = {
-    // pos: vec3.fromValues(4, 4, 0),
-    // rot: vec3.fromValues(-45, 80, 0),
-    pos: vec3.fromValues(0, 2, 0),
+    pos: vec3.fromValues(0, 1, 0),
     rot: vec3.fromValues(-90, 0, 0),
-}
-const light = {
-    direction: vec4.fromValues(0, 1, 1, 1),
-    color: vec4.fromValues(1, 1, 1, 1),
 }
 const modelMat4 = mat4.create();
 let q = quat.create();
 quat.fromEuler(q, cube.rot[0], cube.rot[1], cube.rot[2], "yxz");
 mat4.fromRotationTranslationScale(modelMat4, q, cube.pos, cube.scale);
-const localModelMat4 = mat4.create();
-quat.conjugate(q, q);
-mat4.fromQuat(localModelMat4, q);
 const viewMat4 = mat4.create();
 quat.fromEuler(q, camera.rot[0], camera.rot[1], camera.rot[2], "yxz");
 quat.conjugate(q, q);
@@ -84,9 +78,24 @@ mat4.fromQuat(viewMat4, q);
 mat4.translate(viewMat4, viewMat4, vec3.negate([], camera.pos));
 const clipMat4 = mat4.create();
 mat4.perspective(clipMat4, 45 * Math.PI / 180, 1, 1, 100);
-const mvpMat4 = mat4.create();
+let mvpMat4 = mat4.create();
 mat4.multiply(mvpMat4, clipMat4, viewMat4); // P * V
-// mat4.multiply(mvpMat4, mvpMat4, modelMat4); // P * V * M
+mat4.multiply(mvpMat4, mvpMat4, modelMat4); // P * V * M
+
+const light = {
+    rot: vec3.fromValues(-70, 0, 0)
+}
+const lightViewMat4 = mat4.create();
+quat.fromEuler(q, light.rot[0], light.rot[1], light.rot[2], "yxz");
+quat.conjugate(q, q);
+mat4.fromQuat(lightViewMat4, q);
+mat4.translate(lightViewMat4, lightViewMat4, vec3.negate([], [0, 500, 0]));
+const lightClipMat4 = mat4.create();
+mat4.ortho(lightClipMat4, -10, 10, -10, 10, 1, 1000);
+const lightSpaceMat4 = mat4.create();
+mat4.multiply(lightSpaceMat4, lightClipMat4, lightViewMat4); // P * V
+mat4.multiply(lightSpaceMat4, lightSpaceMat4, modelMat4); // P * V * M
+// mvpMat4 = lightSpaceMat4;
 
 // for(let i = 0; i < cubeModel.vertices.length; i+=3){
 //     const vertex = [cubeModel.vertices[i], cubeModel.vertices[i + 1], cubeModel.vertices[i + 2], 1];
@@ -106,19 +115,67 @@ export function TestRenderer(){
             if(!canvas) return;
             const gl = canvas.getContext("webgl2");
             if(!gl) return;
+
+            const [vao, n] = initVAO(gl);
+
+            const depthTextureSize = 600;
+            const depthTexture = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, depthTexture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT32F, depthTextureSize, depthTextureSize, 0, gl.DEPTH_COMPONENT, gl.FLOAT, null);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            const depFBO = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, depFBO);
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depthTexture, 0);
+            let status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+            if(status != gl.FRAMEBUFFER_COMPLETE){
+                throw `depFBO incomplete status: ${status}`
+            }
+            gl.viewport(0, 0, depthTextureSize, depthTextureSize);
+            gl.enable(gl.DEPTH_TEST);
+            gl.clear(gl.DEPTH_BUFFER_BIT);
+            let program = WebglHelper.createProgram(gl, [
+                { type: gl.VERTEX_SHADER, source: shadowMapVShaderSource },
+                { type: gl.FRAGMENT_SHADER, source: shadowMapFShaderSource },
+            ]);
+            gl.useProgram(program);
+            const u_LightSpaceMat4 = gl.getUniformLocation(program, "u_LightSpaceMat4");
+            if(!u_LightSpaceMat4) throw "u_LightSpaceMat4 dont exist";
+            gl.uniformMatrix4fv(u_LightSpaceMat4, false, lightSpaceMat4);
+            gl.bindVertexArray(vao);
+                gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, 0);
+            gl.bindVertexArray(null);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            // const testFBO = gl.createFramebuffer();
+            // gl.bindFramebuffer(gl.FRAMEBUFFER, testFBO);
+            // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, depthTexture, 0);
+            // status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+            // if(status != gl.FRAMEBUFFER_COMPLETE){
+            //     throw `testFBO incomplete status: ${status}`
+            // }
+            // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.viewport(0, 0, 600, 600);
             gl.enable(gl.DEPTH_TEST);
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
             gl.clearColor(0, 0, 0, 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             const glProgram = initShaders(gl);
-            const n = initVertexBuffer(gl, glProgram);
-
             const u_MvpMatrix = gl.getUniformLocation(glProgram, "u_MvpMatrix");
             if(!u_MvpMatrix) throw "u_MvpMatrix dont exist";
             gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMat4);
-
-            gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
+            const u_Texture = gl.getUniformLocation(glProgram, "u_Texture");
+            if(!u_Texture) throw "u_Texture dont exist";
+            gl.uniform1i(u_Texture, 0);
+            gl.bindVertexArray(vao);
+                gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, 0);
+            gl.bindVertexArray(null);
         }
         setup();
         return () => {
@@ -152,7 +209,7 @@ function initShaders(gl: WebGLRenderingContext){
     gl.useProgram(program);
     return program;
 }
-function initVertexBuffer(gl: WebGL2RenderingContext, glProgram: WebGLProgram){
+function initVAO(gl: WebGL2RenderingContext, glProgram?: WebGLProgram){
     const vertices = cubeModel.vertices;
     const colors = cubeModel.colors;
     const triangles = cubeModel.triangles;
@@ -162,10 +219,18 @@ function initVertexBuffer(gl: WebGL2RenderingContext, glProgram: WebGLProgram){
     const vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-    const a_Position = gl.getAttribLocation(glProgram, "a_Position");
-    if(a_Position < 0) throw "a_Position dont exist";
-    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(a_Position);
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, triangles, gl.STATIC_DRAW);
+    const a_Position = 0;
+
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(a_Position);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bindVertexArray(null);
 
     // const colorBuffer = gl.createBuffer();
     // gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
@@ -183,11 +248,7 @@ function initVertexBuffer(gl: WebGL2RenderingContext, glProgram: WebGLProgram){
     // gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
     // gl.enableVertexAttribArray(a_Normal);
 
-    const indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, triangles, gl.STATIC_DRAW);
-
-    return n;
+    return [vao, n] as const;
 }
 function loadImage(src: string){
     const promise = new Promise<HTMLImageElement>((resolve, reject) => {
