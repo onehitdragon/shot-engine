@@ -2,7 +2,7 @@ import { WebglHelper } from "./WebglHelper";
 import simpleShadingVShaderSource from "./shaders/simple-shader/vshader.glsl?raw";
 import simpleShadingFShaderSource from "./shaders/simple-shader/fshader.glsl?raw";
 import type { mat4 } from "gl-matrix";
-import { WebglCubeVBOs } from "./WebglCubeVBOs";
+import type { WebglMeshVBOs } from "./WebglMeshVBOs";
 
 export class WebglSimpleShader{
     private static _instance: WebglSimpleShader;
@@ -14,9 +14,6 @@ export class WebglSimpleShader{
     private _program: WebGLProgram;
     private _u_MvpMatrixLoc: WebGLUniformLocation;
     private _a_PositionLoc: number;
-    private _cubeVBOs: WebglCubeVBOs;
-    private _cubeVAO: WebGLVertexArrayObject;
-
     private constructor(gl: WebGL2RenderingContext){
         this._gl = gl;
         this._program = WebglHelper.createProgram(
@@ -32,12 +29,10 @@ export class WebglSimpleShader{
         const a_PositionLoc = gl.getAttribLocation(this._program, "a_Position");
         if(a_PositionLoc < 0) throw "a_Position dont exist";
         this._a_PositionLoc  = a_PositionLoc;
-        this._cubeVBOs = WebglCubeVBOs.getInstance(gl);
-        this._cubeVAO = this.initCubeVAOs();
     }
-    private initCubeVAOs(){
+    createMeshVAOs(meshVBOs: WebglMeshVBOs){
         const gl = this._gl;
-        const vbos = this._cubeVBOs;
+        const vbos = meshVBOs;
         const vao = gl.createVertexArray();
         vbos.bindVertexVBO();
         gl.bindVertexArray(vao);
@@ -47,12 +42,12 @@ export class WebglSimpleShader{
         gl.bindVertexArray(null);
         return vao;
     }
-    renderCube(mvpMat4: mat4){
+    renderMesh(meshVBOs: WebglMeshVBOs, vao: WebGLVertexArrayObject, mvpMat4: mat4){
         const gl = this._gl;
-        const vbos = this._cubeVBOs;
+        const vbos = meshVBOs;
         gl.useProgram(this._program);
         gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4);
-        gl.bindVertexArray(this._cubeVAO);
+        gl.bindVertexArray(vao);
             gl.drawElements(gl.TRIANGLES, vbos.vertexIndices.length, gl.UNSIGNED_INT, 0);
         gl.bindVertexArray(null);
     }

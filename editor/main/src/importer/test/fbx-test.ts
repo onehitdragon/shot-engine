@@ -267,8 +267,8 @@ function createFBX(topNodeRecords: FBXFormat.NodeRecord[]){
 
 async function fbx(inPath: string){
     const inFile = await fs.open(inPath, "r");
-    const outFile1 = await fs.open(`src/importer/fbx-debug/${path.basename(inPath)}.out1`, "w");
-    const outFile2 = await fs.open(`src/importer/fbx-debug/${path.basename(inPath)}.out2`, "w");
+    const outFile1 = await fs.open(`src/importer/test/fbx-debug/${path.basename(inPath)}.out1`, "w");
+    const outFile2 = await fs.open(`src/importer/test/fbx-debug/${path.basename(inPath)}.out2`, "w");
 
     let buffer = Buffer.alloc(27);
     let prevEndOffset = 0;

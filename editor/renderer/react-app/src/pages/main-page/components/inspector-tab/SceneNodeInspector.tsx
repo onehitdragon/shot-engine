@@ -7,22 +7,22 @@ import { openContextMenu } from "../../../../global-state/slices/context-menu-sl
 
 export function SceneNodeInspector(props: { sceneNodeInspector: SceneNodeInspector }){
     const { sceneNodeInspector } = props;
-    const { node } = sceneNodeInspector;
+    const { scene, node } = sceneNodeInspector;
 
     return (
         <div className="flex flex-col gap-3 flex-1 p-1 overflow-auto scrollbar-thin">
             {
-                node.components.map((c) => <ComponentSection key={c.id} node={node} component={c}/>)
+                node.components.map((c) => <ComponentSection key={c.id} scene={scene} node={node} component={c}/>)
             }
         </div>
     );
 }
-function ComponentSection(props: { node: SceneFormat.SceneNode, component: Components.Component }){
-    const { node, component } = props;
+function ComponentSection(props: { scene: SceneFormat.Scene, node: SceneFormat.SceneNode, component: Components.Component }){
+    const { scene, node, component } = props;
     const { type } = component;
     return (
         type === "Transform" ? <TransformSection node={node} component={component}/> :
-        type === "Mesh" ? <MeshSection node={node} component={component}/> :
+        type === "Mesh" ? <MeshSection scene={scene} node={node} component={component}/> :
         type === "Shading" ? <ShadingSection node={node} component={component}/> :
         <div>Dont support this component</div>
     );
@@ -70,10 +70,14 @@ function TransformSection(props: { node: SceneFormat.SceneNode, component: Compo
         </div>
     );
 }
-function MeshSection(props: { node: SceneFormat.SceneNode, component: Components.Mesh }){
-    const { node, component } = props;
-    const { vertices, vertexIndices, normals } = component;
+function MeshSection(props: { scene: SceneFormat.Scene, node: SceneFormat.SceneNode, component: Components.Mesh }){
+    const { scene, node, component } = props;
+    const { meshes } = scene;
+    const { meshId } = component;
+    const mesh = meshes.find(m => m.id === meshId);
     const showVertices = () => {
+        if(!mesh) return [];
+        const vertices = mesh.vertices;
         const result = [];
         for(let i = 0, j = 0; i < vertices.length; i += 3, j++){
             result.push(
@@ -87,6 +91,9 @@ function MeshSection(props: { node: SceneFormat.SceneNode, component: Components
         return result;
     }
     const showVertexIndices = () => {
+        if(!mesh) return [];
+        const vertices = mesh.vertices;
+        const vertexIndices = mesh.vertexIndices;
         const result = [];
         for(let i = 0, j = 0; i < vertexIndices.length; i += 3, j++){
             const index0 = vertexIndices[i];
@@ -111,17 +118,25 @@ function MeshSection(props: { node: SceneFormat.SceneNode, component: Components
     return (
         <div className="flex flex-col">
             <Header label="Mesh" node={node} component={component}/>
-            <div className="flex gap-2 mb-1">
-                <span className="select-none text-xs text-white">
-                    {vertices.length / 3} Vertices
-                </span>
-                <span className="select-none text-xs text-white">
-                    {vertexIndices.length / 3} Triangles
-                </span>
-                <span className="select-none text-xs text-white">
-                    {normals.length / 3} Normals
-                </span>
-            </div>
+            {
+                !mesh ?
+                <div className="flex gap-2 mb-1">
+                    <span className="select-none text-xs text-white">
+                        Mesh {meshId} not found in scene
+                    </span>
+                </div> :
+                <div className="flex gap-2 mb-1">
+                    <span className="select-none text-xs text-white">
+                        {mesh.vertices.length / 3} Vertices
+                    </span>
+                    <span className="select-none text-xs text-white">
+                        {mesh.normals.length / 3} Normals
+                    </span>
+                    <span className="select-none text-xs text-white">
+                        {mesh.vertexIndices.length / 3} Triangles
+                    </span>
+                </div>
+            }
             <CollapsedList label="Vertices" listGenerator={showVertices}/>
             <CollapsedList label="Triangles" listGenerator={showVertexIndices}/>
         </div>

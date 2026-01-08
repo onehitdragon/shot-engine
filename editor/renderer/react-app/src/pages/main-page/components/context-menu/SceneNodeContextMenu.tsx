@@ -16,7 +16,7 @@ export function SceneNodeContextMenu(
         dispatch(removeSceneNode({ id: sceneNode.id }));
     }
     const createCubeChild = () => {
-        dispatch(addSceneNodeChild({ parentId: sceneNode.id, child: createCubeSceneNode() }));
+        dispatch(addSceneNodeChild({ parentId: sceneNode.id, child: createCubeSceneNode(dispatch) }));
     }
 
     return (

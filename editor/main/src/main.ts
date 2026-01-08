@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs/promises";
 import { showConfirmDialog, showErrorDialog } from "./message-boxes";
 import trash from "trash";
-import { importFbx } from "./importer/fbx-test";
+import { assimpImporter } from "./importer/assimp/assimp-importer";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -135,8 +135,8 @@ app.whenReady()
             const importExt = path.extname(importPath);
             if(importExt.toLowerCase() === ".fbx"){
                 const jsonImportFile: Importer.JsonImportFile = {
-                    type: "fbx",
-                    data: await importFbx(importPath)
+                    type: "assimp",
+                    data: await assimpImporter(importPath)
                 }
                 const importName = path.basename(importPath) + ".json";
                 const fullPath = path.join(destFolder, importName);

@@ -6,9 +6,10 @@ import { addTopSceneNode, focusSceneNode, renameSceneNode, unfocusSceneNode, upd
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { createEmptySceneNode } from "../../helpers/SceneNodeHelper";
 
-export function SceneGraph(props: { sceneGraph: SceneFormat.SceneGraph }){
-    const { sceneGraph } = props;
-    const { name, nodes } = sceneGraph;
+export function Scene(props: { scene: SceneFormat.Scene }){
+    const { scene } = props;
+    const { name, sceneGraph } = scene;
+    const { nodes } = sceneGraph;
     const modified = useAppSelector(state => state.sceneManager.modified);
     const path = useAppSelector(state => state.sceneManager.path);
     const dispatch = useAppDispatch();
@@ -19,7 +20,7 @@ export function SceneGraph(props: { sceneGraph: SceneFormat.SceneGraph }){
                 if(!modified) return;
                 const jsonImportFile: Importer.JsonImportFile = {
                     type: "scene",
-                    data: sceneGraph
+                    data: scene
                 }
                 const json = JSON.stringify(jsonImportFile, null, 2);
                 if(!path){

@@ -1,4 +1,8 @@
-export const cubeMeshData = {
+export const PRIMITIVE_MESH_ID = {
+    CUBE: "primitive-cube-6d62693a-33ed-4918-93ce-4a9fe3f0d627"
+}
+export const cubeMeshData: SceneFormat.Mesh = {
+    id: PRIMITIVE_MESH_ID.CUBE,
     vertices: [
         -1,
         -1,

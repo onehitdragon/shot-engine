@@ -8,16 +8,21 @@ export type FBXInspector = {
     type: "fbx",
     fbx: FBXFormat.FBX
 }
+export type AssimpInspector = {
+    type: "assimp",
+    assimp: AssimpFormat.Assimp
+}
 export type SceneInspector = {
     type: "scene",
-    sceneGraph: SceneFormat.SceneGraph
+    scene: SceneFormat.Scene
 }
 export type SceneNodeInspector = {
     type: "scene-node",
+    scene: SceneFormat.Scene,
     node: SceneFormat.SceneNode
 }
 type State = {
-    inspector: null | TextInspector | FBXInspector | SceneInspector | SceneNodeInspector
+    inspector: null | TextInspector | FBXInspector | AssimpInspector | SceneInspector | SceneNodeInspector
 };
 const initialState: State = {
     inspector: null

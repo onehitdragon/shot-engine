@@ -1,18 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { useAppSelector } from "../../../../global-state/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { mat4, quat, vec3 } from "gl-matrix";
 import { WebglRenderer } from "../../helpers/WebglRenderer";
 import { sphereCoordinateToCartesian } from "../../helpers/math-helpers/sphere-coordinate-helpers";
 import { OrbitCameraHelper } from "../../helpers/OrbitCameraHelper";
+import { clamp } from "@math.gl/core";
+import { addAppListener } from "../../../../global-state/listenerMiddleware";
 
 export function SceneRenderer(){
-    const sceneGraph = useAppSelector(state => state.sceneManager.sceneGraph);
+    const scene = useAppSelector(state => state.sceneManager.scene);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [camera, setCamera] = useState<SceneFormat.SceneOrbitCamera | null>(null);
     const [webglRenderer, setWebglRenderer] = useState<WebglRenderer | null>(null);
     const [clickedOn, setClickedOn] = useState(false);
     const [altOn, setAltOn] = useState(false);
-    
+    const dispatch = useAppDispatch();
+
     useEffect(() => {
         if(!canvasRef) return;
         const webgl2 = getWebgl2(canvasRef.current);
@@ -22,6 +25,23 @@ export function SceneRenderer(){
         setWebglRenderer(WebglRenderer.getInstance(webgl2));
         setCamera(cam);
     }, []);
+    useEffect(() => {
+        if(!webglRenderer) return;
+        const unsub = dispatch(addAppListener({
+            predicate: (_, curState, originState) => {
+                return curState.sceneManager.scene?.meshes != originState.sceneManager.scene?.meshes;
+            },
+            effect: (_, listenerApi) => {
+                const scene = listenerApi.getState().sceneManager.scene;
+                if(!scene) return;
+                const { meshes } = scene;
+                webglRenderer.webglMeshManager.update(meshes);
+            }
+        }));
+        return () => {
+            unsub();
+        }
+    }, [webglRenderer])
     useEffect(() => {
         if(!canvasRef) return;
         if(!canvasRef.current) return;
@@ -35,20 +55,20 @@ export function SceneRenderer(){
         return () => observer.disconnect();
     }, [camera])
     useEffect(() => {
-        if(!sceneGraph) return;
+        if(!scene) return;
         if(!webglRenderer) return;
         if(!camera) return;
         webglRenderer.clear();
         const handler = () => {
             const renderer = new SceneNodeRenderer(camera, webglRenderer);
-            renderer.renderSceneNodes(sceneGraph.nodes, null);
+            renderer.renderSceneNodes(scene.sceneGraph.nodes, null);
         }
         handler();
         webglRenderer.renderGrid(OrbitCameraHelper.createVPMatrix(camera));
         return () => {
             
         }
-    }, [sceneGraph, webglRenderer, camera]);
+    }, [scene, webglRenderer, camera]);
 
     return (
         <div className="flex-1 flex">
@@ -117,7 +137,7 @@ function CameraMovement(props: {
                 let { theta, phi } = camera.sphereCoordinate;
                 theta -= deltaX;
                 phi += deltaY;
-                phi = Math.clamp(phi, -89, 89);
+                phi = clamp(phi, -89, 89);
                 camera.sphereCoordinate.theta = theta;
                 camera.sphereCoordinate.phi = phi;
             }

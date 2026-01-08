@@ -3,6 +3,6 @@ import { TestRenderer } from "./test/test";
 
 export function SceneTab(){
     return (
-        <TestRenderer />
+        <SceneRenderer />
     );
 }

@@ -8,11 +8,13 @@ import path from "path-browserify";
 import { SceneInspector } from "./SceneInspector";
 import { selectFocusedSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { SceneNodeInspector } from "./SceneNodeInspector";
+import { AssimpInspector } from "./AssimpInspector";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
     const focusedEntry = useAppSelector(selectFocusedEntry);
     const focusedSceneNode = useAppSelector(selectFocusedSceneNode);
+    const scene = useAppSelector(state => state.sceneManager.scene);
     const dispatch = useAppDispatch();
     
     const dispatchShowTextInspector = (text: string) => {
@@ -40,10 +42,16 @@ export function InspectorTab(){
                             fbx: jsonObject.data as FBXFormat.FBX
                         } }));
                     }
+                    if("type" in jsonObject && jsonObject.type === "assimp"){
+                        dispatch(showInspector({ inspector: {
+                            type: "assimp",
+                            assimp: jsonObject.data as AssimpFormat.Assimp
+                        } }));
+                    }
                     else if("type" in jsonObject && jsonObject.type === "scene"){
                         dispatch(showInspector({ inspector: {
                             type: "scene",
-                            sceneGraph: jsonObject.data as SceneFormat.SceneGraph
+                            scene: jsonObject.data as SceneFormat.Scene
                         } }));
                     }
                     else{
@@ -59,9 +67,11 @@ export function InspectorTab(){
             }
         }
         const handleFocusedSceneNode = (sceneNode: SceneFormat.SceneNode) => {
+            if(!scene) return;
             dispatch(showInspector({
                 inspector: {
                     type: "scene-node",
+                    scene: scene,
                     node: sceneNode
                 }
             }));
@@ -86,6 +96,7 @@ export function InspectorTab(){
                 :
                 inspector.type === "text" ? <TextInspector textInspector={inspector}/> :
                 inspector.type === "fbx" ? <FBXInspector fbxInspector={inspector}/> :
+                inspector.type === "assimp" ? <AssimpInspector inspector={inspector}/> :
                 (inspector.type === "scene" && focusedEntry) ? <SceneInspector sceneInspector={inspector} path={focusedEntry.path}/> :
                 inspector.type === "scene-node" ? <SceneNodeInspector sceneNodeInspector={inspector}/> :
                 <div className="flex items-center justify-center flex-1 text-white text-sm">

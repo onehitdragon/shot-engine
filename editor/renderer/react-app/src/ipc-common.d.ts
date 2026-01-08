@@ -17,7 +17,10 @@ declare namespace Importer{
         data: FBXFormat.FBX
     } | {
         type: "scene",
-        data: SceneFormat.SceneGraph
+        data: SceneFormat.Scene
+    } | {
+        type: "assimp",
+        data: AssimpFormat.Assimp
     }
 }
 declare namespace FBXFormat{
@@ -60,4 +63,23 @@ declare namespace FBXFormat{
             UVIndices: number[]
         }
     } & ObjectNode
+}
+declare namespace AssimpFormat{
+    export type Mesh = {
+        id: string,
+        name: string,
+        vertices: number[],
+        normals: number[],
+        faces: number[][]
+    }
+    export type Node = {
+        name: string,
+        transformation: number[],
+        children: Node[],
+        meshes: number[]
+    }
+    export type Assimp = {
+        rootnode: Node,
+        meshes: Mesh[]
+    }
 }

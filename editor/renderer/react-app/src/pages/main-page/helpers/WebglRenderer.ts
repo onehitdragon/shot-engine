@@ -1,6 +1,6 @@
 import type { mat4 } from "gl-matrix";
-import { WebglSimpleShader } from "./WebglSimpleShader";
 import { WebglGridShader } from "./WebglGridShader";
+import { WebglMeshManager } from "./WebglMeshManager";
 
 export class WebglRenderer{
     private static _instance: WebglRenderer;
@@ -10,14 +10,17 @@ export class WebglRenderer{
     }
     private _gl: WebGL2RenderingContext;
     private _webglGridShader: WebglGridShader;
-    private _simpleShader: WebglSimpleShader;
+    private _webglMeshManager: WebglMeshManager;
+    get webglMeshManager(){
+        return this._webglMeshManager;
+    }
     private constructor(gl: WebGL2RenderingContext){
         this._gl = gl;
         gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         this._webglGridShader = WebglGridShader.getInstance(gl);
-        this._simpleShader = WebglSimpleShader.getInstance(gl);
+        this._webglMeshManager = WebglMeshManager.getInstance(gl);
     }
     render(
         shadingComponent: Components.Shading,
@@ -25,14 +28,12 @@ export class WebglRenderer{
         mvpMat4: mat4
     ){
         const { shaderType } = shadingComponent;
-        const { meshType } = meshComponent;
-        if(shaderType == "simple"){
-            if(meshType == "cube"){
-                this._simpleShader.renderCube(mvpMat4);
-            }
-            else throw `dont support shaderType: ${shaderType}`;
+        const { meshId } = meshComponent;
+        const webglMesh = this._webglMeshManager.getWebglMesh(meshId);
+        if(shaderType === "simple"){
+            webglMesh.renderWithSimpleShader(mvpMat4);
         }
-        else throw `dont support meshType: ${meshType}`;
+        else throw `dont support shaderType: ${shaderType}`;
     }
     renderGrid(vpMat4: mat4){
         this._webglGridShader.render(vpMat4);

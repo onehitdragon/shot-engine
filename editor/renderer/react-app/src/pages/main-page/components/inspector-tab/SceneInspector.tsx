@@ -4,11 +4,11 @@ import { updateScene, updateSceneModified, updateScenePath } from "../../../../g
 
 export function SceneInspector(props: { sceneInspector: SceneInspector, path: string }){
     const { sceneInspector, path } = props;
-    const { sceneGraph } = sceneInspector;
+    const { scene } = sceneInspector;
     const dispatch = useAppDispatch();
 
     const openScene = () => {
-        dispatch(updateScene({ sceneGraph: sceneGraph }));
+        dispatch(updateScene({ scene: scene }));
         dispatch(updateScenePath({ path: path }));
         dispatch(updateSceneModified({ value: false }));
     }
@@ -18,7 +18,7 @@ export function SceneInspector(props: { sceneInspector: SceneInspector, path: st
             <button className="text-white text-sm px-3 py-1 rounded-2xl bg-gray-600 cursor-pointer
                 transition hover:opacity-80" onClick={openScene}
             >
-                {`Open ${sceneGraph.name} scene`}
+                {`Open ${scene.name} scene`}
             </button>
         </div>
     );

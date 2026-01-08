@@ -1,7 +1,11 @@
 declare namespace SceneFormat{
     type vec3 = import("gl-matrix").vec3;
-    export type SceneGraph = {
+    export type Scene = {
         name: string,
+        sceneGraph: SceneGraph,
+        meshes: Mesh[]
+    }
+    export type SceneGraph = {
         nodes: SceneNode[]
     }
     export type SceneNode = {
@@ -14,6 +18,12 @@ declare namespace SceneFormat{
         aspect: number,
         sphereCoordinate: { r: number, theta: number, phi: number },
         origin: vec3
+    }
+    export type Mesh = {
+        id: string,
+        vertices: number[],
+        normals: number[],
+        vertexIndices: number[]
     }
 }
 declare namespace Components{
@@ -30,11 +40,7 @@ declare namespace Components{
     }
     export type Mesh = ComponentBase & {
         type: "Mesh",
-        meshType: "cube" | "sphere" | "other",
-        meshId: string,
-        vertices: number[],
-        vertexIndices: number[],
-        normals: number[],
+        meshId: string
     }
     export type Shading = ComponentBase & {
         type: "Shading",

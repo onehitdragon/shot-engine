@@ -22,8 +22,4 @@ declare global{
     interface Window{
         api: ApiType
     }
-    interface Math{
-        Deg2Rad: number,
-        clamp: (value: number, min: number, max: number) => number
-    }
 }

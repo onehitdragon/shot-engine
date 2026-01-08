@@ -42,6 +42,18 @@ export class WebglHelper{
         this.unbindIndexBuffer(gl);
         return buffer;
     }
+    static deleteVertexBuffer(
+        gl: WebGL2RenderingContext,
+        buffer: WebGLBuffer
+    ){
+        gl.deleteBuffer(buffer);
+    }
+    static deleteVertexArray(
+        gl: WebGL2RenderingContext,
+        vao: WebGLVertexArrayObject 
+    ){
+        gl.deleteVertexArray(vao);
+    }
     static bindVertexBuffer(gl: WebGL2RenderingContext, buffer: WebGLBuffer){
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     }
