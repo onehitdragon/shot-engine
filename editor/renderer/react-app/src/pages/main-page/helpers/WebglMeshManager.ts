@@ -13,7 +13,6 @@ export class WebglMeshManager{
         this._webglMeshMap = new Map<string, WebglMesh>();
     }
     update(meshes: SceneFormat.Mesh[]){
-        console.log(meshes.length);
         const gl = this._gl;
         const addeds: SceneFormat.Mesh[] = [];
         const removeds: string[] = [];

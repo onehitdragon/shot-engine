@@ -4,6 +4,7 @@ import { mat4 } from "gl-matrix";
 import { Euler, degrees } from "@math.gl/core";
 import { useAppDispatch } from "../../../../global-state/hooks";
 import { addTopSceneNode } from "../../../../global-state/slices/scene-manager-slice";
+import { createAssimpSceneNode } from "../../helpers/SceneNodeHelper";
 
 export function AssimpInspector(props: { inspector: AssimpInspector }){
     const { assimp } = props.inspector;
@@ -26,14 +27,13 @@ export function AssimpInspector(props: { inspector: AssimpInspector }){
         </div>
     );
 }
-function AddToSceneButton(){
+function AddToSceneButton(props: { node: AssimpFormat.Node, meshes: AssimpFormat.Mesh[] }){
+    const { node, meshes } = props;
     const dispatch = useAppDispatch();
     const click = () => {
-        // dispatch(addTopSceneNode({
-        //     node: {
-        //         id: uuid
-        //     }
-        // }));
+        dispatch(addTopSceneNode({
+            node: createAssimpSceneNode(node, meshes, dispatch)
+        }));
     }
 
     return (
@@ -60,7 +60,7 @@ function Node(props: { node: AssimpFormat.Node, meshes: AssimpFormat.Mesh[] }){
                     {name}
                 </span>
                 <div className="flex items-center">
-                    <AddToSceneButton />
+                    <AddToSceneButton node={props.node} meshes={meshes}/>
                 </div>
             </div>
             <div className="flex flex-col">
