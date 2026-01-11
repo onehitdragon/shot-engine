@@ -18,16 +18,22 @@ export function SceneRenderer(){
 
     useEffect(() => {
         if(!canvasRef) return;
-        const webgl2 = getWebgl2(canvasRef.current);
+        const canvas = canvasRef.current;
+        if(!canvas) return;
+        const webgl2 = getWebgl2(canvas);
         if(!webgl2) return;
-        const camera = getCamera(canvasRef.current);
+        const camera = getCamera(canvas);
         if(!camera) return;
         setWebglRenderer(WebglRenderer.getInstance(webgl2));
         setCamera(camera);
         const observer = new ResizeObserver((entries) => {
-           const { width, height } = entries[0].contentRect;
-           camera.aspect = width / height;
-           setCamera({...camera});
+            const dpr = window.devicePixelRatio || 1;
+            const { width, height } = entries[0].contentRect;
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);;
+            webgl2.viewport(0, 0, canvas.width, canvas.height);
+            camera.aspect = width / height;
+            setCamera({...camera});
         });
         observer.observe(canvasRef.current!);
         return () => {
@@ -178,14 +184,12 @@ function CameraMovement(props: {
 
     return <></>
 }
-function getWebgl2(canvas: HTMLCanvasElement | null){
-    if(!canvas) return null;
+function getWebgl2(canvas: HTMLCanvasElement){
     const gl = canvas.getContext("webgl2");
     if(!gl) return null;
     return gl;
 }
-function getCamera(canvas: HTMLCanvasElement | null): SceneFormat.SceneOrbitCamera | null{
-    if(!canvas) return null;
+function getCamera(canvas: HTMLCanvasElement): SceneFormat.SceneOrbitCamera | null{
     return {
         aspect: canvas.clientWidth / canvas.clientHeight,
         sphereCoordinate: { r: 5, theta: 0, phi: 0 },
