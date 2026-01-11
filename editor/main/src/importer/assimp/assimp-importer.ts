@@ -2,6 +2,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import fs from "fs/promises"
 import { v4 as uuidv4 } from 'uuid';
+import path from "path";
 
 const execPromise = promisify(exec);
 
@@ -35,8 +36,10 @@ function createMeshes(meshesJson: any){
     return meshes;
 }
 async function assimpImporter(inPath: string){
-    const jsonPath = "./test.json";
-    const processResult = await execPromise(`assimp export ${inPath} ${jsonPath} -f assjson -tri`);
+    const jsonPath = path.join(__dirname, "test.json");
+    const processResult = await execPromise(
+        `assimp export ${inPath} ${jsonPath} -f assjson`
+    );
     console.log(processResult);
     const jsonFile = await fs.readFile(jsonPath);
     const json = JSON.parse(jsonFile.toString());

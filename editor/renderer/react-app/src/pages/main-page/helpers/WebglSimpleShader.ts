@@ -23,12 +23,8 @@ export class WebglSimpleShader{
                 { type: gl.FRAGMENT_SHADER, source: simpleShadingFShaderSource },
             ]
         );
-        const u_MvpMatrixLoc = gl.getUniformLocation(this._program, "u_MvpMatrix");
-        if(!u_MvpMatrixLoc) throw "u_MvpMatrix dont exist";
-        this._u_MvpMatrixLoc = u_MvpMatrixLoc;
-        const a_PositionLoc = gl.getAttribLocation(this._program, "a_Position");
-        if(a_PositionLoc < 0) throw "a_Position dont exist";
-        this._a_PositionLoc  = a_PositionLoc;
+        this._u_MvpMatrixLoc = WebglHelper.getUniformLocation(gl, this._program, "u_MvpMatrix");
+        this._a_PositionLoc  = WebglHelper.getAttrLocation(gl, this._program, "a_Position");
     }
     createMeshVAOs(meshVBOs: WebglMeshVBOs){
         const gl = this._gl;

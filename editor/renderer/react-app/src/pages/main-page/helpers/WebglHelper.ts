@@ -22,6 +22,16 @@ export class WebglHelper{
         if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(shader);
         return shader;
     }
+    static getUniformLocation(gl: WebGL2RenderingContext, program: WebGLProgram, name: string){
+        const u_Loc = gl.getUniformLocation(program, name);
+        if(!u_Loc) throw `uniform ${name} dont exist`;
+        return u_Loc;
+    };
+    static getAttrLocation(gl: WebGL2RenderingContext, program: WebGLProgram, name: string){
+        const a_Loc = gl.getAttribLocation(program, name);
+        if(a_Loc < 0) throw `attribute ${name} dont exist`;
+        return a_Loc;
+    };
     static createVertexBuffer(
         gl: WebGL2RenderingContext,
         data: Float32Array
@@ -66,14 +76,4 @@ export class WebglHelper{
     static unbindIndexBuffer(gl: WebGL2RenderingContext){
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     }
-    static getUniformLocation(gl: WebGL2RenderingContext, program: WebGLProgram, name: string){
-        const u_Loc = gl.getUniformLocation(program, name);
-        if(!u_Loc) throw `uniform ${name} dont exist`;
-        return u_Loc;
-    };
-    static getAttrLocation(gl: WebGL2RenderingContext, program: WebGLProgram, name: string){
-        const a_Loc = gl.getAttribLocation(program, name);
-        if(a_Loc < 0) throw `attribute ${name} dont exist`;
-        return a_Loc;
-    };
 }

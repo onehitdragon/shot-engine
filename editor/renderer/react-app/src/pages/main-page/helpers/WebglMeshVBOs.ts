@@ -39,13 +39,13 @@ export class WebglMeshVBOs{
         const gl = this._gl;
         WebglHelper.bindVertexBuffer(gl, this._vertexVBO);
     }
-    bindIndexVBO(){
-        const gl = this._gl;
-        WebglHelper.bindIndexBuffer(gl, this._indexVBO);
-    }
     bindNormalVBO(){
         const gl = this._gl;
         WebglHelper.bindVertexBuffer(gl, this._normalVBO);
+    }
+    bindIndexVBO(){
+        const gl = this._gl;
+        WebglHelper.bindIndexBuffer(gl, this._indexVBO);
     }
     dispose(){
         const gl = this._gl;

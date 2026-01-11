@@ -4,6 +4,7 @@ import { mat4 } from 'gl-matrix';
 import { degrees, Euler } from '@math.gl/core';
 import type { AppDispatch } from '../../../global-state/store';
 import { addMesh } from '../../../global-state/slices/scene-manager-slice';
+import { createPhongShadingComponent } from './SceneNodeComponentHelper';
 
 export function createEmptySceneNode(){
     const sceneNode: SceneFormat.SceneNode = {
@@ -92,11 +93,7 @@ export function createAssimpSceneNode(
                 id: uuidv4(),
                 meshId: mesh.id
             },
-            {
-                id: uuidv4(),
-                type: "Shading",
-                shaderType: "simple"
-            }
+            createPhongShadingComponent()
         );
     }
     for(const childNode of children){

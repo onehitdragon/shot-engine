@@ -93,8 +93,8 @@ function Mesh(props: { mesh: AssimpFormat.Mesh }){
         <div className="flex flex-col">
             <span className="text-white text-sm">{name}</span>
             <div className="flex flex-col ml-2">
-                <span className="text-white text-sm">- vertices: {vertices.length}</span>
-                <span className="text-white text-sm">- normals: {normals.length}</span>
+                <span className="text-white text-sm">- vertices: {vertices.length / 3}</span>
+                <span className="text-white text-sm">- normals: {normals.length / 3}</span>
                 <span className="text-white text-sm">- faces: {faces.length}</span>
             </div>
         </div>

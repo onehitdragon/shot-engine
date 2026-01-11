@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import { mat4, quat, vec3 } from "gl-matrix";
+import { mat4, quat, vec3, mat3 } from "gl-matrix";
 import { WebglRenderer } from "../../helpers/WebglRenderer";
 import { sphereCoordinateToCartesian } from "../../helpers/math-helpers/sphere-coordinate-helpers";
 import { OrbitCameraHelper } from "../../helpers/OrbitCameraHelper";
@@ -20,14 +20,23 @@ export function SceneRenderer(){
         if(!canvasRef) return;
         const webgl2 = getWebgl2(canvasRef.current);
         if(!webgl2) return;
-        const cam = getCamera(canvasRef.current);
-        if(!cam) return;
+        const camera = getCamera(canvasRef.current);
+        if(!camera) return;
         setWebglRenderer(WebglRenderer.getInstance(webgl2));
-        setCamera(cam);
+        setCamera(camera);
+        const observer = new ResizeObserver((entries) => {
+           const { width, height } = entries[0].contentRect;
+           camera.aspect = width / height;
+           setCamera({...camera});
+        });
+        observer.observe(canvasRef.current!);
+        return () => {
+            observer.disconnect();
+        }
     }, []);
     useEffect(() => {
         if(!webglRenderer) return;
-        const unsub = dispatch(addAppListener({
+        const unsub0 = dispatch(addAppListener({
             predicate: (_, curState, originState) => {
                 return curState.sceneManager.scene?.meshes != originState.sceneManager.scene?.meshes;
             },
@@ -38,22 +47,22 @@ export function SceneRenderer(){
                 webglRenderer.webglMeshManager.update(meshes);
             }
         }));
+        const unsub1 = dispatch(addAppListener({
+            predicate: (_, curState, originState) => {
+                return curState.sceneManager.scene?.sceneGraph != originState.sceneManager.scene?.sceneGraph;
+            },
+            effect: (_, listenerApi) => {
+                const scene = listenerApi.getState().sceneManager.scene;
+                if(!scene) return;
+                const { sceneGraph } = scene;
+                webglRenderer.lightSceneNodeManager.update(sceneGraph.nodes);
+            }
+        }));
         return () => {
-            unsub();
+            unsub0();
+            unsub1();
         }
-    }, [webglRenderer])
-    useEffect(() => {
-        if(!canvasRef) return;
-        if(!canvasRef.current) return;
-        if(!camera) return;
-        const observer = new ResizeObserver((entries) => {
-           const { width, height } = entries[0].contentRect;
-           camera.aspect = width / height;
-           setCamera({...camera});
-        });
-        observer.observe(canvasRef.current);
-        return () => observer.disconnect();
-    }, [camera])
+    }, [webglRenderer]);
     useEffect(() => {
         if(!scene) return;
         if(!webglRenderer) return;
@@ -65,6 +74,7 @@ export function SceneRenderer(){
         }
         handler();
         webglRenderer.renderGrid(OrbitCameraHelper.createVPMatrix(camera));
+        webglRenderer.debug();
         return () => {
             
         }
@@ -186,12 +196,14 @@ type ParentData = {
     modelMat4: mat4
 }
 class SceneNodeRenderer{
-    private viewMat4: mat4;
-    private clipMat4: mat4;
+    private _camWorldPos: vec3;
+    private _viewMat4: mat4;
+    private _clipMat4: mat4;
     private _webglRenderer: WebglRenderer;
     constructor(camera: SceneFormat.SceneOrbitCamera, webglRenderer: WebglRenderer){
-        this.viewMat4 = this.createViewMatrix(camera);
-        this.clipMat4 = this.createClipMatrix(camera);
+        this._camWorldPos = vec3.create();
+        this._viewMat4 = this.createViewMatrix(camera); // set camWorldPos
+        this._clipMat4 = this.createClipMatrix(camera);
         this._webglRenderer = webglRenderer;
     }
     renderSceneNodes(nodes: SceneFormat.SceneNode[], parentDataIn: ParentData | null){
@@ -212,7 +224,15 @@ class SceneNodeRenderer{
         if(!shadingComponent) return { modelMat4 }
 
         const mvpMat4 = this.createMVPMatrix(modelMat4);
-        this._webglRenderer.render(shadingComponent, meshComponent, mvpMat4);
+        const normalMat3 = this.createNormalMatrix(modelMat4);
+        this._webglRenderer.render(
+            shadingComponent,
+            meshComponent,
+            mvpMat4,
+            modelMat4,
+            normalMat3,
+            this._camWorldPos
+        );
 
         return { modelMat4 };
     }
@@ -237,6 +257,7 @@ class SceneNodeRenderer{
         vec3.add(camWorldPos, origin, camWorldPos);
         const viewMat4 = mat4.create();
         mat4.lookAt(viewMat4, camWorldPos, origin, [0, 1, 0]);
+        this._camWorldPos = camWorldPos;
         return viewMat4;
     }
     createClipMatrix(camera: SceneFormat.SceneOrbitCamera){
@@ -246,8 +267,13 @@ class SceneNodeRenderer{
     }
     createMVPMatrix(modelMat4: mat4){
         const mvpMat4 = mat4.create();
-        mat4.multiply(mvpMat4, this.clipMat4, this.viewMat4);
+        mat4.multiply(mvpMat4, this._clipMat4, this._viewMat4);
         mat4.multiply(mvpMat4, mvpMat4, modelMat4); // P * V * M
         return mvpMat4;
+    }
+    createNormalMatrix(modelMat4: mat4){
+        const normalMat3 = mat3.create();
+        mat3.normalFromMat4(normalMat3, modelMat4);
+        return normalMat3;
     }
 }

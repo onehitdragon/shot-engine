@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
+import { sceneGraphLooper } from "../../pages/main-page/helpers/SceneGraphHelper";
 
 type State = {
     scene: SceneFormat.Scene | null,
@@ -11,14 +12,15 @@ const initialState: State = {
     scene: null,
     path: null,
     modified: false,
-    focusedId: null,
+    focusedId: null
 }
 const slice = createSlice({
     initialState,
     name: "sceneManager",
     reducers: {
         updateScene: (state, action: PayloadAction<{ scene: SceneFormat.Scene }>) => {
-            state.scene = action.payload.scene;
+            const { scene } = action.payload;
+            state.scene = scene;
         },
         updateSceneModified: (state, action: PayloadAction<{ value: boolean }>) => {
             state.modified = action.payload.value;
@@ -55,9 +57,10 @@ const slice = createSlice({
             if(!scene) return;
             const sceneGraph = scene.sceneGraph;
             const { id } = action.payload;
-            removeSceneNodeHelper(sceneGraph.nodes, id);
-            cleanupMeshHelper(sceneGraph.nodes, scene.meshes);
+            const removedNode = removeSceneNodeHelper(sceneGraph.nodes, id);
+            if(!removedNode) return;
             state.modified = true;
+            cleanupMeshHelper(sceneGraph.nodes, scene.meshes);
         },
         renameSceneNode: (state, action: PayloadAction<{ nodeId: string, newName: string }>) => {
             const scene = state.scene;
@@ -69,7 +72,7 @@ const slice = createSlice({
             nodeFound.name = newName;
             state.modified = true;
         },
-        updateComponentOfSceneNode: (
+        addUniqueComponentToSceneNode: (
             state,
             action: PayloadAction<{ nodeId: string, component: Components.Component }>
         ) => {
@@ -79,9 +82,9 @@ const slice = createSlice({
             const { nodeId, component } = action.payload;
             const nodeFound = findSceneNode(sceneGraph.nodes, nodeId);
             if(!nodeFound) return;
-            const index = nodeFound.components.findIndex((c) => c.id == component.id);
-            if(index == -1) return;
-            nodeFound.components[index] = component;
+            const sameComponent = nodeFound.components.find(c => c.type === component.type);
+            if(sameComponent) return;
+            nodeFound.components.push(component);
             state.modified = true;
         },
         removeComponentOfSceneNode: (
@@ -98,8 +101,23 @@ const slice = createSlice({
             if(index == -1) return;
             const component = nodeFound.components[index];
             const { type } = component;
-            if(type === "Transform" || type === "Mesh" || type === "Shading") return;
+            if(type === "Transform" || type === "Mesh") return;
             nodeFound.components.splice(index, 1);
+            state.modified = true;
+        },
+        updateComponentOfSceneNode: (
+            state,
+            action: PayloadAction<{ nodeId: string, component: Components.Component }>
+        ) => {
+            const scene = state.scene;
+            if(!scene) return;
+            const sceneGraph = scene.sceneGraph;
+            const { nodeId, component } = action.payload;
+            const nodeFound = findSceneNode(sceneGraph.nodes, nodeId);
+            if(!nodeFound) return;
+            const index = nodeFound.components.findIndex((c) => c.id == component.id);
+            if(index == -1) return;
+            nodeFound.components[index] = component;
             state.modified = true;
         },
         addMesh: (state, action: PayloadAction<{ mesh: SceneFormat.Mesh }>) => {
@@ -127,31 +145,17 @@ function selectFocusedSceneNode(state: RootState){
     const sceneGraph = scene.sceneGraph;
     return findSceneNode(sceneGraph.nodes, focusedId);
 }
-function removeSceneNodeHelper(sceneNodes: SceneFormat.SceneNode[], id: string){
+function removeSceneNodeHelper(sceneNodes: SceneFormat.SceneNode[], id: string): SceneFormat.SceneNode | null{
     for(let i = 0; i < sceneNodes.length; i++){
         const sceneNode = sceneNodes[i];
-        if(sceneNode.id == id){
+        if(sceneNode.id === id){
             sceneNodes.splice(i, 1);
-            return true;
+            return sceneNode;
         }
-        if(removeSceneNodeHelper(sceneNode.childs, id)) return true;
+        const removed = removeSceneNodeHelper(sceneNode.childs, id);
+        if(removed) return removed;
     }
-    return false;
-}
-function sceneGraphLooper(
-    sceneNodes: SceneFormat.SceneNode[],
-    action: (
-        sceneNode: SceneFormat.SceneNode,
-        parent: SceneFormat.SceneNode | null,
-        childIndex: number
-    ) => void,
-    parent: SceneFormat.SceneNode | null = null
-){
-    for(let i = 0; i < sceneNodes.length; i++){
-        const node = sceneNodes[i];
-        action(node, parent, i);
-        sceneGraphLooper(node.childs, action, node);
-    }
+    return null;
 }
 function cleanupMeshHelper(sceneNodes: SceneFormat.SceneNode[], meshes: SceneFormat.Mesh[]){
     const usedMeshs = new Set<string>();
@@ -169,6 +173,6 @@ function cleanupMeshHelper(sceneNodes: SceneFormat.SceneNode[], meshes: SceneFor
 export const { updateScene, updateSceneModified, updateScenePath, focusSceneNode,
     unfocusSceneNode, addSceneNodeChild, removeSceneNode, addTopSceneNode,
     updateComponentOfSceneNode, removeComponentOfSceneNode,
-    renameSceneNode, addMesh } = slice.actions;
+    renameSceneNode, addMesh, addUniqueComponentToSceneNode } = slice.actions;
 export { selectFocusedSceneNode }
 export default slice.reducer;

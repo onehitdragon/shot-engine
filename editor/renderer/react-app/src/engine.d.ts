@@ -28,7 +28,7 @@ declare namespace SceneFormat{
 }
 declare namespace Components{
     type vec3 = import("gl-matrix").vec3;
-    export type Component = Transform | Mesh | Shading;
+    export type Component = Transform | Mesh | Shading | Light;
     type ComponentBase = {
         id: string
     }
@@ -42,8 +42,30 @@ declare namespace Components{
         type: "Mesh",
         meshId: string
     }
-    export type Shading = ComponentBase & {
+    export type Shading = SimpleShading | PhongShading;
+    export type ShadingBase = ComponentBase & {
         type: "Shading",
+        culling: "none" | "back" | "front" | "both",
+        transparent: boolean
+    }
+    export type SimpleShading = ShadingBase & {
         shaderType: "simple"
+    }
+    export type PhongShading = ShadingBase & {
+        shaderType: "phong",
+        ambient: vec3,
+        shininess: float
+    }
+    export type Light = PointLight | DirectionalLight;
+    export type LightBase = ComponentBase & {
+        type: "Light"
+    };
+    export type PointLight = LightBase & {
+        lightType: "PointLight",
+        color: vec3
+    }
+    export type DirectionalLight = LightBase & {
+        lightType: "DirectionalLight",
+        dir: vec3
     }
 }

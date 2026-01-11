@@ -8,19 +8,13 @@ export function ComponentContextMenu(props: { contextMenu: ComponentContextMenu,
 
     return (
         <div id="component-context-menu" style={{ left: x, top: y }} className="absolute left-1/2 top-1/2">
-            {
-                component.type == "Transform" &&
-                <ul className='flex flex-col p-1 rounded-sm bg-gradient-to-b bg-gray-700
-                    border border-slate-500'>
-                </ul>
-            }
-            {
-                component.type == "Mesh" &&
-                <ul className='flex flex-col p-1 rounded-sm bg-gradient-to-b bg-gray-700
-                    border border-slate-500'>
+            <ul className='flex flex-col p-1 rounded-sm bg-gradient-to-b bg-gray-700
+                border border-slate-500'>
+                {
+                    (component.type === "Shading" || component.type === "Light") &&
                     <RemoveComponent node={sceneNode} component={component}/>
-                </ul>
-            }
+                }
+            </ul>
         </div>
     );
 }
