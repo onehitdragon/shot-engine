@@ -45,7 +45,9 @@ export function createCubeSceneNode(dispatch: AppDispatch){
             {
                 id: uuidv4(),
                 type: "Shading",
-                shaderType: "simple"
+                shaderType: "simple",
+                transparent: false,
+                culling: 'none'
             }
         ],
         childs: [],

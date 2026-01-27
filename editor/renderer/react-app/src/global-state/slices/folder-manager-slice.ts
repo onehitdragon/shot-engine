@@ -16,7 +16,7 @@ const initialState: State = {
     directory: null,
     selectedPath: null,
     focusedPath: null
-}
+};
 const slice = createSlice({
     initialState,
     name: "folder-manager",
@@ -50,13 +50,37 @@ const slice = createSlice({
             if(index == -1) return;
             selectedFolder.children.splice(index, 1);
         },
-        addEntry(state, action: PayloadAction<{ entry: DirectoryTree.Directory | DirectoryTree.File }>){
+        addEntryToSelectedFolder(state, action: PayloadAction<{ entry: DirectoryTree.Directory | DirectoryTree.File }>){
             const { directory, selectedPath } = state;
             if(directory == null) return;
             if(selectedPath == null) return;
             const selectedFolder = findDirectory(directory, selectedPath);
             if(selectedFolder == null) return;
             selectedFolder.children.push(action.payload.entry);
+        },
+        addEntryToDirectory(
+            state,
+            action: PayloadAction<{ directoryPath: string, entry: DirectoryTree.Directory | DirectoryTree.File }>
+        ){
+            const { directory } = state;
+            if(directory == null) return;
+            const { directoryPath, entry } = action.payload;
+            const targetDirectory = findDirectory(directory, directoryPath);
+            if(targetDirectory == null) return;
+            targetDirectory.children.push(entry);
+        },
+        removeEntryFromDirectory(
+            state,
+            action: PayloadAction<{ directoryPath: string, entryPath: string }>
+        ){
+            const { directory } = state;
+            if(directory == null) return;
+            const { directoryPath, entryPath } = action.payload;
+            const targetDirectory = findDirectory(directory, directoryPath);
+            if(targetDirectory == null) return;
+            const index = targetDirectory.children.findIndex((entry) => entry.path == entryPath);
+            if(index == -1) return;
+            targetDirectory.children.splice(index, 1);
         }
     }
 });
@@ -91,7 +115,8 @@ function selectFocusedEntry(state: RootState){
     return findEntry(directory, focusedPath);
 }
 export const { updateDirectory, toggleExpandDirectory, selectDirectory,
-    focusEntry, unfocusEntry, deleteFocusedEntry, addEntry
+    focusEntry, unfocusEntry, deleteFocusedEntry, addEntryToSelectedFolder, addEntryToDirectory,
+    removeEntryFromDirectory
 } = slice.actions;
 export { selectSelectedFolder, selectFocusedEntry }
 export default slice.reducer;

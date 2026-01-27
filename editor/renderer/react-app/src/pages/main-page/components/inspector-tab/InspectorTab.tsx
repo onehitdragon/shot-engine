@@ -62,6 +62,10 @@ export function InspectorTab(){
                     dispatchShowTextInspector(text);
                 }
             }
+            else if(ext === ".png" || ext === ".jpg"){
+                // come back later
+                
+            }
             else{
                 dispatchShowTextInspector(text);
             }

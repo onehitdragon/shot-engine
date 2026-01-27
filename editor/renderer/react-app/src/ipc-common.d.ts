@@ -83,3 +83,10 @@ declare namespace AssimpFormat{
         meshes: Mesh[]
     }
 }
+declare namespace KTX2{
+    export type TextureKTX2Settings = {
+        qualityLevel: number,
+        sRGB: boolean,
+        mipGen: boolean
+    }
+}

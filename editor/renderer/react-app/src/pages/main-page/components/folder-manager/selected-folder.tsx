@@ -1,7 +1,7 @@
 import { FolderPlusIcon, DocumentPlusIcon, FolderIcon, DocumentTextIcon,
     ArrowDownOnSquareIcon
  } from "@heroicons/react/24/solid";
-import { addEntry, deleteFocusedEntry, focusEntry, selectDirectory, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, type FolderManager } from "../../../../global-state/slices/folder-manager-slice";
+import { addEntryToSelectedFolder, deleteFocusedEntry, focusEntry, selectDirectory, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, type FolderManager } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { useEffect, useRef, useState } from "react";
@@ -172,7 +172,7 @@ function CreateFolderButton(props: { selectedDirectory: FolderManager.DirectoryS
     const dispatch = useAppDispatch();
     const create = async (name: string) => {
         const created = await window.api.folder.create(selectedDirectory.path, name);
-        if(created) dispatch(addEntry({ entry: created }))
+        if(created) dispatch(addEntryToSelectedFolder({ entry: created }))
     }
     const close = () => {
         setEnteringName(false);
@@ -197,8 +197,9 @@ function CreateFileButton(props: { selectedDirectory: FolderManager.DirectorySta
     const [enteringName, setEnteringName] = useState(false);
     const dispatch = useAppDispatch();
     const create = async (name: string) => {
-        const created = await window.api.file.create(selectedDirectory.path, name);
-        if(created) dispatch(addEntry({ entry: created }))
+        const createFilePath = await window.fsPath.join(selectedDirectory.path, name);
+        const created = await window.api.file.create(createFilePath, "");
+        dispatch(addEntryToSelectedFolder({ entry: created }))
     }
     const close = () => {
         setEnteringName(false);
@@ -226,7 +227,7 @@ function ImportFileButton(props: { selectedDirectory: FolderManager.DirectorySta
         if(!importPath) return;
         const imported = await window.api.file.import(importPath, selectedDirectory.path);
         if(!imported) return;
-        dispatch(addEntry({ entry: imported }));
+        dispatch(addEntryToSelectedFolder({ entry: imported }));
     }
     return (
         <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'

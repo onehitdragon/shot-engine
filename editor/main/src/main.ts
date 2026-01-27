@@ -4,6 +4,9 @@ import fs from "fs/promises";
 import { showConfirmDialog, showErrorDialog } from "./message-boxes";
 import trash from "trash";
 import { assimpImporter } from "./importer/assimp/assimp-importer";
+import crypto from "crypto";
+import ktxParser from "ktx-parse";
+import { Worker } from "worker_threads";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -37,6 +40,18 @@ app.whenReady()
         const win = BrowserWindow.fromWebContents(e.sender);
         if(win == null) return;
         win.minimize();
+    });
+    ipcMain.handle("fsPath:extname", async (e, p: string) => {
+        return path.extname(p);
+    });
+    ipcMain.handle("fsPath:basename", async (e, p: string, suffix?: string) => {
+        return path.basename(p, suffix);
+    });
+    ipcMain.handle("fsPath:dirname", async (e, p: string) => {
+        return path.dirname(p);
+    });
+    ipcMain.handle("fsPath:join", async (e, paths: string[]) => {
+        return path.join(...paths);
     });
     ipcMain.handle("folder:open", async () => {
         const result = await dialog.showOpenDialog({
@@ -74,6 +89,15 @@ app.whenReady()
         }
         return await read(folderPath);
     });
+    ipcMain.handle("file:exist", async (e, path: string) => {
+        try{
+            await fs.access(path, fs.constants.F_OK);
+            return true;
+        }
+        catch(err){
+            return false;
+        }
+    });
     ipcMain.handle("file:delete", async (e, path: string, recycle: boolean) => {
         try{
             if(recycle){
@@ -95,7 +119,7 @@ app.whenReady()
     ipcMain.handle("folder:create", async (e, parentPath: string, name: string) => {
         try{
             const fullPath = path.join(parentPath, name);
-            await fs.mkdir(fullPath);
+            await fs.mkdir(fullPath, { recursive: true });
             const created: DirectoryTree.Directory = {
                 type: "Directory",
                 name: name,
@@ -108,20 +132,15 @@ app.whenReady()
             return null;
         }
     });
-    ipcMain.handle("file:create", async (e, parentPath: string, name: string) => {
-        try{
-            const fullPath = path.join(parentPath, name);
-            await fs.writeFile(fullPath, "");
-            const created: DirectoryTree.File = {
-                type: "File",
-                name: name,
-                path: fullPath
-            }
-            return created;
+    ipcMain.handle("file:create", async (e, fullPath: string, data: string) => {
+        await fs.mkdir(path.dirname(fullPath), { recursive: true });
+        await fs.writeFile(fullPath, data);
+        const created: DirectoryTree.File = {
+            type: "File",
+            name: path.basename(fullPath),
+            path: fullPath
         }
-        catch(err){
-            return false;
-        }
+        return created;
     });
     ipcMain.handle("file:open", async () => {
         const result = await dialog.showOpenDialog({
@@ -132,19 +151,30 @@ app.whenReady()
     });
     ipcMain.handle("file:import", async (e, importPath: string, destFolder: string) => {
         try{
-            const importExt = path.extname(importPath);
-            if(importExt.toLowerCase() === ".fbx"){
+            const importExt = path.extname(importPath).toLowerCase();
+            if(importExt === ".fbx"){
+                const importName = path.basename(importPath) + ".json";
+                const fullPath = path.join(destFolder, importName);
+                const outFile = await fs.open(fullPath, "wx");
                 const jsonImportFile: Importer.JsonImportFile = {
                     type: "assimp",
                     data: await assimpImporter(importPath)
                 }
-                const importName = path.basename(importPath) + ".json";
-                const fullPath = path.join(destFolder, importName);
-                const outFile = await fs.open(fullPath, "w");
                 await outFile.write(`${JSON.stringify(jsonImportFile, (key, value) => {
                     return typeof value === "bigint" ? value.toString() : value;
                 }, 2)} \n`);
                 await outFile.close();
+                const created: DirectoryTree.File = {
+                    type: "File",
+                    name: importName,
+                    path: fullPath
+                }
+                return created;
+            }
+            else if(importExt === ".png" || importExt === ".jpg"){
+                const importName = path.basename(importPath);
+                const fullPath = path.join(destFolder, importName);
+                await fs.copyFile(importPath, fullPath, fs.constants.COPYFILE_EXCL);
                 const created: DirectoryTree.File = {
                     type: "File",
                     name: importName,
@@ -175,6 +205,43 @@ app.whenReady()
         const outFile = await fs.open(destPath, "w");
         await outFile.write(data);
         await outFile.close();
+    });
+    ipcMain.handle("file:getSha256", async (e, path: string) => {
+        const buffer = await fs.readFile(path);
+        const hash = crypto.createHash("sha256");
+        hash.update(buffer);
+        const value = hash.digest("hex");
+        return value;
+    });
+    ipcMain.handle(
+        "ktx2:createTextureKTX2",
+        async (e, sourcePath: string, destPath: string, metaHash: string, settings: KTX2.TextureKTX2Settings) => {
+            const worker = new Worker(
+                path.join(__dirname, "importer", "ktx-encode", "ktx-encoder.js"),
+                {
+                    workerData: { sourcePath, destPath, settings }
+                }
+            )
+            await new Promise<void>((resolve, reject) => {
+                worker.once("exit", () => { resolve() });
+                worker.once("error", (err) => { reject(err) });
+            });
+            const ktx = ktxParser.read(await fs.readFile(destPath));
+            ktx.keyValue["metaHash"] = new TextEncoder().encode(metaHash);
+            await fs.writeFile(destPath, ktxParser.write(ktx));
+            const created: DirectoryTree.File = {
+                type: "File",
+                name: path.basename(destPath),
+                path: destPath
+            }
+            return created;
+        }
+    );
+    ipcMain.handle("ktx2:getMetaHash", async (e, path: string) => {
+        const ktx = ktxParser.read(await fs.readFile(path));
+        const buffer = ktx.keyValue["metaHash"] as Uint8Array<ArrayBufferLike>;
+        const metaHash = new TextDecoder().decode(buffer);
+        return metaHash;
     });
 
     createWindow();
