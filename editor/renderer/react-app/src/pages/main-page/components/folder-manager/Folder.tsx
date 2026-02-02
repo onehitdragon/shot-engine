@@ -1,23 +1,25 @@
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { ChevronRightIcon, FolderIcon, FolderOpenIcon } from "@heroicons/react/24/solid";
-import { selectDirectory, selectSelectedFolder, toggleExpandDirectory, type FolderManager } from '../../../../global-state/slices/folder-manager-slice';
+import { chooseEntry, selectEntryByPath, selectSelectedEntry, toggleExpandDirectory, type FolderManager } from '../../../../global-state/slices/folder-manager-slice';
 import { useAppDispatch, useAppSelector } from '../../../../global-state/hooks';
 
 type FolderProps = {
-    directory: FolderManager.DirectoryState,
+    path: string,
     level?: number
 }
 export function Folder(props: FolderProps){
-    const { directory, level = 0 } = props;
+    const { path, level = 0 } = props;
+    const directory = useAppSelector(state => selectEntryByPath(state, path));
+    if(directory.type !== "Directory") throw `${path} is not directory`;
     const { children: entries } = directory;
     const isEmpty = entries.length == 0;
     const isOnlyFile = !isEmpty && entries.every(entry => entry.type == "File");
     const dispatch = useAppDispatch();
-    const selectedDirectory = useAppSelector(selectSelectedFolder);
+    const selectedDirectory = useAppSelector(selectSelectedEntry);
     const isSelected = selectedDirectory && selectedDirectory.path == directory.path;
     const click = () => {
         if(!isOnlyFile) dispatch(toggleExpandDirectory({ path: directory.path }));
-        dispatch(selectDirectory({ path: directory.path }));
+        dispatch(chooseEntry({ path: directory.path }));
     }
 
     return (
@@ -45,7 +47,7 @@ export function Folder(props: FolderProps){
                     {
                         entries.map(entry => {
                             if(entry.type == 'Directory'){
-                                return <Folder key={entry.path} directory={entry} level={level + 1}/>
+                                return <Folder key={entry.path} path={entry.path} level={level + 1}/>
                             }
                         })
                     }

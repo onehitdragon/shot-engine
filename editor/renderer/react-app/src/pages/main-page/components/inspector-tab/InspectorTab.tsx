@@ -4,11 +4,11 @@ import { FBXInspector } from "./FBXInspector";
 import { TextInspector } from "./TextInspector";
 import { showInspector } from "../../../../global-state/slices/inspector-slice";
 import { selectFocusedEntry, type FolderManager } from "../../../../global-state/slices/folder-manager-slice";
-import path from "path-browserify";
 import { SceneInspector } from "./SceneInspector";
 import { selectFocusedSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { SceneNodeInspector } from "./SceneNodeInspector";
 import { AssimpInspector } from "./AssimpInspector";
+import { extIsImage } from "../../helpers/image-import/image-import-helpers";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
@@ -32,7 +32,7 @@ export function InspectorTab(){
             }
             const text = await window.api.file.getText(entry.path);
             if(!active) return;
-            const ext = path.extname(entry.path).toLowerCase();
+            const ext = (await window.fsPath.extname(entry.path)).toLowerCase();
             if(ext === ".json"){
                 try {
                     const jsonObject = JSON.parse(text);
@@ -62,9 +62,10 @@ export function InspectorTab(){
                     dispatchShowTextInspector(text);
                 }
             }
-            else if(ext === ".png" || ext === ".jpg"){
+            else if(extIsImage(ext)){
                 // come back later
-                
+                const metaFilePath = `${entry.path}.meta.json`;
+                console.log(metaFilePath, await window.api.file.exist(metaFilePath));
             }
             else{
                 dispatchShowTextInspector(text);

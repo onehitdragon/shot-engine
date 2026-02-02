@@ -1,12 +1,15 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import path from "path";
-import fs from "fs/promises";
+import fs, { FSWatcher } from "fs-extra";
 import { showConfirmDialog, showErrorDialog } from "./message-boxes";
 import trash from "trash";
 import { assimpImporter } from "./importer/assimp/assimp-importer";
 import crypto from "crypto";
 import ktxParser from "ktx-parse";
 import { Worker } from "worker_threads";
+import { ensureMetaFile } from "./my-watcher/my-watcher";
+import * as fsWalk from '@nodelib/fs.walk';
+import { Entry } from "@nodelib/fs.walk";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -22,6 +25,19 @@ const createWindow = () => {
     else{
         throw new Error("Dont find env process.env.VITE_DEV_SERVER_URL");
     }
+    let isFocus = false;
+    win.on("focus", () => {
+        if(!isFocus){
+            isFocus = true;
+            win.webContents.send("win:onFocus");
+        }
+    });
+    win.on("blur", () => {
+        if(isFocus){
+            isFocus = false;
+            win.webContents.send("win:onBlur");
+        }
+    });
 };
 
 app.whenReady()
@@ -41,16 +57,24 @@ app.whenReady()
         if(win == null) return;
         win.minimize();
     });
-    ipcMain.handle("fsPath:extname", async (e, p: string) => {
+    ipcMain.handle("window:showError", async (e, reason: string) => {
+        await showErrorDialog(reason);
+    });
+    ipcMain.handle("win:isFocus", async (e) => {
+        const win = BrowserWindow.fromWebContents(e.sender);
+        if(!win) return;
+        return win.isFocused();
+    });
+    ipcMain.handle("fsPath:extname", (e, p: string) => {
         return path.extname(p);
     });
-    ipcMain.handle("fsPath:basename", async (e, p: string, suffix?: string) => {
+    ipcMain.handle("fsPath:basename", (e, p: string, suffix?: string) => {
         return path.basename(p, suffix);
     });
-    ipcMain.handle("fsPath:dirname", async (e, p: string) => {
+    ipcMain.handle("fsPath:dirname", (e, p: string) => {
         return path.dirname(p);
     });
-    ipcMain.handle("fsPath:join", async (e, paths: string[]) => {
+    ipcMain.handle("fsPath:join", (e, paths: string[]) => {
         return path.join(...paths);
     });
     ipcMain.handle("folder:open", async () => {
@@ -60,41 +84,74 @@ app.whenReady()
         if(result.canceled) return null;
         return result.filePaths[0];
     });
+    ipcMain.handle("folder:ensureMetaFile", async (e, projectPath: string) => {
+        await ensureMetaFile(projectPath);
+    });
     ipcMain.handle("folder:load", async (e, folderPath: string) => {
-        async function read(dirPath: string){
-            const directory: DirectoryTree.Directory = {
-                type: "Directory",
-                name: path.basename(dirPath),
-                path: dirPath,
-                children: []
-            };
-            const entries = await fs.readdir(dirPath, { withFileTypes: true });
-            for(const entry of entries){
-                if(entry.name.startsWith('.')) continue;
-                const fullPath = path.join(dirPath, entry.name);
-                if(entry.isFile()){
-                    directory.children.push({
-                        type: "File",
-                        name: entry.name,
-                        path: fullPath
-                    });
+        const entries = await new Promise<Entry[]>((rel, rej) => {
+            fsWalk.walk(
+                folderPath,
+                { entryFilter: e => !e.name.endsWith(".meta.json") },
+                (err, entries) => {
+                    if(err) rej(err);
+                    rel(entries);
                 }
-                else{
-                    directory.children.push(
-                        await read(fullPath)
-                    );
-                }
+            );
+        });
+        const directory: DirectoryTree.Directory = {
+            type: "Directory",
+            name: path.basename(folderPath),
+            path: folderPath,
+            children: []
+        };
+        const entryMap = new Map<string, DirectoryTree.Directory | DirectoryTree.File>();
+        entryMap.set(directory.path, directory);
+        for(const entry of entries){
+            const parent = entryMap.get(entry.dirent.parentPath);
+            if(!parent || parent.type === "File") continue;
+            let child: DirectoryTree.Directory | DirectoryTree.File;
+            if(entry.dirent.isDirectory()){
+                child = {
+                    type: "Directory",
+                    name: entry.name,
+                    path: entry.path,
+                    children: []
+                };
             }
-            return directory;
+            else{
+                child = {
+                    type: "File",
+                    name: entry.name,
+                    path: entry.path
+                };
+            }
+            parent.children.push(child);
+            entryMap.set(entry.path, child);
         }
-        return await read(folderPath);
+        return Array.from(entryMap.values());
+    });
+    const watcherMap = new Map<string, FSWatcher>();
+    ipcMain.handle( "folder:watch", async (e, folderPath: string) => {
+        let watcher = watcherMap.get(folderPath);
+        if(watcher) watcher.close();
+        watcher = fs.watch(folderPath);
+        watcher.on("change", () => {
+            e.sender.send("folder:onWatchEvent");
+        });
+        watcherMap.set(folderPath, watcher);
+    });
+    ipcMain.handle("folder:unwatch", async (e, folderPath: string) => {
+        const watcher = watcherMap.get(folderPath);
+        if(!watcher) return;
+        watcher.close();
+        watcherMap.delete(folderPath);
     });
     ipcMain.handle("file:exist", async (e, path: string) => {
         try{
             await fs.access(path, fs.constants.F_OK);
             return true;
         }
-        catch(err){
+        catch{
             return false;
         }
     });
@@ -115,6 +172,14 @@ app.whenReady()
             return false;
         }
         return false;
+    });
+    ipcMain.handle("file:silentDelete", async (e, path: string, recycle: boolean) => {
+        if(recycle){
+            await trash([path]);
+        }
+        else{
+            await fs.rm(path, { recursive: true, force: true });
+        }
     });
     ipcMain.handle("folder:create", async (e, parentPath: string, name: string) => {
         try{
@@ -155,15 +220,13 @@ app.whenReady()
             if(importExt === ".fbx"){
                 const importName = path.basename(importPath) + ".json";
                 const fullPath = path.join(destFolder, importName);
-                const outFile = await fs.open(fullPath, "wx");
                 const jsonImportFile: Importer.JsonImportFile = {
                     type: "assimp",
                     data: await assimpImporter(importPath)
                 }
-                await outFile.write(`${JSON.stringify(jsonImportFile, (key, value) => {
+                await fs.writeFile(fullPath, `${JSON.stringify(jsonImportFile, (key, value) => {
                     return typeof value === "bigint" ? value.toString() : value;
                 }, 2)} \n`);
-                await outFile.close();
                 const created: DirectoryTree.File = {
                     type: "File",
                     name: importName,
@@ -202,9 +265,7 @@ app.whenReady()
         return filePath;
     });
     ipcMain.handle("file:save", async (e, destPath: string, data: string) => {
-        const outFile = await fs.open(destPath, "w");
-        await outFile.write(data);
-        await outFile.close();
+        await fs.writeFile(destPath, data);
     });
     ipcMain.handle("file:getSha256", async (e, path: string) => {
         const buffer = await fs.readFile(path);
@@ -244,10 +305,10 @@ app.whenReady()
         return metaHash;
     });
 
-    createWindow();
     app.on("activate", () => {
         if(BrowserWindow.getAllWindows().length == 0) createWindow();
     });
+    createWindow();
 })
 .catch(err => {
     console.error(err);

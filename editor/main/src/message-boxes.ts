@@ -14,9 +14,9 @@ async function showConfirmDialog(message: string) {
     return result.response === 0;
 }
 async function showErrorDialog(message: string) {
-    const window = BrowserWindow.getFocusedWindow();
-    if(!window) return false;
-    await dialog.showMessageBox(window, {
+    // const window = BrowserWindow.getFocusedWindow();
+    // if(!window) return;
+    await dialog.showMessageBox({
         message,
         type: 'error',
         buttons: ["Yes"],

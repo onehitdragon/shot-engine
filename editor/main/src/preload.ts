@@ -4,15 +4,50 @@ contextBridge.exposeInMainWorld("api", {
     close: () => ipcRenderer.send("window:close"),
     maximize: () => ipcRenderer.send("window:maximize"),
     minimize: () => ipcRenderer.send("window:minimize"),
+    showError: (reason: string) => ipcRenderer.invoke("window:showError", reason),
+    win: {
+        isFocused: () => ipcRenderer.invoke("win:isFocus"),
+        onFocus: (callback: any) => {
+            const subscription = () => {
+                callback();
+            };
+            ipcRenderer.on("win:onFocus", subscription);
+            return () => {
+                ipcRenderer.off("win:onFocus", subscription);
+            }
+        },
+        onBlur: (callback: any) => {
+            const subscription = () => {
+                callback();
+            };
+            ipcRenderer.on("win:onBlur", subscription);
+            return () => {
+                ipcRenderer.off("win:onBlur", subscription);
+            }
+        },
+    },
     folder: {
         open: () => ipcRenderer.invoke("folder:open"),
+        ensureMetaFile: (projectPath: string) => ipcRenderer.invoke("folder:ensureMetaFile", projectPath),
         load: (path: string) => ipcRenderer.invoke("folder:load", path),
-        create: (parentPath: string, name: string) => ipcRenderer.invoke("folder:create", parentPath, name)
+        create: (parentPath: string, name: string) => ipcRenderer.invoke("folder:create", parentPath, name),
+        watch: (path: string) => ipcRenderer.invoke("folder:watch", path),
+        unwatch: (path: string) => ipcRenderer.invoke("folder:unwatch", path),
+        onWatchEvent: (callback: any) => {
+            const subscription = () => {
+                callback();
+            };
+            ipcRenderer.on("folder:onWatchEvent", subscription);
+            return () => {
+                ipcRenderer.off("folder:onWatchEvent", subscription);
+            }
+        },
     },
     file: {
         exist: (path: string) => ipcRenderer.invoke("file:exist", path),
         // can delele both folder and file
         delete: (path: string, recycle: boolean) => ipcRenderer.invoke("file:delete", path, recycle),
+        silentDelete: (path: string, recycle: boolean) => ipcRenderer.invoke("file:silentDelete", path, recycle),
         create: (fullPath: string, data: string) => ipcRenderer.invoke("file:create", fullPath, data),
         open: () => ipcRenderer.invoke("file:open"),
         import: (importPath: string, destFolder: string) => ipcRenderer.invoke("file:import", importPath, destFolder),

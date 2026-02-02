@@ -1,17 +1,13 @@
 import { FolderPlusIcon, DocumentPlusIcon, FolderIcon, DocumentTextIcon,
     ArrowDownOnSquareIcon
  } from "@heroicons/react/24/solid";
-import { addEntryToSelectedFolder, deleteFocusedEntry, focusEntry, selectDirectory, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, type FolderManager } from "../../../../global-state/slices/folder-manager-slice";
+import { chooseEntry, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, focusEntry, type FolderManager, selectSelectedEntry, selectEntryByPath } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { useEffect, useRef, useState } from "react";
 
-type SelectedFolderProps = {
-    directory: FolderManager.DirectoryState
-}
-export function SelectedFolder(props: SelectedFolderProps){
-    const { directory } = props;
-    const { children: entries } = directory;
+export function SelectedFolder(){
+    const selectedEntry = useAppSelector(selectSelectedEntry);
     const dispatch = useAppDispatch();
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -29,12 +25,17 @@ export function SelectedFolder(props: SelectedFolderProps){
     }, []);
 
     return (
+        !selectedEntry || selectedEntry.type !== "Directory" ?
+        <div className='flex-4 bg-gray-500 flex flex-col'></div> :
         <div className='flex-4 bg-gray-500 flex flex-col overflow-hidden'>
-            <ButtonBar selectedDirectory={directory}/>
+            <ButtonBar selectedDirectory={selectedEntry}/>
             <div ref={ref} className='p-1 flex flex-col overflow-auto
                 scrollbar-thin'>
                 {
-                    entries.map(entry => <Entry key={entry.path} entry={entry} parentDirectory={directory}/>)
+                    selectedEntry.children.map(entry => <Entry key={entry.path}
+                        entryPath={entry.path}
+                        parentDirectory={selectedEntry}
+                    />)
                 }
             </div>
             <div className="flex-1"></div>
@@ -44,11 +45,12 @@ export function SelectedFolder(props: SelectedFolderProps){
 }
 
 type EntryProps = {
-    entry: FolderManager.DirectoryState | DirectoryTree.File,
+    entryPath: string,
     parentDirectory: FolderManager.DirectoryState
 }
 function Entry(props: EntryProps){
-    const { entry, parentDirectory } = props;
+    const { entryPath, parentDirectory } = props;
+    const entry = useAppSelector(state => selectEntryByPath(state, entryPath));
     const dispatch = useAppDispatch();
     const focused = useAppSelector(selectFocusedEntry);
     const isFoucused = focused && focused.path == entry.path;
@@ -57,7 +59,7 @@ function Entry(props: EntryProps){
     };
     const doubleClick = () => {
         if(entry.type == "Directory"){
-            dispatch(selectDirectory({ path: entry.path }));
+            dispatch(chooseEntry({ path: entry.path }));
             dispatch(toggleExpandDirectory({ path: parentDirectory.path, force: true }));
             dispatch(unfocusEntry());
         }
@@ -128,23 +130,15 @@ type ButtonBarProps = {
 function ButtonBar(props: ButtonBarProps){
     const { selectedDirectory } = props;
     const focused = useAppSelector(selectFocusedEntry);
-    const dispatch = useAppDispatch();
+    // const dispatch = useAppDispatch();
     useEffect(() => {
         const handler = async (e: KeyboardEvent) => {
             if(!focused) return;
             if(!e.shiftKey && e.key == "Delete"){
-                const success = await window.api.file.delete(focused.path, true);
-                if(success){
-                    dispatch(deleteFocusedEntry());
-                    dispatch(unfocusEntry());
-                }
+                await window.api.file.delete(focused.path, true);
             }
             if(e.shiftKey && e.key == "Delete"){
-                const success = await window.api.file.delete(focused.path, false);
-                if(success){
-                    dispatch(deleteFocusedEntry());
-                    dispatch(unfocusEntry());
-                }
+                await window.api.file.delete(focused.path, false);
             }
         }
         window.addEventListener("keydown", handler);
@@ -169,10 +163,8 @@ function ButtonBar(props: ButtonBarProps){
 function CreateFolderButton(props: { selectedDirectory: FolderManager.DirectoryState }){
     const { selectedDirectory } = props;
     const [enteringName, setEnteringName] = useState(false);
-    const dispatch = useAppDispatch();
     const create = async (name: string) => {
-        const created = await window.api.folder.create(selectedDirectory.path, name);
-        if(created) dispatch(addEntryToSelectedFolder({ entry: created }))
+        await window.api.folder.create(selectedDirectory.path, name);
     }
     const close = () => {
         setEnteringName(false);
@@ -195,11 +187,9 @@ function CreateFolderButton(props: { selectedDirectory: FolderManager.DirectoryS
 function CreateFileButton(props: { selectedDirectory: FolderManager.DirectoryState }){
     const { selectedDirectory } = props;
     const [enteringName, setEnteringName] = useState(false);
-    const dispatch = useAppDispatch();
     const create = async (name: string) => {
         const createFilePath = await window.fsPath.join(selectedDirectory.path, name);
-        const created = await window.api.file.create(createFilePath, "");
-        dispatch(addEntryToSelectedFolder({ entry: created }))
+        await window.api.file.create(createFilePath, "");
     }
     const close = () => {
         setEnteringName(false);
@@ -221,13 +211,11 @@ function CreateFileButton(props: { selectedDirectory: FolderManager.DirectorySta
 }
 function ImportFileButton(props: { selectedDirectory: FolderManager.DirectoryState }){
     const { selectedDirectory } = props;
-    const dispatch = useAppDispatch();
     const open = async () => {
         const importPath = await window.api.file.open();
         if(!importPath) return;
         const imported = await window.api.file.import(importPath, selectedDirectory.path);
         if(!imported) return;
-        dispatch(addEntryToSelectedFolder({ entry: imported }));
     }
     return (
         <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'

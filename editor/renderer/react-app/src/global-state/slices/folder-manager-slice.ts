@@ -1,5 +1,6 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createEntityAdapter, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit"
 import type { RootState } from "../store";
+import { closeProjectThunk, openProjectThunk } from "../thunks/folder-manager-thunks";
 
 export declare namespace FolderManager {
     export type DirectoryState = DirectoryTree.Directory & {
@@ -7,116 +8,106 @@ export declare namespace FolderManager {
         children: (DirectoryState | DirectoryTree.File)[]
     }
 }
-type State = {
-    directory: FolderManager.DirectoryState | null,
+interface DirectoryEntityState extends EntityState<FolderManager.DirectoryState | DirectoryTree.File, string> {
+    projectPath: string | null,
     selectedPath: string | null,
     focusedPath: string | null
-};
-const initialState: State = {
-    directory: null,
+}
+const adapter = createEntityAdapter<FolderManager.DirectoryState | DirectoryTree.File, string>({
+    selectId: (entry) => entry.path
+});
+const initialState: DirectoryEntityState = adapter.getInitialState({
+    projectPath: null,
     selectedPath: null,
     focusedPath: null
-};
+});
 const slice = createSlice({
     initialState,
     name: "folder-manager",
     reducers: {
-        updateDirectory: (state, action: PayloadAction<{ directory: FolderManager.DirectoryState }>) => {
-            state.directory = action.payload.directory;
-        },
         toggleExpandDirectory: (state, action: PayloadAction<{ path: string, force?: boolean }>) => {
             const { path, force } = action.payload;
-            if(state.directory == null) return;
-            const found = findDirectory(state.directory, path);
+            if(state.projectPath == null) return;
+            const found = state.entities[path];
+            if(!found || found.type === "File") return;
             if(found) found.expanding = force !== undefined ? force : !found.expanding;
         },
-        selectDirectory: (state, action: PayloadAction<{ path: string }>) => {
+        chooseEntry: (state, action: PayloadAction<{ path: string }>) => {
             state.selectedPath = action.payload.path;
         },
         focusEntry: (state, action: PayloadAction<{ path: string }>) => {
             state.focusedPath = action.payload.path;
         },
         unfocusEntry: (state) => {
-            if(state.focusedPath) state.focusedPath = null;
+            state.focusedPath = null;
         },
-        deleteFocusedEntry(state){
-            const { directory, selectedPath, focusedPath } = state;
-            if(directory == null) return;
-            if(selectedPath == null) return;
-            if(focusedPath == null) return;
-            const selectedFolder = findDirectory(directory, selectedPath);
-            if(selectedFolder == null) return;
-            const index = selectedFolder.children.findIndex((entry) => entry.path == focusedPath);
-            if(index == -1) return;
-            selectedFolder.children.splice(index, 1);
-        },
-        addEntryToSelectedFolder(state, action: PayloadAction<{ entry: DirectoryTree.Directory | DirectoryTree.File }>){
-            const { directory, selectedPath } = state;
-            if(directory == null) return;
-            if(selectedPath == null) return;
-            const selectedFolder = findDirectory(directory, selectedPath);
-            if(selectedFolder == null) return;
-            selectedFolder.children.push(action.payload.entry);
-        },
-        addEntryToDirectory(
+        reloadEntries: (
             state,
-            action: PayloadAction<{ directoryPath: string, entry: DirectoryTree.Directory | DirectoryTree.File }>
-        ){
-            const { directory } = state;
-            if(directory == null) return;
-            const { directoryPath, entry } = action.payload;
-            const targetDirectory = findDirectory(directory, directoryPath);
-            if(targetDirectory == null) return;
-            targetDirectory.children.push(entry);
+            action: PayloadAction<{
+                entries: (DirectoryTree.Directory | DirectoryTree.File)[]
+            }>
+        ) => {
+            state.selectedPath = null;
+            state.focusedPath = null;
+            adapter.removeAll(state);
+            adapter.addMany(state, action.payload.entries);
         },
-        removeEntryFromDirectory(
+        addEntry: (
             state,
-            action: PayloadAction<{ directoryPath: string, entryPath: string }>
-        ){
-            const { directory } = state;
-            if(directory == null) return;
-            const { directoryPath, entryPath } = action.payload;
-            const targetDirectory = findDirectory(directory, directoryPath);
-            if(targetDirectory == null) return;
-            const index = targetDirectory.children.findIndex((entry) => entry.path == entryPath);
+            action: PayloadAction<{
+                parentPath: string,
+                entry: DirectoryTree.Directory | DirectoryTree.File
+            }>
+        ) => {
+            const { parentPath, entry } = action.payload;
+            if(state.entities[entry.path]) return;
+            const parent = state.entities[parentPath];
+            if(!parent || parent.type === "File") return;
+            parent.children.push(entry);
+            adapter.addOne(state, entry);
+        },
+        deleteEntry: (
+            state,
+            action: PayloadAction<{
+                parentPath: string,
+                entryPath: string
+            }>
+        ) => {
+            const { parentPath, entryPath } = action.payload;
+            const parent = state.entities[parentPath];
+            if(!parent || parent.type === "File") return;
+            const index = parent.children.findIndex(e => e.path === entryPath);
             if(index == -1) return;
-            targetDirectory.children.splice(index, 1);
+            parent.children.splice(index, 1);
+            adapter.removeOne(state, entryPath);
         }
+    },
+    extraReducers(builder){
+        builder.addCase(openProjectThunk.fulfilled, (state, action) => {
+            state.projectPath = action.payload.projectPath;
+            adapter.addMany(state, action.payload.entries);
+        });
+        builder.addCase(closeProjectThunk.fulfilled, (state) => {
+            state.projectPath = null;
+            adapter.removeAll(state);
+            state.selectedPath = null;
+            state.focusedPath = null;
+        });
     }
 });
-function findDirectory(directory: FolderManager.DirectoryState, path: string): FolderManager.DirectoryState | null{
-    if(directory.path == path) return directory;
-    for(const entry of directory.children){
-        if(entry.type == "Directory"){
-            const found = findDirectory(entry, path);
-            if(found) return found;
-        }
-    }
-    return null;
-}
-function findEntry(entry: FolderManager.DirectoryState | DirectoryTree.File, path: string): FolderManager.DirectoryState | DirectoryTree.File | null{
-    if(entry.path == path) return entry;
-    if(entry.type == "File") return null;
-    const directory = entry;
-    for(const entry of directory.children){
-        const found = findEntry(entry, path);
-        if(found) return found;
-    }
-    return null;
-}
-function selectSelectedFolder(state: RootState){
-    const { directory, selectedPath } = state.folderManager;
-    if(!directory || !selectedPath) return null;
-    return findDirectory(directory, selectedPath);
+export const {
+  selectById: selectEntryByPath
+} = adapter.getSelectors((state: RootState) => state.folderManager);
+function selectSelectedEntry(state: RootState){
+    const { selectedPath } = state.folderManager;
+    if(selectedPath) return selectEntryByPath(state, selectedPath);
 }
 function selectFocusedEntry(state: RootState){
-    const { directory, focusedPath } = state.folderManager;
-    if(!directory || !focusedPath) return null;
-    return findEntry(directory, focusedPath);
+    const { focusedPath } = state.folderManager;
+    if(focusedPath) return selectEntryByPath(state, focusedPath);
 }
-export const { updateDirectory, toggleExpandDirectory, selectDirectory,
-    focusEntry, unfocusEntry, deleteFocusedEntry, addEntryToSelectedFolder, addEntryToDirectory,
-    removeEntryFromDirectory
+export const { toggleExpandDirectory, chooseEntry,
+    focusEntry, unfocusEntry, addEntry, deleteEntry, reloadEntries
 } = slice.actions;
-export { selectSelectedFolder, selectFocusedEntry }
+export { selectSelectedEntry, selectFocusedEntry }
 export default slice.reducer;

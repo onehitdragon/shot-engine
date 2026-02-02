@@ -1,29 +1,31 @@
 import { useMemo } from 'react';
 import logoUrl from '../../../../assets/dragon_logo.svg';
-import { useAppDispatch } from '../../../../global-state/hooks';
+import { useAppDispatch, useAppSelector } from '../../../../global-state/hooks';
 import { FileMenu } from './file-menu';
 import { WindowControls } from './WindowControls';
-import { loadProjectFolder } from '../../../../global-state/slices/project-slice';
+import { closeProjectThunk, openProjectThunk } from '../../../../global-state/thunks/folder-manager-thunks';
 
 export function AppBar(){
     const dispatch = useAppDispatch();
+    const projectPath = useAppSelector(state => state.folderManager.projectPath);
     const fileMenuItems = useMemo(() => {
         const fileMenuItems: React.ComponentProps<typeof FileMenu>["items"] = [
             {
                 label: "File",
                 options: [
-                    {
+                    !projectPath ? {
                         optionLabel: "Open Folder",
                         shortcutLabel: "Ctrl + O",
                         click: async () => {
                             const path = await window.api.folder.open();
-                            if(path) dispatch(loadProjectFolder({ folderPath: path }));
+                            if(path) dispatch(openProjectThunk({ path }));
                         }
-                    },
-                    {
+                    } : {
                         optionLabel: "Close Folder",
                         shortcutLabel: "Ctrl + K",
-                        click: () => {}
+                        click: () => {
+                            dispatch(closeProjectThunk());
+                        }
                     },
                     {
                         optionLabel: "Exit",
@@ -69,7 +71,7 @@ export function AppBar(){
             }
         ];
         return fileMenuItems;
-    }, []);
+    }, [projectPath]);
 
     return (
         <div className='bg-gray-800 h-8 flex'>
