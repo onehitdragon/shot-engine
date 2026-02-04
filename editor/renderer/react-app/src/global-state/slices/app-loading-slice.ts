@@ -10,7 +10,7 @@ const initialState: State = {
 };
 const slice = createSlice({
     initialState,
-    name: "folder-manager",
+    name: "app-loading",
     reducers: {
         updateLoading: (state, action: PayloadAction<{ loading: boolean }>) => {
             state.loading = action.payload.loading;

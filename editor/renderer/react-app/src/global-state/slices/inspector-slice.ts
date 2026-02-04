@@ -21,8 +21,14 @@ export type SceneNodeInspector = {
     scene: SceneFormat.Scene,
     node: SceneFormat.SceneNode
 }
+export type AssetInspector = {
+    type: "asset",
+    guid: string,
+    metaPath: string
+}
 type State = {
     inspector: null | TextInspector | FBXInspector | AssimpInspector | SceneInspector | SceneNodeInspector
+    | AssetInspector
 };
 const initialState: State = {
     inspector: null

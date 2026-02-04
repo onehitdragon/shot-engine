@@ -1,4 +1,5 @@
 import z from "zod";
+import { v4 as uuidv4 } from 'uuid';
 
 const AssetBaseSchema = z.object({
     guid: z.string()
@@ -39,6 +40,27 @@ export const AssetImageSchema = AssetBaseSchema.extend({
     image: ImageSchema
 });
 // util
+export function createAssetFolder(){
+    const newMetaObject: Assets.AssetFolder = {
+        guid: uuidv4(),
+        isFolder: true
+    };
+    return newMetaObject;
+}
+export function createAssetImage(){
+    const newMetaObject: Assets.AssetImage = {
+        guid: uuidv4(),
+        image: {
+            imageType: "Texture",
+            sRGB: true,
+            qualityLevel: 255,
+            generateMipmaps: true,
+            wrapMode: "REPEAT",
+            filterMode: "BILINEAR",
+        }
+    };
+    return newMetaObject;
+}
 export function isAssetFolder(ass: Assets.Asset): ass is Assets.AssetFolder{
     return "isFolder" in ass && ass.isFolder === true;
 }

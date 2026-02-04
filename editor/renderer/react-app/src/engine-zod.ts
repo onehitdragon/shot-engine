@@ -1,54 +1,91 @@
 import z from "zod";
+import { v4 as uuidv4 } from 'uuid';
 
+const AssetBaseSchema = z.object({
+    guid: z.string()
+});
+// folder
+export const AssetFolderSchema = AssetBaseSchema.extend({
+    isFolder: z.literal(true)
+});
+// file
+export const AssetFileSchema = AssetBaseSchema.extend({
+    isFolder: z.literal(false)
+});
+// image
 const WrapMode = z.enum(["REPEAT", "MIRROR", "CLAMP"]);
 const FilterMode = z.enum(["NONE", "BILINEAR", "TRILINEAR"]);
-const ImportBaseSchema = z.object({
-    id: z.string(),
-});
-const ImageBaseSchema = ImportBaseSchema.extend({
-    type: z.literal("Image"),
-});
-const TextureBaseSchema = ImageBaseSchema.extend({
-    generateMipmaps: z.boolean(),
+const TextureBaseSchema = z.object({
     wrapMode: WrapMode,
     filterMode: FilterMode,
+    generateMipmaps: z.boolean(),
 });
-export const TextureSchema = TextureBaseSchema.extend({
+const TextureSchema = TextureBaseSchema.extend({
     imageType: z.literal("Texture"),
     sRGB: z.boolean(),
     qualityLevel: z.number()
 });
-export const NormalMapSchema = TextureBaseSchema.extend({
+const NormalMapSchema = TextureBaseSchema.extend({
     imageType: z.literal("NormalMap"),
 });
-export const LightMapSchema = TextureBaseSchema.extend({
+const LightMapSchema = TextureBaseSchema.extend({
     imageType: z.literal("LightMap"),
 });
-export const ImageSchema = z.discriminatedUnion("imageType", [
+const ImageSchema = z.discriminatedUnion("imageType", [
     TextureSchema,
     NormalMapSchema,
     LightMapSchema,
 ]);
-const SoundBaseSchema = ImportBaseSchema.extend({
-    type: z.literal("Sound"),
+export const AssetImageSchema = AssetBaseSchema.extend({
+    image: ImageSchema
 });
-export const Mp3Schema = SoundBaseSchema.extend({
-    soundType: z.literal("Mp3")
-});
-export const AccSchema = SoundBaseSchema.extend({
-    soundType: z.literal("Acc")
-});
-export const SoundSchema = z.discriminatedUnion("soundType", [
-    Mp3Schema,
-    AccSchema
-]);
-export namespace Imports{
+// util
+export function createAssetFolder(){
+    const newMetaObject: Assets.AssetFolder = {
+        guid: uuidv4(),
+        isFolder: true
+    };
+    return newMetaObject;
+}
+export function createTexture(){
+    const texture: Assets.Texture = {
+        imageType: "Texture",
+        sRGB: true,
+        qualityLevel: 255,
+        generateMipmaps: true,
+        wrapMode: "REPEAT",
+        filterMode: "BILINEAR",
+    }
+    return texture;
+}
+export function createAssetImage(){
+    const newMetaObject: Assets.AssetImage = {
+        guid: uuidv4(),
+        image: createTexture()
+    };
+    return newMetaObject;
+}
+export function isAssetFolder(ass: Assets.Asset): ass is Assets.AssetFolder{
+    return "isFolder" in ass && ass.isFolder === true;
+}
+export function isAssetFile(ass: Assets.Asset): ass is Assets.AssetFile{
+    return "isFolder" in ass && ass.isFolder === false;
+}
+export function isAssetImage(ass: Assets.Asset): ass is Assets.AssetImage{
+    return "image" in ass;
+}
+// types
+export namespace Assets{
+    export type AssetFolder = z.infer<typeof AssetFolderSchema>;
+
+    export type AssetFile = z.infer<typeof AssetFileSchema>;
+
     export type Image = z.infer<typeof ImageSchema>;
+    export type TextureBase = z.infer<typeof TextureBaseSchema>;
     export type Texture = z.infer<typeof TextureSchema>;
     export type NormalMap = z.infer<typeof NormalMapSchema>;
     export type LightMap = z.infer<typeof LightMapSchema>;
-    export type Sound = z.infer<typeof SoundSchema>;
-    export type Mp3 = z.infer<typeof Mp3Schema>;
-    export type Acc = z.infer<typeof AccSchema>;
-    export type Import = Image | Sound;
+    export type AssetImage = z.infer<typeof AssetImageSchema>;
+
+    export type Asset = AssetFolder | AssetFile | AssetImage;
 }

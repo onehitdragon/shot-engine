@@ -3,11 +3,10 @@ import folderManagerReducer from "./slices/folder-manager-slice";
 import inspectorReducer from "./slices/inspector-slice";
 import sceneManagerReducer from "./slices/scene-manager-slice";
 import contextMenuReducer from "./slices/context-menu-slice";
-import imageImportReducer from "./slices/image-import-slice";
+import assetManagerReducer from "./slices/asset-manager-slice";
 import appLoadingReducer from "./slices/app-loading-slice";
+import appConfirmDialogReducer from "./slices/app-confirm-dialog-slice";
 import { listenerMiddleware } from "./listenerMiddleware";
-
-import "./thunks/folder-manager-listener";
 
 export const store = configureStore({
     reducer: {
@@ -15,8 +14,9 @@ export const store = configureStore({
         inspector: inspectorReducer,
         sceneManager: sceneManagerReducer,
         contextMenu: contextMenuReducer,
-        imageImport: imageImportReducer,
+        assetManager: assetManagerReducer,
         appLoading: appLoadingReducer,
+        appConfirmDialog: appConfirmDialogReducer
     },
     middleware: (getDefaultMiddleware) => {
         return getDefaultMiddleware({serializableCheck: false}).prepend(listenerMiddleware.middleware);

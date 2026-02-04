@@ -2,7 +2,7 @@ import fsPath from "path";
 import chokidar from 'chokidar';
 import fs from "fs-extra";
 import { Dirent } from "fs";
-import { AssetFileSchema, AssetFolderSchema, AssetImageSchema, Assets } from "./engine-zod";
+import { AssetFileSchema, AssetFolderSchema, AssetImageSchema, Assets, createAssetImage } from "./engine-zod";
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
 import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
@@ -110,17 +110,7 @@ async function processMetaFile(
     if(pathIsImage(assetPath)){
         const z0 = await AssetImageSchema.safeParseAsync(metaObject);
         if(!z0.success){
-            const newMetaObject: Assets.AssetImage = {
-                guid,
-                image: {
-                    imageType: "Texture",
-                    sRGB: true,
-                    qualityLevel: 255,
-                    generateMipmaps: true,
-                    wrapMode: "REPEAT",
-                    filterMode: "BILINEAR",
-                }
-            } as Assets.AssetImage;
+            const newMetaObject = createAssetImage();
             MyWatcherSingleton.metaTasks.push(
                 fs.writeFile(metaPath, JSON.stringify(newMetaObject, null, 2))
             );
@@ -167,20 +157,9 @@ async function verifyMetaFile(
 ){
     if(metaSet.has(assetPath)) return;
     const metaPath = assetPath + ".meta.json";
-    const guid = uuidv4();
     let metaObject: Assets.Asset;
     if(pathIsImage(assetPath)){
-        const newMetaObject: Assets.AssetImage = {
-            guid,
-            image: {
-                imageType: "Texture",
-                sRGB: true,
-                qualityLevel: 255,
-                generateMipmaps: true,
-                wrapMode: "REPEAT",
-                filterMode: "BILINEAR",
-            }
-        };
+        const newMetaObject = createAssetImage();
         MyWatcherSingleton.metaTasks.push(
             fs.writeFile(metaPath, JSON.stringify(newMetaObject, null, 2))
         );
@@ -192,7 +171,7 @@ async function verifyMetaFile(
         if(!assetEntry) throw "my-watcher error";
         if(assetEntry.isDirectory()){
             const newMetaObject: Assets.AssetFolder = {
-                guid,
+                guid: uuidv4(),
                 isFolder: true
             };
             MyWatcherSingleton.metaTasks.push(
@@ -203,7 +182,7 @@ async function verifyMetaFile(
         }
         else{
             const newMetaObject: Assets.AssetFile = {
-                guid,
+                guid: uuidv4(),
                 isFolder: false
             };
             MyWatcherSingleton.metaTasks.push(
@@ -214,7 +193,7 @@ async function verifyMetaFile(
         }
     }
     metaSet.add(assetPath);
-    assetMap[guid] = metaObject;
+    assetMap[metaObject.guid] = metaObject;
 }
 function pathIsImage(path: string){
     const ext = fsPath.extname(path).toLowerCase();

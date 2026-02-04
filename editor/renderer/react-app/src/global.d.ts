@@ -1,3 +1,5 @@
+import type { Assets } from "./engine-zod"
+
 export type ApiType = {
     close: () => void,
     maximize: () => void,
@@ -10,20 +12,21 @@ export type ApiType = {
     },
     folder: {
         open: () => Promise<string | null>,
-        ensureMetaFile: (projectPath: string) => Promise<void>,
+        ensureMetaFile: (projectPath: string) => Promise<Assets.Asset[]>,
         load: (path: string) => Promise<(DirectoryTree.Directory | DirectoryTree.File)[]>,
-        create: (parentPath: string, name: string) => Promise<DirectoryTree.Directory | null>,
+        create: (path: string) => Promise<DirectoryTree.Directory>,
         watch: (path: string) => Promise<void>,
         unwatch: (path: string) => Promise<void>,
         onWatchEvent: (callback: () => void) => Function,
     },
     file: {
         exist: (path: string) => Promise<boolean>,
-        delete: (path: string, recycle: boolean) => Promise<boolean>,
+        delete: (path: string, recycle: boolean) => Promise<void>,
         silentDelete: (path: string, recycle: boolean) => Promise<void>,
         create: (fullPath: string, data: string) => Promise<DirectoryTree.File>,
         open: () => Promise<string | null>,
-        import: (importPath: string, destFolder: string) => Promise<DirectoryTree.File | null>,
+        copy: (src: string, dest: string) => Promise<DirectoryTree.File>,
+        importModel: (importPath: string, destFolder: string) => Promise<DirectoryTree.File>,
         getText: (destPath: string) => Promise<string>,
         openSave: (fileName: string, data: string) => Promise<string | null>,
         save: (destPath: string, data: string) => Promise<void>,

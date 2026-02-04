@@ -1,5 +1,6 @@
 import { AppBar } from './pages/main-page/components/app-bar/AppBar';
 import { ContextMenu } from './pages/main-page/components/context-menu/ContextMenu';
+import { AppConfirmDialog } from './pages/main-page/components/dialogs/AppConfirmDialog';
 import { AppLoading } from './pages/main-page/components/loadings/AppLoading';
 import { MainPage } from './pages/main-page/MainPage';
 
@@ -10,6 +11,7 @@ function App() {
             <MainPage />
             <ContextMenu />
             <AppLoading />
+            <AppConfirmDialog />
         </div>
     );
 }

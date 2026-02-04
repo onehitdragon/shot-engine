@@ -1,4 +1,0 @@
-- image file (png, jpg...)
-+ when open project -> ensure .meta.json -> ensure .ktx2
-+ when delete -> delete .meta.json -> delete .ktx2
-+ when focus -> ensure .meta.json -> ensure .ktx2

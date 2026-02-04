@@ -8,7 +8,7 @@ import { SceneInspector } from "./SceneInspector";
 import { selectFocusedSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { SceneNodeInspector } from "./SceneNodeInspector";
 import { AssimpInspector } from "./AssimpInspector";
-import { extIsImage } from "../../helpers/image-import/image-import-helpers";
+import { AssetInspector } from "./ImageInspector";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
@@ -33,6 +33,7 @@ export function InspectorTab(){
             const text = await window.api.file.getText(entry.path);
             if(!active) return;
             const ext = (await window.fsPath.extname(entry.path)).toLowerCase();
+            const metaPath = entry.path + ".meta.json";
             if(ext === ".json"){
                 try {
                     const jsonObject = JSON.parse(text);
@@ -62,10 +63,13 @@ export function InspectorTab(){
                     dispatchShowTextInspector(text);
                 }
             }
-            else if(extIsImage(ext)){
-                // come back later
-                const metaFilePath = `${entry.path}.meta.json`;
-                console.log(metaFilePath, await window.api.file.exist(metaFilePath));
+            else if(await window.api.file.exist(metaPath)){
+                const metaObject = JSON.parse(await window.api.file.getText(metaPath));
+                dispatch(showInspector({ inspector: {
+                    type: "asset",
+                    guid: metaObject["guid"],
+                    metaPath: metaPath
+                } }));
             }
             else{
                 dispatchShowTextInspector(text);
@@ -104,6 +108,7 @@ export function InspectorTab(){
                 inspector.type === "assimp" ? <AssimpInspector inspector={inspector}/> :
                 (inspector.type === "scene" && focusedEntry) ? <SceneInspector sceneInspector={inspector} path={focusedEntry.path}/> :
                 inspector.type === "scene-node" ? <SceneNodeInspector sceneNodeInspector={inspector}/> :
+                inspector.type === "asset" ? <AssetInspector inspector={inspector}/> :
                 <div className="flex items-center justify-center flex-1 text-white text-sm">
                     This type is not supported in the inspector yet!
                 </div>

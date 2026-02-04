@@ -30,7 +30,7 @@ contextBridge.exposeInMainWorld("api", {
         open: () => ipcRenderer.invoke("folder:open"),
         ensureMetaFile: (projectPath: string) => ipcRenderer.invoke("folder:ensureMetaFile", projectPath),
         load: (path: string) => ipcRenderer.invoke("folder:load", path),
-        create: (parentPath: string, name: string) => ipcRenderer.invoke("folder:create", parentPath, name),
+        create: (path: string) => ipcRenderer.invoke("folder:create", path),
         watch: (path: string) => ipcRenderer.invoke("folder:watch", path),
         unwatch: (path: string) => ipcRenderer.invoke("folder:unwatch", path),
         onWatchEvent: (callback: any) => {
@@ -50,7 +50,8 @@ contextBridge.exposeInMainWorld("api", {
         silentDelete: (path: string, recycle: boolean) => ipcRenderer.invoke("file:silentDelete", path, recycle),
         create: (fullPath: string, data: string) => ipcRenderer.invoke("file:create", fullPath, data),
         open: () => ipcRenderer.invoke("file:open"),
-        import: (importPath: string, destFolder: string) => ipcRenderer.invoke("file:import", importPath, destFolder),
+        copy: (src: string, dest: string) => ipcRenderer.invoke("file:copy", src, dest),
+        importModel: (importPath: string, destFolder: string) => ipcRenderer.invoke("file:importModel", importPath, destFolder),
         getText: (destPath: string) => ipcRenderer.invoke("file:getText", destPath),
         openSave: (fileName: string, data: string) => ipcRenderer.invoke("file:openSave", fileName, data),
         save: (destPath: string, data: string) => ipcRenderer.invoke("file:save", destPath, data),
