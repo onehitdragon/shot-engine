@@ -18,7 +18,7 @@ export async function ensureMetaFile(dirPath: string){
     watcher.on("all", () => {
         dirty = true;
     });
-    let assetMap: Record<string, Assets.Asset> = {};
+    let assetMap: Record<string, Assets.MetaObject> = {};
     const reopen = async () => {
         try{
             do{
@@ -57,7 +57,7 @@ async function syncMetaFile(dirPath: string){
         entries.map(e => [e.path, e.dirent])
     );
     const metaSet = new Set<string>(); // asset path
-    const assetMap: Record<string, Assets.Asset> = {}
+    const assetMap: Record<string, Assets.MetaObject> = {}
     const assets: Dirent<string>[] = [];
     for(const entry of entries){
         const fullPath = entry.path;
@@ -87,7 +87,7 @@ async function processMetaFile(
     assetPath: string,
     entryMap: Map<string, Dirent<string>>,
     metaSet: Set<string>, // asset path
-    assetMap: Record<string, Assets.Asset> // guid, meta path
+    assetMap: Record<string, Assets.MetaObject> // guid, meta path
 ){
     const assetEntry = entryMap.get(assetPath);
     if(!assetEntry){
@@ -147,13 +147,16 @@ async function processMetaFile(
         }
     }
     metaSet.add(assetPath);
-    assetMap[guid] = metaObject;
+    assetMap[guid] = {
+        path: assetPath,
+        asset: metaObject
+    };
 }
 async function verifyMetaFile(
     assetPath: string,
     entryMap: Map<string, Dirent<string>>,
     metaSet: Set<string>, // asset path
-    assetMap: Record<string, Assets.Asset> // guid, meta path
+    assetMap: Record<string, Assets.MetaObject> // guid, meta path
 ){
     if(metaSet.has(assetPath)) return;
     const metaPath = assetPath + ".meta.json";
@@ -193,7 +196,10 @@ async function verifyMetaFile(
         }
     }
     metaSet.add(assetPath);
-    assetMap[metaObject.guid] = metaObject;
+    assetMap[metaObject.guid] = {
+        path: assetPath,
+        asset: metaObject
+    };
 }
 function pathIsImage(path: string){
     const ext = fsPath.extname(path).toLowerCase();

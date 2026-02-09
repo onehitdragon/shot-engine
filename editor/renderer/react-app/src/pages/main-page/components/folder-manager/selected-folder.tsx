@@ -1,7 +1,7 @@
 import { FolderPlusIcon, FolderIcon, DocumentTextIcon,
     ArrowDownOnSquareIcon, PhotoIcon
  } from "@heroicons/react/24/solid";
-import { chooseEntry, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, focusEntry, type FolderManager, selectSelectedEntry, selectEntryByPath } from "../../../../global-state/slices/folder-manager-slice";
+import { chooseEntry, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, focusEntry, type FolderManager, selectEntryByPath, selectSelectedEntry } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { useEffect, useRef, useState } from "react";
@@ -10,7 +10,7 @@ import { fileIsImage } from "../../helpers/folder-manager-helper/helper";
 import { createFolderThunk, deleteEntryThunk, importFileThunk } from "../../../../global-state/thunks/folder-manager-thunks";
 
 export function SelectedFolder(){
-    const selectedEntry = useAppSelector(selectSelectedEntry);
+    const selectedEntry = useAppSelector(state => selectSelectedEntry(state));
     const dispatch = useAppDispatch();
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -35,10 +35,12 @@ export function SelectedFolder(){
             <div ref={ref} className='p-1 flex flex-col overflow-auto
                 scrollbar-thin'>
                 {
-                    selectedEntry.children.map(entry => <Entry key={entry.path}
-                        entryPath={entry.path}
-                        parentDirectory={selectedEntry}
-                    />)
+                    selectedEntry.children.map(
+                        path => <Entry key={path}
+                            entryPath={path}
+                            parentDirectory={selectedEntry}
+                        />
+                    )
                 }
             </div>
             <div className="flex-1"></div>
@@ -198,7 +200,7 @@ function CreateFolderButton(props: { selectedDirectory: FolderManager.DirectoryS
         </button>
         :
         <EntryNameInput
-            entries={selectedDirectory.children}
+            children={selectedDirectory.children}
             create={create}
             close={close}
         />
@@ -245,17 +247,17 @@ function ImportFileButton(props: { selectedDirectory: FolderManager.DirectorySta
     );
 }
 type EntryNameInputProps = {
-    entries: (DirectoryTree.Directory | DirectoryTree.File)[],
+    children: string[],
     create: (name: string) => void,
     close: () => void
 }
 function EntryNameInput(props: EntryNameInputProps){
-    const { entries, close, create } = props;
+    const { children, close, create } = props;
     const [name, setName] = useState("");
     const isValid = () => {
         const nameTrim = name.trim();
         if(nameTrim == "") return false;
-        return !entries.some(entry => entry.name == nameTrim);
+        return !children.some(child => child.endsWith(nameTrim));
     }
     const keyDown = async (value: string) => {
         if(/^[^/\\:*?"<>|]$/.test(value)){

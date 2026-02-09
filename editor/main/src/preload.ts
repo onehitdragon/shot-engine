@@ -56,6 +56,8 @@ contextBridge.exposeInMainWorld("api", {
         openSave: (fileName: string, data: string) => ipcRenderer.invoke("file:openSave", fileName, data),
         save: (destPath: string, data: string) => ipcRenderer.invoke("file:save", destPath, data),
         getSha256: (path: string) => ipcRenderer.invoke("file:getSha256", path),
+        loadDataURL: (path: string) => ipcRenderer.invoke("file:loadDataURL", path),
+        readImage: (path: string) => ipcRenderer.invoke("file:readImage", path),
     },
     ktx2: {
         createTextureKTX2: (sourcePath: string, destPath: string, metaHash: string, settings: KTX2.TextureKTX2Settings) => 

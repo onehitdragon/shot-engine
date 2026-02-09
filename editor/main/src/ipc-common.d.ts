@@ -1,9 +1,10 @@
 declare namespace DirectoryTree{
+    export type Entry = Directory | File;
     export type Directory = {
         type: "Directory"
         name: string,
         path: string,
-        children: (Directory | File)[]
+        children: string[]
     }
     export type File = {
         type: "File",

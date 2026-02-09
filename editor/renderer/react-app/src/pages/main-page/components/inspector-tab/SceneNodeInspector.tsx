@@ -1,11 +1,13 @@
 import { useState, type JSX } from "react";
-import { useAppDispatch } from "../../../../global-state/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import type { SceneNodeInspector } from "../../../../global-state/slices/inspector-slice";
 import { updateComponentOfSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { clamp } from "@math.gl/core";
 import { CheckBox, OneValueRow, Selection } from "./components";
+import { selectAssetImages } from "../../../../global-state/slices/asset-manager-slice";
+import { createOptions, findGuid } from "../../helpers/meta-helper/meta-helper";
 
 export function SceneNodeInspector(props: { sceneNodeInspector: SceneNodeInspector }){
     const { sceneNodeInspector } = props;
@@ -220,10 +222,33 @@ function PhongShadingEditor(props: {
     shadingComponent: Components.PhongShading
 }){
     const { node, shadingComponent } = props;
-    const { ambient, shininess } = shadingComponent;
-    const dispatch = useAppDispatch(); 
+    const { diffuse, normal, ambient, shininess } = shadingComponent;
+    const assetImages = useAppSelector(selectAssetImages);
+    const dispatch = useAppDispatch();
     return (
         <div className="flex flex-col">
+            <Selection
+                label="Diffuse"
+                options={createOptions(assetImages)}
+                value={findGuid(diffuse, assetImages)}
+                onChange={(value) => {
+                    dispatch(updateComponentOfSceneNode({
+                        nodeId: node.id,
+                        component: { ...shadingComponent, diffuse: value }
+                    }));
+                }}
+            />
+            <Selection
+                label="Normal"
+                options={createOptions(assetImages)}
+                value={findGuid(normal, assetImages)}
+                onChange={(value) => {
+                    dispatch(updateComponentOfSceneNode({
+                        nodeId: node.id,
+                        component: { ...shadingComponent, normal: value }
+                    }));
+                }}
+            />
             <ThreeValueRow
                 label="Ambient"
                 value={{ x: ambient[0], y: ambient[1], z: ambient[2] }}

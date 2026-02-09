@@ -11,6 +11,7 @@ import { ensureMetaFile } from "./my-watcher/my-watcher";
 import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
 import chokidar, { type FSWatcher } from 'chokidar';
+import sharp from "sharp";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -110,18 +111,18 @@ app.whenReady()
                 }
             );
         });
-        const directory: DirectoryTree.Directory = {
+        const baseDirectory: DirectoryTree.Directory = {
             type: "Directory",
             name: path.basename(folderPath),
             path: folderPath,
             children: []
         };
-        const entryMap = new Map<string, DirectoryTree.Directory | DirectoryTree.File>();
-        entryMap.set(directory.path, directory);
+        const entryMap = new Map<string, DirectoryTree.Entry>();
+        entryMap.set(baseDirectory.path, baseDirectory);
         for(const entry of entries){
             const parent = entryMap.get(entry.dirent.parentPath);
-            if(!parent || parent.type === "File") continue;
-            let child: DirectoryTree.Directory | DirectoryTree.File;
+            if(!parent || parent.type === "File") throw "internal error";
+            let child: DirectoryTree.Entry;
             if(entry.dirent.isDirectory()){
                 child = {
                     type: "Directory",
@@ -137,7 +138,7 @@ app.whenReady()
                     path: entry.path
                 };
             }
-            parent.children.push(child);
+            parent.children.push(child.path);
             entryMap.set(entry.path, child);
         }
         return Array.from(entryMap.values());
@@ -251,6 +252,21 @@ app.whenReady()
         hash.update(buffer);
         const value = hash.digest("hex");
         return value;
+    });
+    ipcMain.handle("file:loadDataURL", async (e, path: string) => {
+        const buffer = await fs.readFile(path);
+        return `data:image/png;base64,${buffer.toString("base64")}`;
+    });
+    ipcMain.handle("file:readImage", async (e, path: string) => {
+        const { data, info } = await sharp(path)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({resolveWithObject: true});
+        return {
+            width: info.width,
+            height: info.height,
+            data: new Uint8Array(data)
+        };
     });
     ipcMain.handle(
         "ktx2:createTextureKTX2",

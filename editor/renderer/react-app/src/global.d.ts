@@ -12,8 +12,11 @@ export type ApiType = {
     },
     folder: {
         open: () => Promise<string | null>,
-        ensureMetaFile: (projectPath: string) => Promise<Assets.Asset[]>,
-        load: (path: string) => Promise<(DirectoryTree.Directory | DirectoryTree.File)[]>,
+        ensureMetaFile: (projectPath: string) => Promise<{
+            path: string,
+            asset: Assets.Asset
+        }[]>,
+        load: (path: string) => Promise<DirectoryTree.Entry[]>,
         create: (path: string) => Promise<DirectoryTree.Directory>,
         watch: (path: string) => Promise<void>,
         unwatch: (path: string) => Promise<void>,
@@ -31,6 +34,12 @@ export type ApiType = {
         openSave: (fileName: string, data: string) => Promise<string | null>,
         save: (destPath: string, data: string) => Promise<void>,
         getSha256: (path: string) => Promise<string>,
+        loadDataURL: (path: string) => Promise<string>,
+        readImage: (path: string) => Promise<{
+            width: number,
+            height: number,
+            data: Uint8Array<ArrayBuffer>
+        }>
     },
     ktx2: {
         createTextureKTX2: (sourcePath: string, destPath: string, metaHash: string, settings: KTX2.TextureKTX2Settings) => Promise<DirectoryTree.File>,

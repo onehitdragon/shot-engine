@@ -32,8 +32,8 @@ export const openProjectThunk = createAsyncThunk
             projectPath = path;
 
             dispatch(addLog({ log: `ensureMetaFile... ` }));
-            const assets = await window.api.folder.ensureMetaFile(projectPath);
-            dispatch(recreate({ assets }));
+            const metaObjects = await window.api.folder.ensureMetaFile(projectPath);
+            dispatch(recreate({ metaObjects }));
             
             dispatch(addLog({ log: `load...` }));
             const entries = await window.api.folder.load(projectPath);
@@ -66,8 +66,8 @@ async function processBlurFocusEvent(projectPath: string, dispatch: AppDispatch)
             dispatch(updateLoading({ loading: true }));
             dispatch(addLog({ log: `Reloading project... ${projectPath}` }));
             dispatch(addLog({ log: `ensureMetaFile... ` }));
-            const assets = await window.api.folder.ensureMetaFile(projectPath);
-            dispatch(recreate({ assets }));
+            const metaObjects = await window.api.folder.ensureMetaFile(projectPath);
+            dispatch(recreate({ metaObjects }));
             dispatch(addLog({ log: `load...` }));
             const entries = await window.api.folder.load(projectPath);
             dispatch(reloadEntries({ entries }));
@@ -150,7 +150,12 @@ export const createFolderThunk = createAsyncThunk
                     created.path + ".meta.json",
                     JSON.stringify(asset, null, 2)
                 );
-                dispatch(addAsset({ asset }));
+                dispatch(addAsset({
+                    metaObject: {
+                        path: created.path,
+                        asset
+                    }
+                }));
             }
             dispatch(addEntry({ parentPath, entry: created }));
         }
@@ -204,7 +209,12 @@ export const importFileThunk = createAsyncThunk
             }
             if(importedFile && asset){
                 dispatch(addEntry({ parentPath: destFolder, entry: importedFile }));
-                dispatch(addAsset({ asset }));
+                dispatch(addAsset({
+                    metaObject: {
+                        path: importedFile.path,
+                        asset
+                    }
+                }));
             }
         }
         catch(err){

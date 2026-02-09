@@ -68,6 +68,7 @@ export function InspectorTab(){
                 dispatch(showInspector({ inspector: {
                     type: "asset",
                     guid: metaObject["guid"],
+                    path: entry.path,
                     metaPath: metaPath
                 } }));
             }

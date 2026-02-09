@@ -35,6 +35,8 @@ export function createPhongShadingComponent(){
         culling: "none",
         transparent: false,
         shaderType: "phong",
+        diffuse: "",
+        normal: "",
         ambient: [0.1, 0.1, 0.1],
         shininess: 1
     }

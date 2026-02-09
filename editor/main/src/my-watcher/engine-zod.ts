@@ -16,9 +16,9 @@ export const AssetFileSchema = AssetBaseSchema.extend({
 const WrapMode = z.enum(["REPEAT", "MIRROR", "CLAMP"]);
 const FilterMode = z.enum(["NONE", "BILINEAR", "TRILINEAR"]);
 const TextureBaseSchema = z.object({
-    generateMipmaps: z.boolean(),
     wrapMode: WrapMode,
     filterMode: FilterMode,
+    generateMipmaps: z.boolean(),
 });
 const TextureSchema = TextureBaseSchema.extend({
     imageType: z.literal("Texture"),
@@ -47,17 +47,21 @@ export function createAssetFolder(){
     };
     return newMetaObject;
 }
+export function createTexture(){
+    const texture: Assets.Texture = {
+        imageType: "Texture",
+        sRGB: true,
+        qualityLevel: 255,
+        generateMipmaps: true,
+        wrapMode: "REPEAT",
+        filterMode: "BILINEAR",
+    }
+    return texture;
+}
 export function createAssetImage(){
     const newMetaObject: Assets.AssetImage = {
         guid: uuidv4(),
-        image: {
-            imageType: "Texture",
-            sRGB: true,
-            qualityLevel: 255,
-            generateMipmaps: true,
-            wrapMode: "REPEAT",
-            filterMode: "BILINEAR",
-        }
+        image: createTexture()
     };
     return newMetaObject;
 }
@@ -77,10 +81,15 @@ export namespace Assets{
     export type AssetFile = z.infer<typeof AssetFileSchema>;
 
     export type Image = z.infer<typeof ImageSchema>;
+    export type TextureBase = z.infer<typeof TextureBaseSchema>;
     export type Texture = z.infer<typeof TextureSchema>;
     export type NormalMap = z.infer<typeof NormalMapSchema>;
     export type LightMap = z.infer<typeof LightMapSchema>;
     export type AssetImage = z.infer<typeof AssetImageSchema>;
 
     export type Asset = AssetFolder | AssetFile | AssetImage;
+    export  type MetaObject = {
+        path: string,
+        asset: Asset
+    }
 }

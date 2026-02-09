@@ -88,4 +88,8 @@ export namespace Assets{
     export type AssetImage = z.infer<typeof AssetImageSchema>;
 
     export type Asset = AssetFolder | AssetFile | AssetImage;
+    export  type MetaObject = {
+        path: string,
+        asset: Asset
+    }
 }

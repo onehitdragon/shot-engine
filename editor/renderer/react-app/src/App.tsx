@@ -1,4 +1,5 @@
 import { AppBar } from './pages/main-page/components/app-bar/AppBar';
+import { AssetManager } from './pages/main-page/components/asset-manager/AssetManager';
 import { ContextMenu } from './pages/main-page/components/context-menu/ContextMenu';
 import { AppConfirmDialog } from './pages/main-page/components/dialogs/AppConfirmDialog';
 import { AppLoading } from './pages/main-page/components/loadings/AppLoading';
@@ -10,6 +11,7 @@ function App() {
             <AppBar />
             <MainPage />
             <ContextMenu />
+            <AssetManager />
             <AppLoading />
             <AppConfirmDialog />
         </div>

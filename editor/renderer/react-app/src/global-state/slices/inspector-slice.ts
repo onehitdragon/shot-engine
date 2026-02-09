@@ -24,6 +24,7 @@ export type SceneNodeInspector = {
 export type AssetInspector = {
     type: "asset",
     guid: string,
+    path: string,
     metaPath: string
 }
 type State = {

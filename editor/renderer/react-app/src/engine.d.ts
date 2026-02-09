@@ -53,6 +53,8 @@ declare namespace Components{
     }
     export type PhongShading = ShadingBase & {
         shaderType: "phong",
+        diffuse: string,
+        normal: string,
         ambient: vec3,
         shininess: float
     }

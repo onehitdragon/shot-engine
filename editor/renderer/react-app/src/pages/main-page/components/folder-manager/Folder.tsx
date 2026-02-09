@@ -1,7 +1,8 @@
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { ChevronRightIcon, FolderIcon, FolderOpenIcon } from "@heroicons/react/24/solid";
-import { chooseEntry, selectEntryByPath, selectSelectedEntry, toggleExpandDirectory, type FolderManager } from '../../../../global-state/slices/folder-manager-slice';
+import { chooseEntry, selectChildren, selectEntryByPath, toggleExpandDirectory, type FolderManager } from '../../../../global-state/slices/folder-manager-slice';
 import { useAppDispatch, useAppSelector } from '../../../../global-state/hooks';
+import { useMemo } from 'react';
 
 type FolderProps = {
     path: string,
@@ -9,16 +10,17 @@ type FolderProps = {
 }
 export function Folder(props: FolderProps){
     const { path, level = 0 } = props;
-    const directory = useAppSelector(state => selectEntryByPath(state, path));
-    if(directory.type !== "Directory") throw `${path} is not directory`;
-    const { children: entries } = directory;
-    const isEmpty = entries.length == 0;
-    const isOnlyFile = !isEmpty && entries.every(entry => entry.type == "File");
+    const entry = useAppSelector(state => selectEntryByPath(state, path));
+    if(entry.type !== "Directory") throw `${path} is not directory`;
+    const directory = entry;
+    const children = useAppSelector(state => selectChildren(state, directory.children));
+    const isEmpty = children.length == 0;
+    const isOnlyFile = useMemo(() => children.every((child) => child.type === "File"), [children]);
     const dispatch = useAppDispatch();
-    const selectedDirectory = useAppSelector(selectSelectedEntry);
-    const isSelected = selectedDirectory && selectedDirectory.path == directory.path;
+    const selectedPath = useAppSelector(state => state.folderManager.selectedPath);
+    const isSelected = selectedPath && selectedPath === entry.path;
     const click = () => {
-        if(!isOnlyFile) dispatch(toggleExpandDirectory({ path: directory.path }));
+        if(!isEmpty && !isOnlyFile) dispatch(toggleExpandDirectory({ path: directory.path }));
         dispatch(chooseEntry({ path: directory.path }));
     }
 
@@ -45,9 +47,9 @@ export function Folder(props: FolderProps){
                 &&
                 <ul className='flex flex-col'>
                     {
-                        entries.map(entry => {
-                            if(entry.type == 'Directory'){
-                                return <Folder key={entry.path} path={entry.path} level={level + 1}/>
+                        children.map(child => {
+                            if(child.type == 'Directory'){
+                                return <Folder key={child.path} path={child.path} level={level + 1}/>
                             }
                         })
                     }

@@ -1,11 +1,10 @@
-import { createEntityAdapter, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit"
+import { createEntityAdapter, createSelector, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit"
 import type { RootState } from "../store";
 import { closeProjectThunk, openProjectThunk } from "../thunks/folder-manager-thunks";
 
 export declare namespace FolderManager {
     export type DirectoryState = DirectoryTree.Directory & {
-        expanding?: boolean,
-        children: (DirectoryState | DirectoryTree.File)[]
+        expanding?: boolean
     }
 }
 interface DirectoryEntityState extends EntityState<FolderManager.DirectoryState | DirectoryTree.File, string> {
@@ -43,9 +42,7 @@ const slice = createSlice({
         },
         reloadEntries: (
             state,
-            action: PayloadAction<{
-                entries: (DirectoryTree.Directory | DirectoryTree.File)[]
-            }>
+            action: PayloadAction<{ entries: DirectoryTree.Entry[] }>
         ) => {
             state.selectedPath = null;
             state.focusedPath = null;
@@ -63,7 +60,7 @@ const slice = createSlice({
             if(state.entities[entry.path]) return;
             const parent = state.entities[parentPath];
             if(!parent || parent.type === "File") return;
-            parent.children.push(entry);
+            parent.children.push(entry.path);
             adapter.addOne(state, entry);
         },
         deleteEntry: (
@@ -76,7 +73,7 @@ const slice = createSlice({
             const { parentPath, entryPath } = action.payload;
             const parent = state.entities[parentPath];
             if(!parent || parent.type === "File") return;
-            const index = parent.children.findIndex(e => e.path === entryPath);
+            const index = parent.children.findIndex(path => path === entryPath);
             if(index == -1) return;
             parent.children.splice(index, 1);
             adapter.removeOne(state, entryPath);
@@ -96,8 +93,17 @@ const slice = createSlice({
     }
 });
 export const {
-  selectById: selectEntryByPath
+  selectById: selectEntryByPath, selectEntities: selectEntries
 } = adapter.getSelectors((state: RootState) => state.folderManager);
+const selectChildren = createSelector(
+    [
+        selectEntries,
+        (_: RootState, children: string[]) => children
+    ],
+    (entities, children) => {
+        return children.map(path => entities[path]);
+    }
+);
 function selectSelectedEntry(state: RootState){
     const { selectedPath } = state.folderManager;
     if(selectedPath) return selectEntryByPath(state, selectedPath);
@@ -109,5 +115,5 @@ function selectFocusedEntry(state: RootState){
 export const { toggleExpandDirectory, chooseEntry,
     focusEntry, unfocusEntry, addEntry, deleteEntry, reloadEntries
 } = slice.actions;
-export { selectSelectedEntry, selectFocusedEntry }
+export { selectChildren, selectSelectedEntry, selectFocusedEntry }
 export default slice.reducer;

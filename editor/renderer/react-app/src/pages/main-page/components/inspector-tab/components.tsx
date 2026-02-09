@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function TextRow(props: {
     label: string,
@@ -115,6 +115,28 @@ export function ButtonRow(
                 })
             }
             
+        </div>
+    );
+}
+export function Image(props: { path: string }){
+    const [src, setSrc] = useState("");
+    useEffect(() => {
+        let cancel = false;
+        const handle = async () => {
+            const dataURL = await window.api.file.loadDataURL(props.path);
+            if(!cancel) setSrc(dataURL);
+        }
+        handle();
+        return () => {
+            cancel = true;
+        }
+    }, [props.path])
+    return (
+        <div className="flex justify-center">
+            {
+                src &&
+                <img className="size-36" src={src}/>
+            }
         </div>
     );
 }
