@@ -2,41 +2,24 @@ import { CubeIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, ChevronRightIcon, Square3Stack3DIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import { addTopSceneNode, focusSceneNode, renameSceneNode, unfocusSceneNode, updateSceneModified, updateScenePath } from "../../../../global-state/slices/scene-manager-slice";
+import { addTopSceneNode, focusSceneNode, renameSceneNode, selectSceneNodeById, unfocusSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { createEmptySceneNode } from "../../helpers/SceneNodeHelper";
+import { saveSceneThunk } from "../../../../global-state/thunks/scene-manager-thunks";
+import { createEmptySceneNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 
 export function Scene(props: { scene: SceneFormat.Scene }){
     const { scene } = props;
-    const { name, sceneGraph } = scene;
-    const { nodes } = sceneGraph;
+    const { name, nodes } = scene;
     const modified = useAppSelector(state => state.sceneManager.modified);
-    const path = useAppSelector(state => state.sceneManager.path);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
         const handler = async (e: KeyboardEvent) => {
-            if(e.ctrlKey && e.key == "s"){
-                if(!modified) return;
-                const jsonImportFile: Importer.JsonImportFile = {
-                    type: "scene",
-                    data: scene
-                }
-                const json = JSON.stringify(jsonImportFile, null, 2);
-                if(!path){
-                    const savedPath = await window.api.file.openSave(name + ".scene.json", json);
-                    if(!savedPath) return;
-                    dispatch(updateScenePath({ path: savedPath }));
-                }
-                else{
-                    await window.api.file.save(path, json);
-                }
-                dispatch(updateSceneModified({ value: false }));
-            }
+            if(e.ctrlKey && e.key == "s") dispatch(saveSceneThunk());
         }
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
-    }, [sceneGraph, modified, path]);
+    }, []);
     const createEmptyChild = () => {
         dispatch(addTopSceneNode({ node: createEmptySceneNode() }));
     }
@@ -61,19 +44,19 @@ export function Scene(props: { scene: SceneFormat.Scene }){
         </div>
     );
 }
-function SceneNodes(props: { nodes: SceneFormat.SceneNode[]}){
-    const { nodes } = props;
-
+function SceneNodes(props: { nodes: string[], parent?: string }){
+    const { nodes, parent } = props;
     return (
         <ul className="flex flex-col ml-2.5">
             {
-                nodes.map(node => <SceneNode key={node.id} node={node}/>)
+                nodes.map(node => <SceneNode key={node} nodeId={node} parent={parent}/>)
             }
         </ul>
     );
 }
-function SceneNode(props: { node: SceneFormat.SceneNode }){
-    const { node } = props;
+function SceneNode(props: { nodeId: string, parent?: string }){
+    const { nodeId, parent } = props;
+    const node = useAppSelector(state => selectSceneNodeById(state, nodeId));
     const { id, childs } = node;
     const [collapsed, setCollapsed] = useState(true);
     const focusedId = useAppSelector(state => state.sceneManager.focusedId);
@@ -98,19 +81,19 @@ function SceneNode(props: { node: SceneFormat.SceneNode }){
                 </div>
                 {
                     (!focusedId || focusedId != id) ?
-                    <NonSelected node={node}/> :
-                    <Selected node={node}/>
+                    <NonSelected node={node} parent={parent}/> :
+                    <Selected node={node} parent={parent}/>
                 }
             </div>
             {
                 !collapsed &&
-                <SceneNodes nodes={childs}/>
+                <SceneNodes nodes={childs} parent={id}/>
             }
         </li>
     );
 }
-function NonSelected(props: { node: SceneFormat.SceneNode }){
-    const { node } = props;
+function NonSelected(props: { node: SceneFormat.SceneNode, parent?: string }){
+    const { node, parent } = props;
     const dispatch = useAppDispatch();
     const click = () => {
         dispatch(focusSceneNode({ id: node.id }));
@@ -119,7 +102,7 @@ function NonSelected(props: { node: SceneFormat.SceneNode }){
         e.preventDefault();
         dispatch(focusSceneNode({ id: node.id }));
         dispatch(openContextMenu({
-            contextMenu: { type: "scene-node", sceneNode: node },
+            contextMenu: { type: "scene-node", sceneNode: node, parent },
             mousePos: { x: e.clientX, y: e.clientY }
         }));
     }
@@ -132,8 +115,8 @@ function NonSelected(props: { node: SceneFormat.SceneNode }){
         </div>
     );
 }
-function Selected(props: { node: SceneFormat.SceneNode }){
-    const { node } = props;
+function Selected(props: { node: SceneFormat.SceneNode, parent?: string }){
+    const { node, parent } = props;
     const { name } = node;
     const dispatch = useAppDispatch();
     const [editing, setEditing] = useState(false);
@@ -155,7 +138,7 @@ function Selected(props: { node: SceneFormat.SceneNode }){
     const rightClick = (e: React.MouseEvent) => {
         e.preventDefault();
         dispatch(openContextMenu({
-            contextMenu: { type: "scene-node", sceneNode: node },
+            contextMenu: { type: "scene-node", sceneNode: node, parent },
             mousePos: { x: e.clientX, y: e.clientY }
         }));
     }

@@ -2,13 +2,13 @@ import { useAppDispatch } from "../../../../global-state/hooks";
 import type { SceneInspector } from "../../../../global-state/slices/inspector-slice";
 import { updateScene, updateSceneModified, updateScenePath } from "../../../../global-state/slices/scene-manager-slice";
 
-export function SceneInspector(props: { sceneInspector: SceneInspector, path: string }){
-    const { sceneInspector, path } = props;
-    const { scene } = sceneInspector;
+export function SceneInspector(props: { sceneInspector: SceneInspector }){
+    const { sceneInspector } = props;
+    const { path, scene, nodes } = sceneInspector;
     const dispatch = useAppDispatch();
 
     const openScene = () => {
-        dispatch(updateScene({ scene: scene }));
+        dispatch(updateScene({ scene, nodes }));
         dispatch(updateScenePath({ path: path }));
         dispatch(updateSceneModified({ value: false }));
     }

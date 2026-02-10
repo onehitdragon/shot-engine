@@ -1,18 +1,17 @@
 import { ArrowsRightLeftIcon } from "@heroicons/react/24/solid";
-import type { AssimpInspector } from "../../../../global-state/slices/inspector-slice";
 import { mat4 } from "gl-matrix";
 import { Euler, degrees } from "@math.gl/core";
 import { useAppDispatch } from "../../../../global-state/hooks";
-import { addTopSceneNode } from "../../../../global-state/slices/scene-manager-slice";
-import { createAssimpSceneNode } from "../../helpers/SceneNodeHelper";
+import type { PrefabInspector } from "../../../../global-state/slices/inspector-slice";
 
-export function AssimpInspector(props: { inspector: AssimpInspector }){
-    const { assimp } = props.inspector;
+export function PrefabInspector(props: { inspector: PrefabInspector }){
+    const {  } = props.inspector;
     return (
         <div className="p-1 overflow-auto scrollbar-thin flex flex-1 flex-col">
-            <div className="flex flex-col">
+            Fix later
+            {/* <div className="flex flex-col">
                 <span className="text-white text-center text-sm">Nodes</span>
-                <Node node={assimp.rootnode} meshes={assimp.meshes}/>
+                <Node node={assimp.rootnode} meshes={assimp.meshes} inspector={props.inspector}/>
             </div>
             <div className="flex flex-col">
                 <span className="text-white text-center text-sm">Meshes</span>
@@ -23,17 +22,15 @@ export function AssimpInspector(props: { inspector: AssimpInspector }){
                         })
                     }
                 </ul>
-            </div>
+            </div> */}
         </div>
     );
 }
-function AddToSceneButton(props: { node: AssimpFormat.Node, meshes: AssimpFormat.Mesh[] }){
-    const { node, meshes } = props;
+function AddToSceneButton(props: { }){
+    const { } = props;
     const dispatch = useAppDispatch();
     const click = () => {
-        dispatch(addTopSceneNode({
-            node: createAssimpSceneNode(node, meshes, dispatch)
-        }));
+        
     }
 
     return (
@@ -43,7 +40,7 @@ function AddToSceneButton(props: { node: AssimpFormat.Node, meshes: AssimpFormat
         </button>
     );
 }
-function Node(props: { node: AssimpFormat.Node, meshes: AssimpFormat.Mesh[] }){
+function Node(props: { node: AssimpFormat.Node, meshes: AssimpFormat.Mesh[], inspector: PrefabInspector }){
     const { name, transformation, children, meshes: meshesIndies } = props.node;
     const meshes = props.meshes;
     const transformMat4 = mat4.clone(transformation);
@@ -60,7 +57,7 @@ function Node(props: { node: AssimpFormat.Node, meshes: AssimpFormat.Mesh[] }){
                     {name}
                 </span>
                 <div className="flex items-center">
-                    <AddToSceneButton node={props.node} meshes={meshes}/>
+                    {/* <AddToSceneButton node={props.node} meshes={meshes} inspector={props.inspector}/> */}
                 </div>
             </div>
             <div className="flex flex-col">
@@ -80,7 +77,7 @@ function Node(props: { node: AssimpFormat.Node, meshes: AssimpFormat.Mesh[] }){
             <ul className="ml-3 flex flex-col">
                 {
                     children.map((child, index) => {
-                        return <Node key={index} node={child} meshes={meshes}/>
+                        return <Node key={index} node={child} meshes={meshes} inspector={props.inspector}/>
                     })
                 }
             </ul>

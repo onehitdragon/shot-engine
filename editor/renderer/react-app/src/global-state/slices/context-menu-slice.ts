@@ -2,6 +2,7 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export type SceneNodeContextMenu = {
     type: "scene-node",
+    parent?: string,
     sceneNode: SceneFormat.SceneNode
 }
 export type ComponentContextMenu = {

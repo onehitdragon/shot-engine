@@ -7,10 +7,8 @@ import { assimpImporter } from "./importer/assimp/assimp-importer";
 import crypto from "crypto";
 import ktxParser from "ktx-parse";
 import { Worker } from "worker_threads";
-import { ensureMetaFile } from "./my-watcher/my-watcher";
 import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
-import chokidar, { type FSWatcher } from 'chokidar';
 import sharp from "sharp";
 
 const createWindow = () => {
@@ -96,15 +94,10 @@ app.whenReady()
         }
         return created;
     });
-    ipcMain.handle("folder:ensureMetaFile", async (e, projectPath: string) => {
-        const assetRecord = await ensureMetaFile(projectPath);
-        return Object.values(assetRecord);
-    });
     ipcMain.handle("folder:load", async (e, folderPath: string) => {
         const entries = await new Promise<Entry[]>((rel, rej) => {
             fsWalk.walk(
                 folderPath,
-                { entryFilter: e => !e.name.endsWith(".meta.json") },
                 (err, entries) => {
                     if(err) rej(err);
                     rel(entries);
@@ -142,22 +135,6 @@ app.whenReady()
             entryMap.set(entry.path, child);
         }
         return Array.from(entryMap.values());
-    });
-    const watcherMap = new Map<string, FSWatcher>();
-    ipcMain.handle( "folder:watch", async (e, folderPath: string) => {
-        let watcher = watcherMap.get(folderPath);
-        if(watcher) await watcher.close();
-        watcher = chokidar.watch(folderPath, { ignoreInitial: true });
-        watcher.on("all", () => {
-            e.sender.send("folder:onWatchEvent");
-        });
-        watcherMap.set(folderPath, watcher);
-    });
-    ipcMain.handle("folder:unwatch", async (e, folderPath: string) => {
-        const watcher = watcherMap.get(folderPath);
-        if(!watcher) return;
-        await watcher.close();
-        watcherMap.delete(folderPath);
     });
     ipcMain.handle("file:exist", async (e, path: string) => {
         try{
@@ -203,31 +180,15 @@ app.whenReady()
     });
     ipcMain.handle("file:copy", async (e, src: string, dest: string) => {
         await fs.copy(src, dest);
-        const created: DirectoryTree.File = {
-            type: "File",
-            name: path.basename(dest),
-            path: dest
-        }
-        return created;
     });
-    ipcMain.handle("file:importModel", async (e, importPath: string, destFolder: string) => {
+    ipcMain.handle("file:assimpImporter", async (e, importPath: string) => {
         const importExt = path.extname(importPath).toLowerCase();
         if(importExt === ".fbx"){
-            const importName = path.basename(importPath) + ".json";
-            const fullPath = path.join(destFolder, importName);
-            const jsonImportFile: Importer.JsonImportFile = {
+            const jsonImportFile: Extract<Importer.JsonImportFile, { type: "assimp" }> = {
                 type: "assimp",
                 data: await assimpImporter(importPath)
             }
-            await fs.writeFile(fullPath, `${JSON.stringify(jsonImportFile, (key, value) => {
-                return typeof value === "bigint" ? value.toString() : value;
-            }, 2)} \n`);
-            const created: DirectoryTree.File = {
-                type: "File",
-                name: importName,
-                path: fullPath
-            }
-            return created;
+            return jsonImportFile;
         }
         else throw(`model file extension ${importExt} dont support`);
     });

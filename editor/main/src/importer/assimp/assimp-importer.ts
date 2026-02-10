@@ -1,7 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 import fs from "fs/promises"
-import { v4 as uuidv4 } from 'uuid';
 import path from "path";
 
 const execPromise = promisify(exec);
@@ -25,7 +24,6 @@ function createMeshes(meshesJson: any){
     for(const meshJson of meshesJson){
         const name = meshJson["name"] ?? "";
         const mesh: AssimpFormat.Mesh = {
-            id: `${name}-${uuidv4()}`,
             name: name,
             vertices: meshJson["vertices"] ?? [],
             normals: meshJson["normals"] ?? [],
@@ -40,7 +38,7 @@ async function assimpImporter(inPath: string){
     const processResult = await execPromise(
         `assimp export ${inPath} ${jsonPath} -f assjson`
     );
-    console.log(processResult);
+    // console.log(processResult);
     const jsonFile = await fs.readFile(jsonPath);
     const json = JSON.parse(jsonFile.toString());
     const rootJson = json["rootnode"];

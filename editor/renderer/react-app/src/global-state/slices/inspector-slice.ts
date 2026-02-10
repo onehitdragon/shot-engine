@@ -8,13 +8,14 @@ export type FBXInspector = {
     type: "fbx",
     fbx: FBXFormat.FBX
 }
-export type AssimpInspector = {
-    type: "assimp",
-    assimp: AssimpFormat.Assimp
+export type PrefabInspector = {
+    type: "prefab"
 }
 export type SceneInspector = {
     type: "scene",
-    scene: SceneFormat.Scene
+    path: string,
+    scene: SceneFormat.Scene,
+    nodes: SceneFormat.SceneNode[]
 }
 export type SceneNodeInspector = {
     type: "scene-node",
@@ -28,7 +29,7 @@ export type AssetInspector = {
     metaPath: string
 }
 type State = {
-    inspector: null | TextInspector | FBXInspector | AssimpInspector | SceneInspector | SceneNodeInspector
+    inspector: null | TextInspector | FBXInspector | PrefabInspector | SceneInspector | SceneNodeInspector
     | AssetInspector
 };
 const initialState: State = {

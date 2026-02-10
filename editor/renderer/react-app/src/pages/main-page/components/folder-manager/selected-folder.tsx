@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { showDialog } from "../../../../global-state/slices/app-confirm-dialog-slice";
 import { fileIsImage } from "../../helpers/folder-manager-helper/helper";
 import { createFolderThunk, deleteEntryThunk, importFileThunk } from "../../../../global-state/thunks/folder-manager-thunks";
+import { inspectAssetThunk } from "../../../../global-state/thunks/inspector-thunks";
 
 export function SelectedFolder(){
     const selectedEntry = useAppSelector(state => selectSelectedEntry(state));
@@ -60,7 +61,8 @@ function Entry(props: EntryProps){
     const focused = useAppSelector(selectFocusedEntry);
     const isFoucused = focused && focused.path == entry.path;
     const click = () => {
-        dispatch(focusEntry({ path: entry.path }));
+        dispatch(focusEntry(entry));
+        dispatch(inspectAssetThunk(entry));
     };
     const doubleClick = () => {
         if(entry.type == "Directory"){

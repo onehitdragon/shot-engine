@@ -28,20 +28,8 @@ contextBridge.exposeInMainWorld("api", {
     },
     folder: {
         open: () => ipcRenderer.invoke("folder:open"),
-        ensureMetaFile: (projectPath: string) => ipcRenderer.invoke("folder:ensureMetaFile", projectPath),
         load: (path: string) => ipcRenderer.invoke("folder:load", path),
         create: (path: string) => ipcRenderer.invoke("folder:create", path),
-        watch: (path: string) => ipcRenderer.invoke("folder:watch", path),
-        unwatch: (path: string) => ipcRenderer.invoke("folder:unwatch", path),
-        onWatchEvent: (callback: any) => {
-            const subscription = () => {
-                callback();
-            };
-            ipcRenderer.on("folder:onWatchEvent", subscription);
-            return () => {
-                ipcRenderer.off("folder:onWatchEvent", subscription);
-            }
-        },
     },
     file: {
         exist: (path: string) => ipcRenderer.invoke("file:exist", path),
@@ -51,7 +39,7 @@ contextBridge.exposeInMainWorld("api", {
         create: (fullPath: string, data: string) => ipcRenderer.invoke("file:create", fullPath, data),
         open: () => ipcRenderer.invoke("file:open"),
         copy: (src: string, dest: string) => ipcRenderer.invoke("file:copy", src, dest),
-        importModel: (importPath: string, destFolder: string) => ipcRenderer.invoke("file:importModel", importPath, destFolder),
+        assimpImporter: (importPath: string) => ipcRenderer.invoke("file:assimpImporter", importPath),
         getText: (destPath: string) => ipcRenderer.invoke("file:getText", destPath),
         openSave: (fileName: string, data: string) => ipcRenderer.invoke("file:openSave", fileName, data),
         save: (destPath: string, data: string) => ipcRenderer.invoke("file:save", destPath, data),

@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { updateSceneModified, updateScene, updateScenePath } from "../../../../global-state/slices/scene-manager-slice";
-import { createEmptyScene } from "../../helpers/SceneHelper";
+import { createEmptyScene } from "../../helpers/scene-manager-helper/helper";
 import { Scene } from "./SceneGraph";
 
 export function SceneManagerTab(){
@@ -8,7 +8,7 @@ export function SceneManagerTab(){
     const dispatch = useAppDispatch();
 
     const createEmptySceneClick = () => {
-        dispatch(updateScene({ scene: createEmptyScene() }));
+        dispatch(updateScene({ scene: createEmptyScene(), nodes: [] }));
         dispatch(updateScenePath({ path: null }));
         dispatch(updateSceneModified({ value: true }));
     }

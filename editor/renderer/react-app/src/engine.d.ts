@@ -1,26 +1,24 @@
 declare namespace SceneFormat{
     type vec3 = import("gl-matrix").vec3;
     export type Scene = {
+        id: string,
         name: string,
-        sceneGraph: SceneGraph,
-        meshes: Mesh[]
-    }
-    export type SceneGraph = {
-        nodes: SceneNode[]
+        nodes: string[]
     }
     export type SceneNode = {
         id: string,
         name: string,
         components: Components.Component[],
-        childs: SceneNode[],
+        childs: string[],
     }
     export type SceneOrbitCamera = {
         aspect: number,
         sphereCoordinate: { r: number, theta: number, phi: number },
         origin: vec3
     }
+}
+declare namespace MeshFormat{
     export type Mesh = {
-        id: string,
         vertices: number[],
         normals: number[],
         vertexIndices: number[]
@@ -38,9 +36,17 @@ declare namespace Components{
         rotation: vec3,
         scale: vec3
     }
-    export type Mesh = ComponentBase & {
-        type: "Mesh",
-        meshId: string
+    export type Mesh = PrimitiveMesh | ImportMesh;
+    export type MeshBase = ComponentBase & {
+        type: "Mesh"
+    }
+    export type PrimitiveMesh = MeshBase & {
+        meshType: "PrimitiveMesh",
+        primitiveType: "CUBE" | "SPHERE" | "CYLINDER"
+    }
+    export type ImportMesh = MeshBase & {
+        meshType: "ImportMesh",
+        guid: string
     }
     export type Shading = SimpleShading | PhongShading;
     export type ShadingBase = ComponentBase & {

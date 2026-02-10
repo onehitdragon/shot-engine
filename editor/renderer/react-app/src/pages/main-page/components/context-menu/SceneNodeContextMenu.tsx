@@ -1,23 +1,24 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
 import type { SceneNodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { addSceneNodeChild, addUniqueComponentToSceneNode, removeSceneNode } from "../../../../global-state/slices/scene-manager-slice";
+import { addSceneNodeChild, addUniqueComponentToSceneNode, removeTopSceneNode, removeChildSceneNode } from "../../../../global-state/slices/scene-manager-slice";
+import { createCubeSceneNode, createEmptySceneNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 import { createDirectionalLightComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent } from "../../helpers/SceneNodeComponentHelper";
-import { createCubeSceneNode, createEmptySceneNode } from "../../helpers/SceneNodeHelper";
 
 export function SceneNodeContextMenu(
     props: { contextMenu: SceneNodeContextMenu, x: number, y: number }
 ){
     const { contextMenu, x, y } = props;
-    const { sceneNode } = contextMenu;
+    const { sceneNode, parent } = contextMenu;
     const dispatch = useAppDispatch();
     const createEmptyChild = () => {
         dispatch(addSceneNodeChild({ parentId: sceneNode.id, child: createEmptySceneNode() }));
     }
     const remmove = () => {
-        dispatch(removeSceneNode({ id: sceneNode.id }));
+        if(!parent) dispatch(removeTopSceneNode({ id: sceneNode.id }));
+        else dispatch(removeChildSceneNode({ chilId: sceneNode.id, parentId: parent }));
     }
     const createCubeChild = () => {
-        dispatch(addSceneNodeChild({ parentId: sceneNode.id, child: createCubeSceneNode(dispatch) }));
+        dispatch(addSceneNodeChild({ parentId: sceneNode.id, child: createCubeSceneNode() }));
     }
     const addPointLightComponent = () => {
         dispatch(addUniqueComponentToSceneNode({

@@ -1,10 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
-import { cubeMeshData, PRIMITIVE_MESH_ID } from './mesh-datas';
 import { mat4 } from 'gl-matrix';
 import { degrees, Euler } from '@math.gl/core';
-import type { AppDispatch } from '../../../global-state/store';
-import { addMesh } from '../../../global-state/slices/scene-manager-slice';
-import { createPhongShadingComponent } from './SceneNodeComponentHelper';
+import { createPhongShadingComponent } from '../SceneNodeComponentHelper';
+import type { Assets } from '../../../../engine-zod';
 
 export function createEmptySceneNode(){
     const sceneNode: SceneFormat.SceneNode = {
@@ -24,8 +22,7 @@ export function createEmptySceneNode(){
 
     return sceneNode;
 }
-export function createCubeSceneNode(dispatch: AppDispatch){
-    dispatch(addMesh({ mesh: cubeMeshData }));
+export function createCubeSceneNode(){
     const sceneNode: SceneFormat.SceneNode = {
         name: "CubeNode",
         id: uuidv4(),
@@ -38,9 +35,10 @@ export function createCubeSceneNode(dispatch: AppDispatch){
                 scale: [1, 1, 1]
             },
             {
-                type: "Mesh",
                 id: uuidv4(),
-                meshId: PRIMITIVE_MESH_ID.CUBE
+                type: "Mesh",
+                meshType: "PrimitiveMesh",
+                primitiveType: "CUBE"
             },
             {
                 id: uuidv4(),
@@ -55,10 +53,10 @@ export function createCubeSceneNode(dispatch: AppDispatch){
 
     return sceneNode;
 }
-export function createAssimpSceneNode(
+export function createAssimpPrefab(
     node: AssimpFormat.Node,
-    meshes: AssimpFormat.Mesh[],
-    dispatch: AppDispatch
+    meshAssets: Assets.AssetMesh[],
+    parent: SceneFormat.SceneNode | null = null
 ){
     const { name, transformation, meshes: meshIndices, children } = node;
     const transformMat4 = mat4.clone(transformation);
@@ -81,27 +79,22 @@ export function createAssimpSceneNode(
         ],
         childs: [],
     }
+    if(parent) parent.childs.push(sceneNode.id);
     if(meshIndices.length > 0){
-        const mesh = meshes[meshIndices[0]];
-        dispatch(addMesh({ mesh: {
-            id: mesh.id,
-            vertices: mesh.vertices,
-            normals: mesh.normals,
-            vertexIndices: mesh.faces.flat()
-        } }));
+        const guid = meshAssets[meshIndices[0]].guid;
         sceneNode.components.push(
             {
-                type: "Mesh",
                 id: uuidv4(),
-                meshId: mesh.id
+                type: "Mesh",
+                meshType: "ImportMesh",
+                guid
             },
             createPhongShadingComponent()
         );
     }
     for(const childNode of children){
-        const sceneChildNode = createAssimpSceneNode(childNode, meshes, dispatch);
-        sceneNode.childs.push(sceneChildNode);
+        const sceneChildNode = createAssimpPrefab(childNode, meshAssets, sceneNode);
+        sceneNode.childs.push(sceneChildNode.id);
     }
-
     return sceneNode;
 }

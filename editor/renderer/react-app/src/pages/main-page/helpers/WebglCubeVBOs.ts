@@ -1,4 +1,4 @@
-import { cubeMeshData } from "./mesh-datas";
+import { cubeMeshData } from "./scene-manager-helper/mesh-datas";
 import { WebglHelper } from "./WebglHelper";
 
 export class WebglCubeVBOs{

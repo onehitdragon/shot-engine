@@ -39,6 +39,24 @@ const ImageSchema = z.discriminatedUnion("imageType", [
 export const AssetImageSchema = AssetBaseSchema.extend({
     image: ImageSchema
 });
+// scene
+const SceneSchema = z.object({
+});
+export const AssetSceneSchema = AssetBaseSchema.extend({
+    scene: SceneSchema
+});
+// mesh
+const MeshSchema = z.object({
+});
+export const AssetMeshSchema = AssetBaseSchema.extend({
+    mesh: MeshSchema
+});
+// prefab
+const PrefabSchema = z.object({
+});
+export const AssetPrefabSchema = AssetBaseSchema.extend({
+    prefab: PrefabSchema
+});
 // util
 export function createAssetFolder(){
     const newMetaObject: Assets.AssetFolder = {
@@ -65,6 +83,27 @@ export function createAssetImage(){
     };
     return newMetaObject;
 }
+export function createAssetScene(){
+    const newMetaObject: Assets.AssetScene = {
+        guid: uuidv4(),
+        scene: {}
+    };
+    return newMetaObject;
+}
+export function createAssetMesh(){
+    const newMetaObject: Assets.AssetMesh = {
+        guid: uuidv4(),
+        mesh: {}
+    };
+    return newMetaObject;
+}
+export function createAssetPrefab(){
+    const newMetaObject: Assets.AssetPrefab = {
+        guid: uuidv4(),
+        prefab: {}
+    };
+    return newMetaObject;
+}
 export function isAssetFolder(ass: Assets.Asset): ass is Assets.AssetFolder{
     return "isFolder" in ass && ass.isFolder === true;
 }
@@ -73,6 +112,15 @@ export function isAssetFile(ass: Assets.Asset): ass is Assets.AssetFile{
 }
 export function isAssetImage(ass: Assets.Asset): ass is Assets.AssetImage{
     return "image" in ass;
+}
+export function isAssetScene(ass: Assets.Asset): ass is Assets.AssetScene{
+    return "scene" in ass;
+}
+export function isAssetMesh(ass: Assets.Asset): ass is Assets.AssetMesh{
+    return "mesh" in ass;
+}
+export function isAssetPrefab(ass: Assets.Asset): ass is Assets.AssetPrefab{
+    return "prefab" in ass;
 }
 // types
 export namespace Assets{
@@ -87,7 +135,17 @@ export namespace Assets{
     export type LightMap = z.infer<typeof LightMapSchema>;
     export type AssetImage = z.infer<typeof AssetImageSchema>;
 
-    export type Asset = AssetFolder | AssetFile | AssetImage;
+    export type Scene = z.infer<typeof SceneSchema>;
+    export type AssetScene = z.infer<typeof AssetSceneSchema>;
+
+    export type Mesh = z.infer<typeof MeshSchema>;
+    export type AssetMesh = z.infer<typeof AssetMeshSchema>;
+
+    export type Prefab = z.infer<typeof PrefabSchema>;
+    export type AssetPrefab = z.infer<typeof AssetPrefabSchema>;
+
+    export type Asset = AssetFolder | AssetFile | AssetImage | AssetScene 
+    | AssetMesh | AssetPrefab;
     export  type MetaObject = {
         path: string,
         asset: Asset

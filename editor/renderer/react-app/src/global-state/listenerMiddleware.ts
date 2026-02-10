@@ -1,15 +1,16 @@
-// listenerMiddleware.ts
 import { createListenerMiddleware, addListener } from '@reduxjs/toolkit'
 import type { RootState, AppDispatch } from './store'
+import { addFolderManagerListener } from './listeners/folder-manager-listener';
 
-declare type ExtraArgument = {foo: string};
-
-export const listenerMiddleware = createListenerMiddleware()
+export const listenerMiddleware = createListenerMiddleware();
 
 export const startAppListening = listenerMiddleware.startListening.withTypes<
   RootState,
-  AppDispatch,
-  ExtraArgument
->()
+  AppDispatch
+>();
+export type AppStartListening = typeof startAppListening;
 
-export const addAppListener = addListener.withTypes<RootState, AppDispatch>()
+export const addAppListener = addListener.withTypes<RootState, AppDispatch>();
+export type AppAddListener = typeof addAppListener;
+
+addFolderManagerListener(startAppListening);

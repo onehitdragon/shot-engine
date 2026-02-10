@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { type JSX } from "react";
+import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 
 export function TextRow(props: {
     label: string,
@@ -136,6 +138,32 @@ export function Image(props: { path: string }){
             {
                 src &&
                 <img className="size-36" src={src}/>
+            }
+        </div>
+    );
+}
+export function CollapsedList(props: { label: string, listGenerator: () => JSX.Element[] }){
+    const { label, listGenerator } = props;
+    const [collapsed, setCollapsed] = useState(true);
+
+    return (
+        <div className="flex flex-col">
+            <div className="flex items-center cursor-pointer transition hover:opacity-80"
+                onClick={() => setCollapsed(!collapsed)}
+            >
+                <span className="select-none text-sm text-white">{label}</span>
+                <div className="h-0.5 flex-1 bg-gray-600 mx-1"></div>
+                {
+                    collapsed ?
+                    <ChevronRightIcon className="size-4 text-white"/> :
+                    <ChevronDownIcon className="size-4 text-white"/>
+                }
+            </div>
+            {
+                !collapsed &&
+                <ul className="flex flex-col">
+                    { listGenerator() }
+                </ul>
             }
         </div>
     );

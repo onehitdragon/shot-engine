@@ -40,15 +40,6 @@ const slice = createSlice({
         unfocusEntry: (state) => {
             state.focusedPath = null;
         },
-        reloadEntries: (
-            state,
-            action: PayloadAction<{ entries: DirectoryTree.Entry[] }>
-        ) => {
-            state.selectedPath = null;
-            state.focusedPath = null;
-            adapter.removeAll(state);
-            adapter.addMany(state, action.payload.entries);
-        },
         addEntry: (
             state,
             action: PayloadAction<{
@@ -93,11 +84,12 @@ const slice = createSlice({
     }
 });
 export const {
-  selectById: selectEntryByPath, selectEntities: selectEntries
+  selectById: selectEntryByPath,
+  selectEntities: selectEntryRecord
 } = adapter.getSelectors((state: RootState) => state.folderManager);
 const selectChildren = createSelector(
     [
-        selectEntries,
+        selectEntryRecord,
         (_: RootState, children: string[]) => children
     ],
     (entities, children) => {
@@ -113,7 +105,7 @@ function selectFocusedEntry(state: RootState){
     if(focusedPath) return selectEntryByPath(state, focusedPath);
 }
 export const { toggleExpandDirectory, chooseEntry,
-    focusEntry, unfocusEntry, addEntry, deleteEntry, reloadEntries
+    focusEntry, unfocusEntry, addEntry, deleteEntry
 } = slice.actions;
 export { selectChildren, selectSelectedEntry, selectFocusedEntry }
 export default slice.reducer;

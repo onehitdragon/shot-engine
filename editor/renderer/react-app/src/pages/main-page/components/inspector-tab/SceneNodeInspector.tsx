@@ -1,8 +1,7 @@
-import { useState, type JSX } from "react";
+import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import type { SceneNodeInspector } from "../../../../global-state/slices/inspector-slice";
 import { updateComponentOfSceneNode } from "../../../../global-state/slices/scene-manager-slice";
-import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { clamp } from "@math.gl/core";
 import { CheckBox, OneValueRow, Selection } from "./components";
@@ -76,99 +75,24 @@ function TransformSection(props: { node: SceneFormat.SceneNode, component: Compo
     );
 }
 function MeshSection(props: { scene: SceneFormat.Scene, node: SceneFormat.SceneNode, component: Components.Mesh }){
-    const { scene, node, component } = props;
-    const { meshes } = scene;
-    const { meshId } = component;
-    const mesh = meshes.find(m => m.id === meshId);
-    const showVertices = () => {
-        if(!mesh) return [];
-        const vertices = mesh.vertices;
-        const result = [];
-        for(let i = 0, j = 0; i < vertices.length; i += 3, j++){
-            result.push(
-                <li key={j} className="flex ml-2">
-                    <span className="text-sm text-white">
-                        Vertex{j}: ({vertices[i]}, {vertices[i + 1]}, {vertices[i + 2]})
-                    </span>
-                </li>
-            );
-        }
-        return result;
-    }
-    const showNormals = () => {
-        if(!mesh) return [];
-        const normals = mesh.normals;
-        const vertexIndices = mesh.vertexIndices;
-        const result = [];
-        for(let i = 0, j = 0; i < vertexIndices.length; i += 3, j++){
-            const index0 = vertexIndices[i];
-            const index1 = vertexIndices[i + 1];
-            const index2 = vertexIndices[i + 2];
-            result.push(
-                <li key={j} className="flex ml-2">
-                    <span className="text-sm text-white">
-                        Trig{j}: ({index0}, {index1}, {index2})
-                        [
-                            ({normals[index0 * 3]}, {normals[index0 * 3 + 1]}, {normals[index0 * 3 + 2]}),
-                            ({normals[index1 * 3]}, {normals[index1 * 3 + 1]}, {normals[index1 * 3 + 2]}),
-                            ({normals[index2 * 3]}, {normals[index2 * 3 + 1]}, {normals[index2 * 3 + 2]})
-                        ]
-                    </span>
-                </li>
-            );
-        }
-        return result;
-    }
-    const showVertexIndices = () => {
-        if(!mesh) return [];
-        const vertices = mesh.vertices;
-        const vertexIndices = mesh.vertexIndices;
-        const result = [];
-        for(let i = 0, j = 0; i < vertexIndices.length; i += 3, j++){
-            const index0 = vertexIndices[i];
-            const index1 = vertexIndices[i + 1];
-            const index2 = vertexIndices[i + 2];
-            result.push(
-                <li key={j} className="flex ml-2">
-                    <span className="text-sm text-white">
-                        Trig{j}: ({index0}, {index1}, {index2})
-                        [
-                            ({vertices[index0 * 3]}, {vertices[index0 * 3 + 1]}, {vertices[index0 * 3 + 2]}),
-                            ({vertices[index1 * 3]}, {vertices[index1 * 3 + 1]}, {vertices[index1 * 3 + 2]}),
-                            ({vertices[index2 * 3]}, {vertices[index2 * 3 + 1]}, {vertices[index2 * 3 + 2]})
-                        ]
-                    </span>
-                </li>
-            );
-        }
-        return result;
-    }
+    const { node, component } = props;
     
     return (
         <div className="flex flex-col">
-            <Header label="Mesh" node={node} component={component}/>
+            <Header label={component.meshType} node={node} component={component}/>
             {
-                !mesh ?
+                component.meshType === "PrimitiveMesh" ?
                 <div className="flex gap-2 mb-1">
                     <span className="select-none text-xs text-white">
-                        Mesh {meshId} not found in scene
+                        {component.primitiveType}
                     </span>
                 </div> :
                 <div className="flex gap-2 mb-1">
                     <span className="select-none text-xs text-white">
-                        {mesh.vertices.length / 3} Vertices
-                    </span>
-                    <span className="select-none text-xs text-white">
-                        {mesh.normals.length / 3} Normals
-                    </span>
-                    <span className="select-none text-xs text-white">
-                        {mesh.vertexIndices.length / 3} Triangles
+                        guid: {component.guid}
                     </span>
                 </div>
             }
-            <CollapsedList label="Vertices" listGenerator={showVertices}/>
-            <CollapsedList label="Normals" listGenerator={showNormals}/>
-            <CollapsedList label="Triangles" listGenerator={showVertexIndices}/>
         </div>
     );
 }
@@ -351,32 +275,6 @@ function Header(props: { label: string, node: SceneFormat.SceneNode, component: 
             onContextMenu={onRightClick}
         >
             <span className="select-none text-sm text-white font-bold">{label}</span>
-        </div>
-    );
-}
-function CollapsedList(props: { label: string, listGenerator: () => JSX.Element[] }){
-    const { label, listGenerator } = props;
-    const [collapsed, setCollapsed] = useState(true);
-
-    return (
-        <div className="flex flex-col">
-            <div className="flex items-center cursor-pointer transition hover:opacity-80"
-                onClick={() => setCollapsed(!collapsed)}
-            >
-                <span className="select-none text-sm text-white">{label}</span>
-                <div className="h-0.5 flex-1 bg-gray-600 mx-1"></div>
-                {
-                    collapsed ?
-                    <ChevronRightIcon className="size-4 text-white"/> :
-                    <ChevronDownIcon className="size-4 text-white"/>
-                }
-            </div>
-            {
-                !collapsed &&
-                <ul className="flex flex-col">
-                    { listGenerator() }
-                </ul>
-            }
         </div>
     );
 }

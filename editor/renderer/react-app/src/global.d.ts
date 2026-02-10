@@ -1,5 +1,3 @@
-import type { Assets } from "./engine-zod"
-
 export type ApiType = {
     close: () => void,
     maximize: () => void,
@@ -12,15 +10,8 @@ export type ApiType = {
     },
     folder: {
         open: () => Promise<string | null>,
-        ensureMetaFile: (projectPath: string) => Promise<{
-            path: string,
-            asset: Assets.Asset
-        }[]>,
         load: (path: string) => Promise<DirectoryTree.Entry[]>,
         create: (path: string) => Promise<DirectoryTree.Directory>,
-        watch: (path: string) => Promise<void>,
-        unwatch: (path: string) => Promise<void>,
-        onWatchEvent: (callback: () => void) => Function,
     },
     file: {
         exist: (path: string) => Promise<boolean>,
@@ -28,8 +19,8 @@ export type ApiType = {
         silentDelete: (path: string, recycle: boolean) => Promise<void>,
         create: (fullPath: string, data: string) => Promise<DirectoryTree.File>,
         open: () => Promise<string | null>,
-        copy: (src: string, dest: string) => Promise<DirectoryTree.File>,
-        importModel: (importPath: string, destFolder: string) => Promise<DirectoryTree.File>,
+        copy: (src: string, dest: string) => Promise<void>,
+        assimpImporter: (importPath: string) => Promise<Extract<Importer.JsonImportFile, { type: "assimp" }>>,
         getText: (destPath: string) => Promise<string>,
         openSave: (fileName: string, data: string) => Promise<string | null>,
         save: (destPath: string, data: string) => Promise<void>,
