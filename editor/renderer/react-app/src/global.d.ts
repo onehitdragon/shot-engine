@@ -32,6 +32,10 @@ export type ApiType = {
             data: Uint8Array<ArrayBuffer>
         }>
     },
+    resource: {
+        saveMesh: (path: string, mesh: Resource.Mesh) => Promise<void>,
+        loadMesh: (path: string) => Promise<Resource.MeshBin>
+    },
     ktx2: {
         createTextureKTX2: (sourcePath: string, destPath: string, metaHash: string, settings: KTX2.TextureKTX2Settings) => Promise<DirectoryTree.File>,
         getMetaHash: (path: string) => Promise<string>

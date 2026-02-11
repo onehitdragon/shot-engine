@@ -76,10 +76,10 @@ export class WebglPhongShader{
         const vao = gl.createVertexArray();
         gl.bindVertexArray(vao);
             vbos.bindVertexVBO();
-            gl.vertexAttribPointer(this._a_PositionLoc, 3, gl.FLOAT, false, 0, 0);
+            const stride = (3 + 3) * 4; // (3 verter float, 3 normal float) * floatSize = 4
+            gl.vertexAttribPointer(this._a_PositionLoc, 3, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(this._a_PositionLoc);
-            vbos.bindNormalVBO();
-            gl.vertexAttribPointer(this._a_NormalLoc, 3, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribPointer(this._a_NormalLoc, 3, gl.FLOAT, false, stride, 3 * 4);
             gl.enableVertexAttribArray(this._a_NormalLoc);
             vbos.bindIndexVBO();
         gl.bindVertexArray(null);
@@ -120,7 +120,7 @@ export class WebglPhongShader{
             gl.uniform3fv(this._programLoc.u_DirectionalLights[i].color, lightInfo.color);
         }
         gl.bindVertexArray(vao);
-            gl.drawElements(gl.TRIANGLES, vbos.vertexIndices.length, gl.UNSIGNED_INT, 0);
+            gl.drawElements(gl.TRIANGLES, vbos.indexCount, gl.UNSIGNED_INT, 0);
         gl.bindVertexArray(null);
     }
 }

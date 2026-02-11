@@ -1,6 +1,6 @@
 import { createListenerMiddleware, addListener } from '@reduxjs/toolkit'
 import type { RootState, AppDispatch } from './store'
-import { addFolderManagerListener } from './listeners/folder-manager-listener';
+import { addSceneManegerListener } from './listeners/scene-manager-listener';
 
 export const listenerMiddleware = createListenerMiddleware();
 
@@ -13,4 +13,4 @@ export type AppStartListening = typeof startAppListening;
 export const addAppListener = addListener.withTypes<RootState, AppDispatch>();
 export type AppAddListener = typeof addAppListener;
 
-addFolderManagerListener(startAppListening);
+addSceneManegerListener(startAppListening);

@@ -1,5 +1,3 @@
-import { sceneGraphLooper } from "./SceneGraphHelper";
-
 export class LightSceneNodeManager{
     private static _instance: LightSceneNodeManager;
     static getInstance(){
@@ -22,7 +20,7 @@ export class LightSceneNodeManager{
     }
     update(sceneNodes: SceneFormat.SceneNode[]){
         this.clear();
-        sceneGraphLooper(sceneNodes, (sceneNode) => {
+        sceneNodes.forEach((sceneNode) => {
             const { components } = sceneNode;
             const lightComponent = components.find((c): c is Components.Light => c.type === "Light");
             if(!lightComponent) return;

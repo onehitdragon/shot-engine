@@ -93,3 +93,14 @@ declare namespace KTX2{
         mipGen: boolean
     }
 }
+declare namespace Resource{
+    export type Mesh = {
+        vertices: number[], // 3 FLOAT
+        normals: number[], // 3 FLOAT
+        vertexIndices: number[] // 1 UINT32
+    }
+    export type MeshBin = {
+        interleave: Float32Array, // 3 FLOAT
+        indices: Uint32Array // 1 UINT32
+    }
+}

@@ -1,7 +1,7 @@
 import type { mat3, mat4, vec3 } from "gl-matrix";
 import { WebglGridShader } from "./WebglGridShader";
-import { WebglMeshManager } from "./WebglMeshManager";
-import { LightSceneNodeManager } from "./LightSceneNodeManager";
+import { LightSceneNodeManager } from "./resource-manager-helper/LightSceneNodeManager";
+import { WebglResourceManager } from "./resource-manager-helper/WebglResourceManager";
 
 export class WebglRenderer{
     private static _instance: WebglRenderer;
@@ -11,11 +11,7 @@ export class WebglRenderer{
     }
     private _gl: WebGL2RenderingContext;
     private _webglGridShader: WebglGridShader;
-    private _webglMeshManager: WebglMeshManager;
     private _lightSceneNodeManager: LightSceneNodeManager;
-    get webglMeshManager(){
-        return this._webglMeshManager;
-    }
     get lightSceneNodeManager(){
         return this._lightSceneNodeManager;
     }
@@ -23,7 +19,6 @@ export class WebglRenderer{
         this._gl = gl;
         gl.enable(gl.DEPTH_TEST);
         this._webglGridShader = WebglGridShader.getInstance(gl);
-        this._webglMeshManager = WebglMeshManager.getInstance(gl);
         this._lightSceneNodeManager = LightSceneNodeManager.getInstance();
     }
     render(
@@ -36,8 +31,7 @@ export class WebglRenderer{
     ){
         const { shaderType, culling } = shadingComponent;
         this.culling(culling);
-        const { meshId } = meshComponent;
-        const webglMesh = this._webglMeshManager.getWebglMesh(meshId);
+        const webglMesh = WebglResourceManager.getInstance().getWebglMesh(meshComponent);
         if(shaderType === "simple"){
             webglMesh.renderWithSimpleShader(mvpMat4);
         }

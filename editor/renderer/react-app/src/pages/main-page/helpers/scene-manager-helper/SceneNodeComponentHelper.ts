@@ -42,3 +42,8 @@ export function createPhongShadingComponent(){
     }
     return component;
 }
+export function getMeshGuid(component: Components.Mesh){
+    if(component.meshType === "PrimitiveMesh") return component.primitiveType;
+    if(component.meshType === "ImportMesh") return component.guid;
+    throw "cant getMeshGuid"
+}

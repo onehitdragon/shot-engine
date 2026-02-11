@@ -10,6 +10,7 @@ import { Worker } from "worker_threads";
 import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
 import sharp from "sharp";
+import { saveMeshToBuffer, readMeshBinary } from "./importer/binary/meshBinary";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -229,6 +230,18 @@ app.whenReady()
             data: new Uint8Array(data)
         };
     });
+    ipcMain.handle(
+        "resource:saveMesh",
+        async (e, destPath: string, mesh: Resource.Mesh) => {
+            await saveMeshToBuffer(destPath, mesh);
+        }
+    );
+    ipcMain.handle(
+        "resource:loadMesh",
+        async (e, destPath: string) => {
+            return await readMeshBinary(destPath);
+        }
+    );
     ipcMain.handle(
         "ktx2:createTextureKTX2",
         async (e, sourcePath: string, destPath: string, metaHash: string, settings: KTX2.TextureKTX2Settings) => {

@@ -2,7 +2,7 @@ import { useAppDispatch } from "../../../../global-state/hooks";
 import type { SceneNodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { addSceneNodeChild, addUniqueComponentToSceneNode, removeTopSceneNode, removeChildSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { createCubeSceneNode, createEmptySceneNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
-import { createDirectionalLightComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent } from "../../helpers/SceneNodeComponentHelper";
+import { createDirectionalLightComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
 
 export function SceneNodeContextMenu(
     props: { contextMenu: SceneNodeContextMenu, x: number, y: number }

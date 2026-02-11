@@ -1,6 +1,5 @@
 import type { Assets } from "../../../engine-zod";
 import { isEqual } from "lodash";
-import { sceneGraphLooper } from "./SceneGraphHelper";
 
 export class WebglTextureManager{
     private static _instance: WebglTextureManager;

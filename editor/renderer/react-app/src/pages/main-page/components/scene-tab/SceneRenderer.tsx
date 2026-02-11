@@ -6,9 +6,12 @@ import { sphereCoordinateToCartesian } from "../../helpers/math-helpers/sphere-c
 import { OrbitCameraHelper } from "../../helpers/OrbitCameraHelper";
 import { clamp } from "@math.gl/core";
 import { addAppListener } from "../../../../global-state/listenerMiddleware";
+import { getSceneCanvas, getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
+import { selectSceneNodeRecord, selectSceneNodes } from "../../../../global-state/slices/scene-manager-slice";
 
 export function SceneRenderer(){
     const scene = useAppSelector(state => state.sceneManager.scene);
+    const sceneNodeRecord = useAppSelector(state => selectSceneNodeRecord(state));
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [camera, setCamera] = useState<SceneFormat.SceneOrbitCamera | null>(null);
     const [webglRenderer, setWebglRenderer] = useState<WebglRenderer | null>(null);
@@ -17,11 +20,8 @@ export function SceneRenderer(){
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        if(!canvasRef) return;
-        const canvas = canvasRef.current;
-        if(!canvas) return;
-        const webgl2 = getWebgl2(canvas);
-        if(!webgl2) return;
+        const webgl2 = getSceneWebglContext();
+        const canvas = getSceneCanvas();
         const camera = getCamera(canvas);
         if(!camera) return;
         setWebglRenderer(WebglRenderer.getInstance(webgl2));
@@ -42,30 +42,16 @@ export function SceneRenderer(){
     }, []);
     useEffect(() => {
         if(!webglRenderer) return;
-        const unsub0 = dispatch(addAppListener({
-            predicate: (_, curState, originState) => {
-                return curState.sceneManager.scene?.meshes != originState.sceneManager.scene?.meshes;
-            },
-            effect: (_, listenerApi) => {
-                const scene = listenerApi.getState().sceneManager.scene;
-                if(!scene) return;
-                const { meshes } = scene;
-                webglRenderer.webglMeshManager.update(meshes);
-            }
-        }));
         const unsub1 = dispatch(addAppListener({
             predicate: (_, curState, originState) => {
-                return curState.sceneManager.scene?.sceneGraph != originState.sceneManager.scene?.sceneGraph;
+                return curState.sceneManager.entities != originState.sceneManager.entities;
             },
-            effect: (_, listenerApi) => {
-                const scene = listenerApi.getState().sceneManager.scene;
-                if(!scene) return;
-                const { sceneGraph } = scene;
-                webglRenderer.lightSceneNodeManager.update(sceneGraph.nodes);
+            effect: (_, { getState }) => {
+                const nodes = selectSceneNodes(getState());
+                webglRenderer.lightSceneNodeManager.update(nodes); // todo
             }
         }));
         return () => {
-            unsub0();
             unsub1();
         }
     }, [webglRenderer]);
@@ -76,7 +62,7 @@ export function SceneRenderer(){
         webglRenderer.clear();
         const handler = () => {
             const renderer = new SceneNodeRenderer(camera, webglRenderer);
-            renderer.renderSceneNodes(scene.sceneGraph.nodes, null);
+            renderer.renderSceneNodes(scene.nodes, sceneNodeRecord, null);
         }
         handler();
         webglRenderer.renderGrid(OrbitCameraHelper.createVPMatrix(camera));
@@ -84,7 +70,7 @@ export function SceneRenderer(){
         return () => {
             
         }
-    }, [scene, webglRenderer, camera]);
+    }, [scene, sceneNodeRecord, webglRenderer, camera]);
 
     return (
         <div className="flex-1 flex">
@@ -184,11 +170,6 @@ function CameraMovement(props: {
 
     return <></>
 }
-function getWebgl2(canvas: HTMLCanvasElement){
-    const gl = canvas.getContext("webgl2");
-    if(!gl) return null;
-    return gl;
-}
 function getCamera(canvas: HTMLCanvasElement): SceneFormat.SceneOrbitCamera | null{
     return {
         aspect: canvas.clientWidth / canvas.clientHeight,
@@ -210,10 +191,15 @@ class SceneNodeRenderer{
         this._clipMat4 = this.createClipMatrix(camera);
         this._webglRenderer = webglRenderer;
     }
-    renderSceneNodes(nodes: SceneFormat.SceneNode[], parentDataIn: ParentData | null){
-        for(const node of nodes){
+    renderSceneNodes(
+        nodes: string[],
+        nodeRecord: Record<string, SceneFormat.SceneNode>,
+        parentDataIn: ParentData | null
+    ){
+        for(const nodeId of nodes){
+            const node = nodeRecord[nodeId];
             const parentData = this.renderNode(node, parentDataIn);
-            this.renderSceneNodes(node.childs, parentData);
+            this.renderSceneNodes(node.childs, nodeRecord, parentData);
         }
     }
     renderNode(node: SceneFormat.SceneNode, parentDataIn: ParentData | null): ParentData | null{

@@ -30,9 +30,10 @@ export class WebglSimpleShader{
         const gl = this._gl;
         const vbos = meshVBOs;
         const vao = gl.createVertexArray();
-        vbos.bindVertexVBO();
         gl.bindVertexArray(vao);
-            gl.vertexAttribPointer(this._a_PositionLoc, 3, gl.FLOAT, false, 0, 0);
+            vbos.bindVertexVBO();
+            const stride = (3 + 3) * 4; // (3 verter float, 3 normal float) * floatSize = 4
+            gl.vertexAttribPointer(this._a_PositionLoc, 3, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(this._a_PositionLoc);
             vbos.bindIndexVBO();
         gl.bindVertexArray(null);
@@ -44,7 +45,7 @@ export class WebglSimpleShader{
         gl.useProgram(this._program);
         gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4);
         gl.bindVertexArray(vao);
-            gl.drawElements(gl.TRIANGLES, vbos.vertexIndices.length, gl.UNSIGNED_INT, 0);
+            gl.drawElements(gl.TRIANGLES, vbos.indexCount, gl.UNSIGNED_INT, 0);
         gl.bindVertexArray(null);
     }
 }

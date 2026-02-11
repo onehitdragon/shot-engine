@@ -6,6 +6,7 @@ import contextMenuReducer from "./slices/context-menu-slice";
 import assetManagerReducer from "./slices/asset-manager-slice";
 import appLoadingReducer from "./slices/app-loading-slice";
 import appConfirmDialogReducer from "./slices/app-confirm-dialog-slice";
+import resourceManagerReducer from "./slices/resource-manager-slice";
 import { listenerMiddleware } from "./listenerMiddleware";
 
 export const store = configureStore({
@@ -16,7 +17,8 @@ export const store = configureStore({
         contextMenu: contextMenuReducer,
         assetManager: assetManagerReducer,
         appLoading: appLoadingReducer,
-        appConfirmDialog: appConfirmDialogReducer
+        appConfirmDialog: appConfirmDialogReducer,
+        resourceManager: resourceManagerReducer
     },
     middleware: (getDefaultMiddleware) => {
         return getDefaultMiddleware({serializableCheck: false}).prepend(listenerMiddleware.middleware);

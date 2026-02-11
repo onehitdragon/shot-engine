@@ -47,6 +47,10 @@ contextBridge.exposeInMainWorld("api", {
         loadDataURL: (path: string) => ipcRenderer.invoke("file:loadDataURL", path),
         readImage: (path: string) => ipcRenderer.invoke("file:readImage", path),
     },
+    resource: {
+        saveMesh: (path: string, mesh: Resource.Mesh) => ipcRenderer.invoke("resource:saveMesh", path, mesh),
+        loadMesh: (path: string) => ipcRenderer.invoke("resource:loadMesh", path),
+    },
     ktx2: {
         createTextureKTX2: (sourcePath: string, destPath: string, metaHash: string, settings: KTX2.TextureKTX2Settings) => 
             ipcRenderer.invoke("ktx2:createTextureKTX2", sourcePath, destPath, metaHash, settings),

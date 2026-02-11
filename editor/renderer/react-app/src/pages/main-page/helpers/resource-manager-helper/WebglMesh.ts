@@ -8,9 +8,9 @@ export class WebglMesh{
     private _gl: WebGL2RenderingContext;
     private _meshVBOs: WebglMeshVBOs;
     private _meshVAOMap: Map<Components.Shading["shaderType"], WebGLVertexArrayObject>;
-    constructor(gl: WebGL2RenderingContext, mesh: SceneFormat.Mesh){
+    constructor(gl: WebGL2RenderingContext, meshResource: Resource.MeshBin){
         this._gl = gl;
-        this._meshVBOs = new WebglMeshVBOs(gl, mesh);
+        this._meshVBOs = new WebglMeshVBOs(gl, meshResource);
         this._meshVAOMap = new Map();
         this._meshVAOMap.set(
             "simple",

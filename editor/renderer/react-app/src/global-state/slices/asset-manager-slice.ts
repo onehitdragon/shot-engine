@@ -34,9 +34,9 @@ const slice = createSlice({
 
 export const {
   selectById: selectAssetByGuid,
-  selectEntities: selectAssets
+  selectEntities: selectAssetEntities,
 } = adapter.getSelectors((state: RootState) => state.assetManager);
-export const selectAssetImages = createSelector(selectAssets, (metaObjects) => {
+export const selectAssetImages = createSelector(selectAssetEntities, (metaObjects) => {
     return Object.values(metaObjects).filter(metaObject => isAssetImage(metaObject.asset));
 });
 export const { recreate, addAsset, deleteAsset, updateAsset } = slice.actions;

@@ -6,6 +6,7 @@ import { createAssetFolder, createAssetImage, createAssetMesh, createAssetPrefab
 import { pathIsImage } from "../../pages/main-page/helpers/folder-manager-helper/helper";
 import { addAsset, deleteAsset, recreate } from "../slices/asset-manager-slice";
 import { createAssimpPrefab } from "../../pages/main-page/helpers/scene-manager-helper/SceneNodeHelper";
+import { createPrimitivesAssetMesh } from "../../pages/main-page/helpers/scene-manager-helper/mesh-datas";
 
 export const openProjectThunk = createAsyncThunk
 <
@@ -30,12 +31,13 @@ export const openProjectThunk = createAsyncThunk
             if(projectPath) throw "having a project is opening";
             projectPath = path;
             
-            const assetPath = await window.fsPath.join(projectPath, "Assets");
+            const assetPath = await window.fsPath.join(projectPath, "Assets", "Scripts");
             await window.api.folder.create(assetPath);
-            const libPath = await window.fsPath.join(projectPath, "Library");
+            const assetDefaultPath = await window.fsPath.join(projectPath, "Assets", ".default");
+            await window.api.folder.create(assetDefaultPath);
+            await createPrimitivesAssetMesh(assetDefaultPath);
+            const libPath = await window.fsPath.join(projectPath, "Library", "Resource");
             await window.api.folder.create(libPath);
-            const scriptPath = await window.fsPath.join(assetPath, "Scripts");
-            await window.api.folder.create(scriptPath);
 
             const entries = await window.api.folder.load(assetPath);
 
