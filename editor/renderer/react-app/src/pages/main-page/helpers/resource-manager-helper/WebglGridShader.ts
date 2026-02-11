@@ -1,6 +1,6 @@
 import { WebglHelper } from "./WebglHelper";
-import gridShadingVShaderSource from "./shaders/grid-shader/vshader.glsl?raw";
-import gridShadingFShaderSource from "./shaders/grid-shader/fshader.glsl?raw";
+import gridShadingVShaderSource from "../shaders/grid-shader/vshader.glsl?raw";
+import gridShadingFShaderSource from "../shaders/grid-shader/fshader.glsl?raw";
 import type { mat4 } from "gl-matrix";
 
 export class WebglGridShader{

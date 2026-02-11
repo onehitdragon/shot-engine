@@ -1,7 +1,7 @@
 import type { mat3, mat4, vec3 } from "gl-matrix";
 import { WebglGridShader } from "./WebglGridShader";
-import { LightSceneNodeManager } from "./resource-manager-helper/LightSceneNodeManager";
-import { WebglResourceManager } from "./resource-manager-helper/WebglResourceManager";
+import { LightSceneNodeManager } from "./LightSceneNodeManager";
+import { WebglResourceManager } from "./WebglResourceManager";
 
 export class WebglRenderer{
     private static _instance: WebglRenderer;

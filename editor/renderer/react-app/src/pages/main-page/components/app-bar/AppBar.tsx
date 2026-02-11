@@ -7,13 +7,13 @@ import { closeProjectThunk, openProjectThunk } from '../../../../global-state/th
 
 export function AppBar(){
     const dispatch = useAppDispatch();
-    const projectPath = useAppSelector(state => state.folderManager.projectPath);
+    const projectPaths = useAppSelector(state => state.folderManager.projectPaths);
     const fileMenuItems = useMemo(() => {
         const fileMenuItems: React.ComponentProps<typeof FileMenu>["items"] = [
             {
                 label: "File",
                 options: [
-                    !projectPath ? {
+                    !projectPaths ? {
                         optionLabel: "Open Folder",
                         shortcutLabel: "Ctrl + O",
                         click: async () => {
@@ -71,7 +71,7 @@ export function AppBar(){
             }
         ];
         return fileMenuItems;
-    }, [projectPath]);
+    }, [projectPaths]);
 
     return (
         <div className='bg-gray-800 h-8 flex'>

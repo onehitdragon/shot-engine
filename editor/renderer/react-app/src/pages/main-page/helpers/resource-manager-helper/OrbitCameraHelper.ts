@@ -1,5 +1,5 @@
 import { mat4, vec3 } from "gl-matrix";
-import { sphereCoordinateToCartesian } from "./math-helpers/sphere-coordinate-helpers";
+import { sphereCoordinateToCartesian } from "../math-helpers/sphere-coordinate-helpers";
 
 export class OrbitCameraHelper{
     static createViewMatrix(camera: SceneFormat.SceneOrbitCamera){

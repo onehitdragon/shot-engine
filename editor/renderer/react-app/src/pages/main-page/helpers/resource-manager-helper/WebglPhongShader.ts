@@ -1,6 +1,6 @@
 import { WebglHelper } from "./WebglHelper";
-import phongShadingVShaderSource from "./shaders/phong-shader/vshader.glsl?raw";
-import phongShadingFShaderSource from "./shaders/phong-shader/fshader.glsl?raw";
+import phongShadingVShaderSource from "../shaders/phong-shader/vshader.glsl?raw";
+import phongShadingFShaderSource from "../shaders/phong-shader/fshader.glsl?raw";
 import type { mat3, mat4, vec3 } from "gl-matrix";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
 import { LightSceneNodeManager } from "./LightSceneNodeManager";

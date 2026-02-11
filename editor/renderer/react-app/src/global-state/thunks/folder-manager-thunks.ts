@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { AppDispatch, RootState } from "../store";
-import { addEntry, deleteEntry } from "../slices/folder-manager-slice";
+import { addEntry, deleteEntry, type FolderManager } from "../slices/folder-manager-slice";
 import { addLog, updateLoading } from "../slices/app-loading-slice";
 import { createAssetFolder, createAssetImage, createAssetMesh, createAssetPrefab, type Assets } from "../../engine-zod";
 import { pathIsImage } from "../../pages/main-page/helpers/folder-manager-helper/helper";
@@ -11,7 +11,7 @@ import { createPrimitivesAssetMesh } from "../../pages/main-page/helpers/scene-m
 export const openProjectThunk = createAsyncThunk
 <
     {
-        projectPath: string,
+        projectPaths: FolderManager.ProjectPaths
         entries: (DirectoryTree.Directory | DirectoryTree.File)[]
     },
     { path: string },
@@ -27,19 +27,20 @@ export const openProjectThunk = createAsyncThunk
             dispatch(updateLoading({ loading: true }));
 
             dispatch(addLog({ log: `Opening project... ${path}` }));
-            let projectPath = getState().folderManager.projectPath;
-            if(projectPath) throw "having a project is opening";
-            projectPath = path;
-            
-            const assetPath = await window.fsPath.join(projectPath, "Assets", "Scripts");
-            await window.api.folder.create(assetPath);
-            const assetDefaultPath = await window.fsPath.join(projectPath, "Assets", ".default");
-            await window.api.folder.create(assetDefaultPath);
-            await createPrimitivesAssetMesh(assetDefaultPath);
-            const libPath = await window.fsPath.join(projectPath, "Library", "Resource");
-            await window.api.folder.create(libPath);
+            let projectPaths = getState().folderManager.projectPaths;
+            if(projectPaths) throw "having a project is opening";
+            projectPaths = {
+                project: path,
+                asset: await window.fsPath.join(path, "Assets"),
+                assetDefault: await window.fsPath.join(path, "Assets", ".default"),
+                resource: await window.fsPath.join(path, "Library", "Resource"),
+            }
+            await window.api.folder.create(projectPaths.asset);
+            await window.api.folder.create(projectPaths.assetDefault);
+            await window.api.folder.create(projectPaths.resource);
+            await createPrimitivesAssetMesh(projectPaths.assetDefault);
 
-            const entries = await window.api.folder.load(assetPath);
+            const entries = await window.api.folder.load(projectPaths.asset);
 
             dispatch(addLog({ log: `Loading assets... ${path}` }));
             const metaEntries = entries.filter(entry => entry.name.endsWith(".meta.json"));
@@ -47,12 +48,12 @@ export const openProjectThunk = createAsyncThunk
             for(const { path } of metaEntries){
                 const json = await window.api.file.getText(path);
                 const jsonObject = JSON.parse(json) as Assets.Asset;
-                metaObjects.push({ path, asset: jsonObject });
+                metaObjects.push({ path: path.replace(".meta.json", ""), asset: jsonObject });
             }
             dispatch(recreate({ metaObjects }));
 
             return {
-                projectPath,
+                projectPaths,
                 entries
             };
         }
@@ -79,8 +80,8 @@ export const closeProjectThunk = createAsyncThunk
     "folder-manager/closeProject",
     async (_, { getState, dispatch }) => {
         try{
-            const projectPath = getState().folderManager.projectPath;
-            if(!projectPath) throw "no project has been opened yet";
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "no project has been opened yet";
             dispatch(recreate({ metaObjects: [] }));
         }
         catch(err){
@@ -101,12 +102,17 @@ export const createFolderThunk = createAsyncThunk
     "folder-manager/createFolder",
     async ({ parentPath, name }, { getState, dispatch }) => {
         try{
-            const projectPath = getState().folderManager.projectPath;
-            if(!projectPath) throw "no project has been opened yet";
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "no project has been opened yet";
+
+            if(parentPath.startsWith(projectPaths.assetDefault)){
+                await window.api.showError("Cant create inside default");
+                return;
+            }
+
             const path = await window.fsPath.join(parentPath, name);
             const created = await window.api.folder.create(path);
-            const assetPath = await window.fsPath.join(projectPath, "Assets");
-            if(path.startsWith(assetPath)){
+            if(path.startsWith(projectPaths.asset)){
                 const asset = createAssetFolder();
                 const metaName = name + ".meta.json";
                 const metaPath = path + ".meta.json";
@@ -140,10 +146,13 @@ export const importFileThunk = createAsyncThunk
     "folder-manager/importFile",
     async ({ destFolder }, { getState, dispatch }) => {
         try{
-            const projectPath = getState().folderManager.projectPath;
-            if(!projectPath) throw "no project has been opened yet";
-            const assetPath = await window.fsPath.join(projectPath, "Assets");
-            if(!destFolder.startsWith(assetPath)){
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "no project has been opened yet";
+            if(destFolder.startsWith(projectPaths.assetDefault)){
+                await window.api.showError("Cant import to default file");
+                return;
+            }
+            if(!destFolder.startsWith(projectPaths.asset)){
                 await window.api.showError(String("importing requires inside the asset path"));
                 return;
             }
@@ -255,10 +264,15 @@ export const deleteEntryThunk = createAsyncThunk
     "folder-manager/deleteEntry",
     async ({ parentPath, entryPath, recycle }, { getState, dispatch }) => {
         try{
-            const projectPath = getState().folderManager.projectPath;
-            if(!projectPath) throw "no project has been opened yet";
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "no project has been opened yet";
+
             if(entryPath.endsWith(".meta.json")){
                 await window.api.showError("Cant delete meta file");
+                return;
+            }
+            if(entryPath.startsWith(projectPaths.assetDefault)){
+                await window.api.showError("Cant delete default file");
                 return;
             }
             const { path: scenePath } = getState().sceneManager;

@@ -2,13 +2,19 @@ import { createEntityAdapter, createSelector, createSlice, type EntityState, typ
 import type { RootState } from "../store";
 import { closeProjectThunk, openProjectThunk } from "../thunks/folder-manager-thunks";
 
-export declare namespace FolderManager {
+export namespace FolderManager {
+    export type ProjectPaths = {
+        project: string,
+        asset: string,
+        assetDefault: string,
+        resource: string
+    }
     export type DirectoryState = DirectoryTree.Directory & {
         expanding?: boolean
     }
 }
 interface DirectoryEntityState extends EntityState<FolderManager.DirectoryState | DirectoryTree.File, string> {
-    projectPath: string | null,
+    projectPaths: FolderManager.ProjectPaths | null,
     selectedPath: string | null,
     focusedPath: string | null
 }
@@ -16,7 +22,7 @@ const adapter = createEntityAdapter<FolderManager.DirectoryState | DirectoryTree
     selectId: (entry) => entry.path
 });
 const initialState: DirectoryEntityState = adapter.getInitialState({
-    projectPath: null,
+    projectPaths: null,
     selectedPath: null,
     focusedPath: null
 });
@@ -26,7 +32,7 @@ const slice = createSlice({
     reducers: {
         toggleExpandDirectory: (state, action: PayloadAction<{ path: string, force?: boolean }>) => {
             const { path, force } = action.payload;
-            if(state.projectPath == null) return;
+            if(state.projectPaths == null) return;
             const found = state.entities[path];
             if(!found || found.type === "File") return;
             if(found) found.expanding = force !== undefined ? force : !found.expanding;
@@ -72,11 +78,11 @@ const slice = createSlice({
     },
     extraReducers(builder){
         builder.addCase(openProjectThunk.fulfilled, (state, action) => {
-            state.projectPath = action.payload.projectPath;
+            state.projectPaths = action.payload.projectPaths;
             adapter.addMany(state, action.payload.entries);
         });
         builder.addCase(closeProjectThunk.fulfilled, (state) => {
-            state.projectPath = null;
+            state.projectPaths = null;
             adapter.removeAll(state);
             state.selectedPath = null;
             state.focusedPath = null;

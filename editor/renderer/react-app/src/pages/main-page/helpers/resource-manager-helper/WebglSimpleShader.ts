@@ -1,6 +1,6 @@
 import { WebglHelper } from "./WebglHelper";
-import simpleShadingVShaderSource from "./shaders/simple-shader/vshader.glsl?raw";
-import simpleShadingFShaderSource from "./shaders/simple-shader/fshader.glsl?raw";
+import simpleShadingVShaderSource from "../shaders/simple-shader/vshader.glsl?raw";
+import simpleShadingFShaderSource from "../shaders/simple-shader/fshader.glsl?raw";
 import type { mat4 } from "gl-matrix";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
 

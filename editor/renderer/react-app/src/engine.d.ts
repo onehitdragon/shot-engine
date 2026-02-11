@@ -24,6 +24,12 @@ declare namespace MeshFormat{
         vertexIndices: number[]
     }
 }
+declare namespace PrefabFormat{
+    export type Prefab = {
+        nodeId: string,
+        nodes: SceneFormat.SceneNode[]
+    }
+}
 declare namespace Components{
     type vec3 = import("gl-matrix").vec3;
     export type Component = Transform | Mesh | Shading | Light;

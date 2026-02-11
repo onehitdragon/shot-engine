@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { mat4 } from 'gl-matrix';
 import { degrees, Euler } from '@math.gl/core';
-import { createPhongShadingComponent } from '../SceneNodeComponentHelper';
+import { createPhongShadingComponent } from './SceneNodeComponentHelper';
 import type { Assets } from '../../../../engine-zod';
 
 export function createEmptySceneNode(){
@@ -56,8 +56,13 @@ export function createCubeSceneNode(){
 export function createAssimpPrefab(
     node: AssimpFormat.Node,
     meshAssets: Assets.AssetMesh[],
-    parent: SceneFormat.SceneNode | null = null
-){
+    parent: SceneFormat.SceneNode | null = null,
+    result: PrefabFormat.Prefab = {
+        nodeId: "",
+        nodes: []
+    }
+): PrefabFormat.Prefab
+{
     const { name, transformation, meshes: meshIndices, children } = node;
     const transformMat4 = mat4.clone(transformation);
     mat4.transpose(transformMat4, transformMat4);
@@ -79,7 +84,11 @@ export function createAssimpPrefab(
         ],
         childs: [],
     }
+
     if(parent) parent.childs.push(sceneNode.id);
+    else result.nodeId = sceneNode.id;
+    result.nodes.push(sceneNode);
+
     if(meshIndices.length > 0){
         const guid = meshAssets[meshIndices[0]].guid;
         sceneNode.components.push(
@@ -93,8 +102,7 @@ export function createAssimpPrefab(
         );
     }
     for(const childNode of children){
-        const sceneChildNode = createAssimpPrefab(childNode, meshAssets, sceneNode);
-        sceneNode.childs.push(sceneChildNode.id);
+        createAssimpPrefab(childNode, meshAssets, sceneNode, result);
     }
-    return sceneNode;
+    return result;
 }

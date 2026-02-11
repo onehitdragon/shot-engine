@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { mat4, quat, vec3, mat3 } from "gl-matrix";
-import { WebglRenderer } from "../../helpers/WebglRenderer";
 import { sphereCoordinateToCartesian } from "../../helpers/math-helpers/sphere-coordinate-helpers";
-import { OrbitCameraHelper } from "../../helpers/OrbitCameraHelper";
 import { clamp } from "@math.gl/core";
 import { addAppListener } from "../../../../global-state/listenerMiddleware";
 import { getSceneCanvas, getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
 import { selectSceneNodeRecord, selectSceneNodes } from "../../../../global-state/slices/scene-manager-slice";
+import { WebglRenderer } from "../../helpers/resource-manager-helper/WebglRenderer";
+import { OrbitCameraHelper } from "../../helpers/resource-manager-helper/OrbitCameraHelper";
 
 export function SceneRenderer(){
     const scene = useAppSelector(state => state.sceneManager.scene);
     const sceneNodeRecord = useAppSelector(state => selectSceneNodeRecord(state));
+    const resourceManagerStatus = useAppSelector(state => state.resourceManager.status);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [camera, setCamera] = useState<SceneFormat.SceneOrbitCamera | null>(null);
     const [webglRenderer, setWebglRenderer] = useState<WebglRenderer | null>(null);
@@ -59,6 +60,7 @@ export function SceneRenderer(){
         if(!scene) return;
         if(!webglRenderer) return;
         if(!camera) return;
+        if(resourceManagerStatus === "loading") return;
         webglRenderer.clear();
         const handler = () => {
             const renderer = new SceneNodeRenderer(camera, webglRenderer);
@@ -70,7 +72,7 @@ export function SceneRenderer(){
         return () => {
             
         }
-    }, [scene, sceneNodeRecord, webglRenderer, camera]);
+    }, [scene, sceneNodeRecord, resourceManagerStatus, webglRenderer, camera]);
 
     return (
         <div className="flex-1 flex">

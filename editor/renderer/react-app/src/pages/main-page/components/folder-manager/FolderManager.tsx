@@ -5,7 +5,7 @@ import { type FolderManager } from "../../../../global-state/slices/folder-manag
 import { SelectedFolder } from "./selected-folder";
 
 export function FolderManager(){
-    const projectPath = useAppSelector(state => state.folderManager.projectPath);
+    const projectPaths = useAppSelector(state => state.folderManager.projectPaths);
 
     return (
         <div className='flex-1 flex overflow-hidden'>
@@ -23,9 +23,9 @@ export function FolderManager(){
                 <div className='flex-1 px-1 py-2 flex flex-col overflow-auto
                     scrollbar-thin'>
                     {
-                        projectPath
+                        projectPaths
                         &&
-                        <Folder path={projectPath}/>
+                        <Folder path={projectPaths.asset}/>
                     }
                 </div>
             </div>
