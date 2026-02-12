@@ -7,6 +7,7 @@ import { pathIsImage } from "../../pages/main-page/helpers/folder-manager-helper
 import { addAsset, deleteAsset, recreate } from "../slices/asset-manager-slice";
 import { createAssimpPrefab } from "../../pages/main-page/helpers/scene-manager-helper/SceneNodeHelper";
 import { createPrimitivesAssetMesh } from "../../pages/main-page/helpers/scene-manager-helper/mesh-datas";
+import { closeSceneThunk } from "./scene-manager-thunks";
 
 export const openProjectThunk = createAsyncThunk
 <
@@ -36,6 +37,9 @@ export const openProjectThunk = createAsyncThunk
                 resource: await window.fsPath.join(path, "Library", "Resource"),
             }
             await window.api.folder.create(projectPaths.asset);
+            await window.api.folder.create(await window.fsPath.join(projectPaths.asset, "Scenes"));
+            await window.api.folder.create(await window.fsPath.join(projectPaths.asset, "Prefabs"));
+            await window.api.folder.create(await window.fsPath.join(projectPaths.asset, "Scripts"));
             await window.api.folder.create(projectPaths.assetDefault);
             await window.api.folder.create(projectPaths.resource);
             await createPrimitivesAssetMesh(projectPaths.assetDefault);
@@ -82,6 +86,7 @@ export const closeProjectThunk = createAsyncThunk
         try{
             const projectPaths = getState().folderManager.projectPaths;
             if(!projectPaths) throw "no project has been opened yet";
+            await dispatch(closeSceneThunk());
             dispatch(recreate({ metaObjects: [] }));
         }
         catch(err){

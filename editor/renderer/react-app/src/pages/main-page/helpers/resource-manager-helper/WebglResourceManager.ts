@@ -14,6 +14,11 @@ export class WebglResourceManager{
         this._gl = gl;
         this._webglMeshMap = new Map();
     }
+    public info(){
+        return {
+            meshCount: this._webglMeshMap.size
+        }
+    }
     public updateMesh(guid: string, meshResource: Resource.MeshBin){
         const gl = this._gl;
         const webglMesh = this._webglMeshMap.get(guid);
@@ -22,6 +27,18 @@ export class WebglResourceManager{
         }
         const newWebglMesh = new WebglMesh(gl, meshResource);
         this._webglMeshMap.set(guid, newWebglMesh);
+    }
+    public deleteMesh(guid: string){
+        const webglMesh = this._webglMeshMap.get(guid);
+        if(webglMesh){
+            webglMesh.dispose();
+            this._webglMeshMap.delete(guid);
+        }
+    }
+    public deleteAll(){
+        for(const guid of this._webglMeshMap.keys()){
+            this.deleteMesh(guid);
+        }
     }
     public getWebglMesh(guid: string): WebglMesh;
     public getWebglMesh(component: Components.Mesh): WebglMesh;

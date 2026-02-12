@@ -12,7 +12,6 @@ import { OrbitCameraHelper } from "../../helpers/resource-manager-helper/OrbitCa
 export function SceneRenderer(){
     const scene = useAppSelector(state => state.sceneManager.scene);
     const sceneNodeRecord = useAppSelector(state => selectSceneNodeRecord(state));
-    const resourceManagerStatus = useAppSelector(state => state.resourceManager.status);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [camera, setCamera] = useState<SceneFormat.SceneOrbitCamera | null>(null);
     const [webglRenderer, setWebglRenderer] = useState<WebglRenderer | null>(null);
@@ -57,11 +56,10 @@ export function SceneRenderer(){
         }
     }, [webglRenderer]);
     useEffect(() => {
-        if(!scene) return;
         if(!webglRenderer) return;
-        if(!camera) return;
-        if(resourceManagerStatus === "loading") return;
         webglRenderer.clear();
+        if(!scene) return;
+        if(!camera) return;
         const handler = () => {
             const renderer = new SceneNodeRenderer(camera, webglRenderer);
             renderer.renderSceneNodes(scene.nodes, sceneNodeRecord, null);
@@ -72,7 +70,7 @@ export function SceneRenderer(){
         return () => {
             
         }
-    }, [scene, sceneNodeRecord, resourceManagerStatus, webglRenderer, camera]);
+    }, [scene, sceneNodeRecord, webglRenderer, camera]);
 
     return (
         <div className="flex-1 flex">

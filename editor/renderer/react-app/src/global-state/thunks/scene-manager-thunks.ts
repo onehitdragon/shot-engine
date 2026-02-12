@@ -1,13 +1,14 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"
 import type { AppDispatch, RootState } from "../store"
-import { selectSceneNodeRecord, selectSceneNodes, updateSceneModified, updateScenePath } from "../slices/scene-manager-slice";
+import { addSceneNode, closeScene, openScene, removeSceneNode, selectSceneNodeRecord, selectSceneNodes, updateSceneModified, updateScenePath } from "../slices/scene-manager-slice";
 import { addEntry, type FolderManager } from "../slices/folder-manager-slice";
 import { createAssetScene, isAssetImage, isAssetMesh } from "../../engine-zod";
 import { addAsset } from "../slices/asset-manager-slice";
-import { addManyResource, recreate, reduceResoures, selectResourceRecord, updateStatus, type ResourceManager } from "../slices/resource-manager-slice";
+import { reduceResoures, removeAllResource, selectResourceRecord, upsertManyResource, type ResourceManager } from "../slices/resource-manager-slice";
 import { WebglResourceManager } from "../../pages/main-page/helpers/resource-manager-helper/WebglResourceManager";
 import { updateLoading } from "../slices/app-loading-slice";
 import { loop } from "../../pages/main-page/helpers/scene-manager-helper/helper";
+import { cloneDeep } from "lodash";
 
 export const saveSceneThunk = createAsyncThunk
 <
@@ -65,10 +66,7 @@ export const saveSceneThunk = createAsyncThunk
 );
 export const openSceneThunk = createAsyncThunk
 <
-    {
-        scene: SceneFormat.Scene,
-        nodes: SceneFormat.SceneNode[]
-    },
+    void,
     {
         scene: SceneFormat.Scene,
         nodes: SceneFormat.SceneNode[]
@@ -80,38 +78,56 @@ export const openSceneThunk = createAsyncThunk
 >
 (
     "scene-manager/openScene",
-    async ({ scene, nodes }, { dispatch, getState, rejectWithValue }) => {
+    async ({ scene, nodes }, { dispatch, getState }) => {
         try{
             dispatch(updateLoading({ loading: true }));
-            dispatch(updateStatus({ status: "loading" }));
             const projectPaths = getState().folderManager.projectPaths;
             if(!projectPaths) throw "require a project opening";
 
             const resources = await whenNewNodes(getState(), projectPaths, nodes);
-            dispatch(recreate({ resources }));
-            
-            return {
-                scene,
-                nodes
-            }
+            dispatch(upsertManyResource({ resources }));
+            dispatch(openScene({ scene, nodes }));
         }
         catch(err){
             await window.api.showError(String(err));
-            return rejectWithValue(err);
         }
         finally{
-            dispatch(updateStatus({ status: "stable" }));
             dispatch(updateLoading({ loading: false }));
         }
     }
 );
+export const closeSceneThunk = createAsyncThunk
+<
+    void,
+    void,
+    {
+        dispatch: AppDispatch,
+        state: RootState
+    }
+>
+(
+    "scene-manager/closeScene",
+    async (_, { dispatch, getState }) => {
+        try{
+            dispatch(updateLoading({ loading: true }));
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "require a project opening";
+
+            dispatch(closeScene());
+            dispatch(removeAllResource());
+            WebglResourceManager.getInstance().deleteAll();
+        }
+        catch(err){
+            await window.api.showError(String(err));
+        }
+        finally{
+            dispatch(updateLoading({ loading: false }));
+        }
+    }
+)
 export const addSceneNodeThunk = createAsyncThunk
 <
-    {
-        nodeId: string,
-        parentId: SceneFormat.SceneNode["parent"]
-        nodes: SceneFormat.SceneNode[]
-    },
+    void,
     {
         nodeId: string,
         parentId: SceneFormat.SceneNode["parent"]
@@ -124,38 +140,27 @@ export const addSceneNodeThunk = createAsyncThunk
 >
 (
     "scene-manager/addSceneNode",
-    async ({ nodeId, parentId, nodes }, { dispatch, getState, rejectWithValue }) => {
+    async ({ nodeId, parentId, nodes }, { dispatch, getState }) => {
         try{
             dispatch(updateLoading({ loading: true }));
-            dispatch(updateStatus({ status: "loading" }));
             const projectPaths = getState().folderManager.projectPaths;
             if(!projectPaths) throw "require a project opening";
 
             const resources = await whenNewNodes(getState(), projectPaths, nodes);
-            dispatch(addManyResource({ resources }));
-            
-            return {
-                nodeId,
-                parentId,
-                nodes
-            }
+            dispatch(upsertManyResource({ resources }));
+            dispatch(addSceneNode({ nodeId, parentId, nodes }));
         }
         catch(err){
             await window.api.showError(String(err));
-            return rejectWithValue(err);
         }
         finally{
-            dispatch(updateStatus({ status: "stable" }));
             dispatch(updateLoading({ loading: false }));
         }
     }
 );
 export const removeSceneNodeThunk = createAsyncThunk
 <
-    {
-        id: string,
-        nodeIds: string[]
-    },
+    void,
     {
         id: string
     },
@@ -166,10 +171,9 @@ export const removeSceneNodeThunk = createAsyncThunk
 >
 (
     "scene-manager/removeSceneNode",
-    async ({ id }, { dispatch, getState, rejectWithValue }) => {
+    async ({ id }, { dispatch, getState }) => {
         try{
             dispatch(updateLoading({ loading: true }));
-            dispatch(updateStatus({ status: "loading" }));
             const projectPaths = getState().folderManager.projectPaths;
             if(!projectPaths) throw "require a project opening";
 
@@ -181,41 +185,14 @@ export const removeSceneNodeThunk = createAsyncThunk
                 nodeIds.push(node.id);
             });
 
-            const resourceRecord = selectResourceRecord(getState());
-            const reduceGuids: string[] = [];
-            for(const node of nodes){
-                const { components } = node;
-                for(const component of components){
-                    if(component.type === "Mesh" && component.meshType === "PrimitiveMesh"){
-                        const { primitiveType: guid } = component;
-                        const resource = resourceRecord[guid];
-                        if(!resource) continue;
-                        reduceGuids.push(guid);
-                    }
-                    else if(component.type === "Mesh" && component.meshType === "ImportMesh"){
-                        const { guid } = component;
-                        const resource = resourceRecord[guid];
-                        if(!resource) continue;
-                        reduceGuids.push(guid);
-                    }
-                    else if(component.type === "Shading"){
-                        // todo
-                    }
-                }
-            }
+            dispatch(removeSceneNode({ id, nodeIds }));
+            const reduceGuids = await whenDeleteNodes(getState(), nodes);
             dispatch(reduceResoures({ reduceGuids }));
-            
-            return {
-                id,
-                nodeIds
-            }
         }
         catch(err){
             await window.api.showError(String(err));
-            return rejectWithValue(err);
         }
         finally{
-            dispatch(updateStatus({ status: "stable" }));
             dispatch(updateLoading({ loading: false }));
         }
     }
@@ -224,44 +201,60 @@ async function whenNewNodes(
     state: RootState,
     projectPaths: FolderManager.ProjectPaths,
     nodes: SceneFormat.SceneNode[],
+    onError?: (msg: string) => void 
 ){
-    const resourceMap = new Map<string, ResourceManager.Resource>();
+    const resourceEntities = state.resourceManager.entities;
+    const dirtyResourceMap = new Map<string, ResourceManager.Resource>();
+
+    const assetEntities = state.assetManager.entities;
+    const assetExist = (guid: string) => {
+        if(assetEntities[guid]) return true;
+        onError?.(`dont find asset with guid ${guid}`);
+        return false;
+    }
+
     for(const node of nodes){
         const { components } = node;
         for(const component of components){
             if(component.type === "Mesh" && component.meshType === "PrimitiveMesh"){
-                const { primitiveType } = component;
-                const resource = resourceMap.get(primitiveType);
-                if(!resource){
-                    resourceMap.set(
-                        primitiveType,
-                        {
-                            guid: primitiveType,
-                            fileName: `${primitiveType}.mesh`,
-                            usedCount: 1
+                const { primitiveType: guid } = component;
+                if(!assetExist(guid)) continue;
+                let dirtyResource = dirtyResourceMap.get(guid);
+                if(!dirtyResource){
+                    const curResource = resourceEntities[guid];
+                    if(curResource){
+                        dirtyResource = cloneDeep(curResource);
+                    }
+                    else{
+                        dirtyResource = {
+                            guid,
+                            fileName: `${guid}.mesh`,
+                            usedCount: 0
                         }
-                    );
+                    }
+                    dirtyResourceMap.set(dirtyResource.guid, dirtyResource);
                 }
-                else{
-                    resource.usedCount++;
-                }
+                dirtyResource.usedCount++;
             }
             else if(component.type === "Mesh" && component.meshType === "ImportMesh"){
                 const { guid } = component;
-                const resource = resourceMap.get(guid);
-                if(!resource){
-                    resourceMap.set(
-                        guid,
-                        {
+                if(!assetExist(guid)) continue;
+                let dirtyResource = dirtyResourceMap.get(guid);
+                if(!dirtyResource){
+                    const curResource = resourceEntities[guid];
+                    if(curResource){
+                        dirtyResource = cloneDeep(curResource);
+                    }
+                    else{
+                        dirtyResource = {
                             guid,
                             fileName: `${guid}.mesh`,
-                            usedCount: 1
+                            usedCount: 0
                         }
-                    );
+                    }
+                    dirtyResourceMap.set(dirtyResource.guid, dirtyResource);
                 }
-                else{
-                    resource.usedCount++;
-                }
+                dirtyResource.usedCount++;
             }
             else if(component.type === "Shading"){
                 // todo
@@ -269,13 +262,15 @@ async function whenNewNodes(
         }
     }
 
-    const resources = Array.from(resourceMap.values());
+    const resources = Array.from(dirtyResourceMap.values());
     const resourceDirPath = projectPaths.resource;
-    const assetEntities = state.assetManager.entities;
     for(const resource of resources){
-        const metaObject = assetEntities[resource.guid];
-        if(!metaObject) throw `Dont find metaObject ${resource.guid}`;
+        const { guid } = resource;
 
+        const curResource = resourceEntities[guid];
+        if(curResource) continue;
+
+        const metaObject = assetEntities[resource.guid];
         const resourcePath = await window.fsPath.join(resourceDirPath, resource.fileName);
         const resourceExist = await window.api.file.exist(resourcePath);
         if(!resourceExist){
@@ -299,4 +294,49 @@ async function whenNewNodes(
     }
 
     return resources;
+}
+async function whenDeleteNodes(
+    state: RootState,
+    nodes: SceneFormat.SceneNode[],
+){
+    const resourceRecord = selectResourceRecord(state);
+    const countMap = new Map<string, number>();
+    const reduceGuids: string[] = [];
+    for(const node of nodes){
+        const { components } = node;
+        for(const component of components){
+            if(component.type === "Mesh" && component.meshType === "PrimitiveMesh"){
+                const { primitiveType: guid } = component;
+
+                const resource = resourceRecord[guid];
+                if(!resource) continue;
+                reduceGuids.push(guid);
+
+                let count = countMap.get(guid) ?? 0;
+                count++;
+                countMap.set(guid, count);
+                if(resource.usedCount === count){
+                    WebglResourceManager.getInstance().deleteMesh(guid);
+                }
+            }
+            else if(component.type === "Mesh" && component.meshType === "ImportMesh"){
+                const { guid } = component;
+
+                const resource = resourceRecord[guid];
+                if(!resource) continue;
+                reduceGuids.push(guid);
+                
+                let count = countMap.get(guid) ?? 0;
+                count++;
+                countMap.set(guid, count);
+                if(resource.usedCount === count){
+                    WebglResourceManager.getInstance().deleteMesh(guid);
+                }
+            }
+            else if(component.type === "Shading"){
+                // todo
+            }
+        }
+    }
+    return reduceGuids;
 }

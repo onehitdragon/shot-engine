@@ -9,7 +9,7 @@ export namespace ResourceManager{
     };
 }
 interface ResourceEntityState extends EntityState<ResourceManager.Resource, string>{
-    status: "stable" | "loading"
+    
 }
 const adapter = createEntityAdapter<ResourceManager.Resource, string>({
     selectId: (entity) => entity.guid
@@ -21,15 +21,11 @@ const slice = createSlice({
     initialState,
     name: "resource-manager",
     reducers: {
-        updateStatus: (state, action: PayloadAction<{ status: ResourceEntityState["status"] }>) => {
-            state.status = action.payload.status;
-        },
-        recreate: (state, action: PayloadAction<{ resources: ResourceManager.Resource[] }>) => {
+        removeAllResource: (state) => {
             adapter.removeAll(state);
-            adapter.addMany(state, action.payload.resources);
         },
-        addManyResource: (state, action: PayloadAction<{ resources: ResourceManager.Resource[] }>) => {
-            adapter.addMany(state, action.payload.resources);
+        upsertManyResource: (state, action: PayloadAction<{ resources: ResourceManager.Resource[] }>) => {
+            adapter.upsertMany(state, action.payload.resources);
         },
         reduceResoures: (state, action: PayloadAction<{ reduceGuids: string[] }>) => {
             const { reduceGuids } = action.payload;
@@ -51,5 +47,5 @@ export const {
     selectEntities: selectResourceRecord,
     selectAll: selectResources
 } = adapter.getSelectors((state: RootState) => state.resourceManager);
-export const { updateStatus, recreate, addManyResource, reduceResoures } = slice.actions;
+export const { removeAllResource, upsertManyResource, reduceResoures } = slice.actions;
 export default slice.reducer;

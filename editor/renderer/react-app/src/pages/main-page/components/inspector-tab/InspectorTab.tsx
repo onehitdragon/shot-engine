@@ -26,6 +26,16 @@ export function InspectorTab(){
             }));
         }
     }, [focusedSceneNode, scene]);
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            const target = e.target as HTMLElement | null;
+            if(!target) return;
+            if(target.closest("#inspector")) return;
+            dispatch(showInspector({ inspector: null }));
+        }
+        window.addEventListener("mousedown", handler);
+        return () => window.removeEventListener("mousedown", handler);
+    }, []);
 
     return (
         <div id="inspector" className="flex flex-1 overflow-hidden">
