@@ -90,7 +90,7 @@ function Empty(props: { name: string }){
     return (
         <>
             <div className='size-4 text-white'/>
-            <FolderEmptyIcon className='size-4 text-white'/>
+            <FolderEmptyIcon className='size-4 text-yellow-500'/>
             <span className='text-sm ml-2 text-white select-none'>{props.name}</span>
         </> 
     );
@@ -99,7 +99,7 @@ function OnlyFile(props: { name: string }){
     return (
         <>
             <div className='size-4 text-white'/>
-            <FolderIcon className='size-4 text-white'/>
+            <FolderIcon className='size-4 text-yellow-500'/>
             <span className='text-sm ml-2 text-white select-none'>{props.name}</span>
         </> 
     );
@@ -108,7 +108,7 @@ function Collapsed(props: { name: string }){
     return (
         <>
             <ChevronRightIcon className='size-4 text-white'/>
-            <FolderIcon className='size-4 text-white'/>
+            <FolderIcon className='size-4 text-yellow-500'/>
             <span className='text-sm ml-2 text-white select-none'>{props.name}</span>
         </> 
     );
@@ -117,7 +117,7 @@ function Expanding(props: { name: string }){
     return (
         <>
             <ChevronRightIcon className='size-4 text-white rotate-90'/>
-            <FolderOpenIcon className='size-4 text-white'/>
+            <FolderOpenIcon className='size-4 text-yellow-500'/>
             <span className='text-sm ml-2 text-white select-none'>{props.name}</span>
         </> 
     );

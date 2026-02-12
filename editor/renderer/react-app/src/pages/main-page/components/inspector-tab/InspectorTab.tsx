@@ -8,6 +8,7 @@ import { selectFocusedSceneNode } from "../../../../global-state/slices/scene-ma
 import { SceneNodeInspector } from "./SceneNodeInspector";
 import { PrefabInspector } from "./PrefabInspector";
 import { AssetInspector } from "./ImageInspector";
+import { MeshInspector } from "./MeshInspector";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
@@ -35,6 +36,7 @@ export function InspectorTab(){
                 :
                 inspector.type === "text" ? <TextInspector textInspector={inspector}/> :
                 inspector.type === "fbx" ? <FBXInspector fbxInspector={inspector}/> :
+                inspector.type === "mesh" ? <MeshInspector inspector={inspector}/> :
                 inspector.type === "prefab" ? <PrefabInspector inspector={inspector}/> :
                 inspector.type === "scene" ? <SceneInspector sceneInspector={inspector}/> :
                 inspector.type === "scene-node" ? <SceneNodeInspector sceneNodeInspector={inspector}/> :

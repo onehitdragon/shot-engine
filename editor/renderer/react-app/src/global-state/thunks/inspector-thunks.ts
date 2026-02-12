@@ -74,17 +74,19 @@ export const inspectAssetThunk = createAsyncThunk
         }
         else if(isAssetMesh(metaObject)){
             const text = await window.api.file.getText(path);
+            const jsonObject = JSON.parse(text) as MeshFormat.Mesh;
             dispatch(showInspector({ inspector: {
-                type: "text",
-                content: text
+                type: "mesh",
+                mesh: jsonObject
             } }));
             return;
         }
         else if(isAssetPrefab(metaObject)){
             const text = await window.api.file.getText(path);
+            const jsonObject = JSON.parse(text) as PrefabFormat.Prefab;
             dispatch(showInspector({ inspector: {
-                type: "text",
-                content: text
+                type: "prefab",
+                prefab: jsonObject
             } }));
             return;
         }

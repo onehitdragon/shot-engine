@@ -2,9 +2,9 @@ import { CubeIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, ChevronRightIcon, Square3Stack3DIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import { addTopSceneNode, focusSceneNode, renameSceneNode, selectSceneNodeById, unfocusSceneNode } from "../../../../global-state/slices/scene-manager-slice";
+import { focusSceneNode, renameSceneNode, selectSceneNodeById, unfocusSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { saveSceneThunk } from "../../../../global-state/thunks/scene-manager-thunks";
+import { addSceneNodeThunk, saveSceneThunk } from "../../../../global-state/thunks/scene-manager-thunks";
 import { createEmptySceneNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 
 export function Scene(props: { scene: SceneFormat.Scene }){
@@ -21,7 +21,12 @@ export function Scene(props: { scene: SceneFormat.Scene }){
         return () => window.removeEventListener("keydown", handler);
     }, []);
     const createEmptyChild = () => {
-        dispatch(addTopSceneNode({ node: createEmptySceneNode() }));
+        const node = createEmptySceneNode(null);
+        dispatch(addSceneNodeThunk({
+            nodeId: node.id,
+            parentId: null,
+            nodes: [node]
+        }));
     }
 
     return (

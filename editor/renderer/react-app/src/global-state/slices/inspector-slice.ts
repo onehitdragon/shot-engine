@@ -8,8 +8,13 @@ export type FBXInspector = {
     type: "fbx",
     fbx: FBXFormat.FBX
 }
+export type MeshInspector = {
+    type: "mesh",
+    mesh: MeshFormat.Mesh
+}
 export type PrefabInspector = {
-    type: "prefab"
+    type: "prefab",
+    prefab: PrefabFormat.Prefab
 }
 export type SceneInspector = {
     type: "scene",
@@ -30,7 +35,7 @@ export type AssetInspector = {
 }
 type State = {
     inspector: null | TextInspector | FBXInspector | PrefabInspector | SceneInspector | SceneNodeInspector
-    | AssetInspector
+    | AssetInspector | MeshInspector
 };
 const initialState: State = {
     inspector: null

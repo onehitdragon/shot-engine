@@ -1,24 +1,34 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
 import type { SceneNodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { addSceneNodeChild, addUniqueComponentToSceneNode, removeTopSceneNode, removeChildSceneNode } from "../../../../global-state/slices/scene-manager-slice";
+import { addUniqueComponentToSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { createCubeSceneNode, createEmptySceneNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 import { createDirectionalLightComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
+import { addSceneNodeThunk, removeSceneNodeThunk } from "../../../../global-state/thunks/scene-manager-thunks";
 
 export function SceneNodeContextMenu(
     props: { contextMenu: SceneNodeContextMenu, x: number, y: number }
 ){
     const { contextMenu, x, y } = props;
-    const { sceneNode, parent } = contextMenu;
+    const { sceneNode } = contextMenu;
     const dispatch = useAppDispatch();
     const createEmptyChild = () => {
-        dispatch(addSceneNodeChild({ parentId: sceneNode.id, child: createEmptySceneNode() }));
+        const node = createEmptySceneNode(sceneNode.id);
+        dispatch(addSceneNodeThunk({
+            nodeId: node.id,
+            parentId: sceneNode.id,
+            nodes: [node]
+        }));
     }
     const remmove = () => {
-        if(!parent) dispatch(removeTopSceneNode({ id: sceneNode.id }));
-        else dispatch(removeChildSceneNode({ chilId: sceneNode.id, parentId: parent }));
+        dispatch(removeSceneNodeThunk({ id: sceneNode.id }));
     }
     const createCubeChild = () => {
-        dispatch(addSceneNodeChild({ parentId: sceneNode.id, child: createCubeSceneNode() }));
+        const node = createCubeSceneNode(sceneNode.id);
+        dispatch(addSceneNodeThunk({
+            nodeId: node.id,
+            parentId: sceneNode.id,
+            nodes: [node]
+        }));
     }
     const addPointLightComponent = () => {
         dispatch(addUniqueComponentToSceneNode({

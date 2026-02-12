@@ -1,5 +1,6 @@
 import { createEntityAdapter, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
+import { addSceneNodeThunk, openSceneThunk, removeSceneNodeThunk } from "../thunks/scene-manager-thunks";
 
 interface SceneEntityState extends EntityState<SceneFormat.SceneNode, string> {
     scene: SceneFormat.Scene | null,
@@ -20,15 +21,6 @@ const slice = createSlice({
     initialState,
     name: "sceneManager",
     reducers: {
-        updateScene: (state, action: PayloadAction<{
-            scene: SceneFormat.Scene,
-            nodes: SceneFormat.SceneNode[]
-        }>) => {
-            const { scene, nodes } = action.payload;
-            state.scene = scene;
-            adapter.removeAll(state);
-            adapter.addMany(state, nodes);
-        },
         updateSceneModified: (state, action: PayloadAction<{ value: boolean }>) => {
             state.modified = action.payload.value;
         },
@@ -41,44 +33,7 @@ const slice = createSlice({
         unfocusSceneNode: (state) => {
             state.focusedId = null;
         },
-        addSceneNodeChild: (state, action: PayloadAction<{ parentId: string, child: SceneFormat.SceneNode }>) => {
-            const { parentId, child } = action.payload;
-            if(state.entities[child.id]) return;
-            const parent = state.entities[parentId];
-            if(!parent) return;
-            parent.childs.push(child.id);
-            adapter.addOne(state, child);
-            state.modified = true;
-        },
-        addTopSceneNode: (state, action: PayloadAction<{ node: SceneFormat.SceneNode }>) => {
-            const { node } = action.payload;
-            if(state.entities[node.id]) return;
-            const scene = state.scene;
-            if(!scene) return;
-            scene.nodes.push(node.id);
-            adapter.addOne(state, node);
-            state.modified = true;
-        },
-        removeChildSceneNode: (state, action: PayloadAction<{ parentId: string, chilId: string }>) => {
-            const { parentId, chilId } = action.payload;
-            const parent = state.entities[parentId];
-            if(!parent) return;
-            const index = parent.childs.findIndex(child => child === chilId);
-            if(index == -1) return;
-            parent.childs.splice(index, 1);
-            adapter.removeOne(state, chilId);
-            state.modified = true;
-        },
-        removeTopSceneNode: (state, action: PayloadAction<{ id: string }>) => {
-            const scene = state.scene;
-            if(!scene) return;
-            const { id } = action.payload;
-            const index = scene.nodes.findIndex(nodeId => nodeId === id);
-            if(index == -1) return;
-            scene.nodes.splice(index, 1);
-            adapter.removeOne(state, id);
-            state.modified = true;
-        },
+
         renameSceneNode: (state, action: PayloadAction<{ nodeId: string, newName: string }>) => {
             const { nodeId, newName } = action.payload;
             adapter.updateOne(state, { id: nodeId, changes: { name: newName } });
@@ -123,6 +78,45 @@ const slice = createSlice({
             nodeFound.components[index] = component;
             state.modified = true;
         }
+    },
+    extraReducers(builder){
+        builder.addCase(openSceneThunk.fulfilled, (state, action) => {
+            state.scene = action.payload.scene;
+            adapter.removeAll(state);
+            adapter.addMany(state, action.payload.nodes)
+        });
+        builder.addCase(addSceneNodeThunk.fulfilled, (state, action) => {
+            const { nodeId, parentId, nodes } = action.payload;
+            if(!parentId){
+                const scene = state.scene;
+                if(!scene) return;
+                scene.nodes.push(nodeId);
+            }
+            else{
+                const parent = state.entities[parentId];
+                if(!parent) return;
+                parent.childs.push(nodeId);
+            }
+            adapter.addMany(state, nodes);
+            state.modified = true;
+        });
+        builder.addCase(removeSceneNodeThunk.fulfilled, (state, action) => {
+            const { id, nodeIds } = action.payload;
+            const node = state.entities[id];
+            if(!node) return;
+            if(!node.parent){
+                const scene = state.scene;
+                if(!scene) return;
+                scene.nodes = scene.nodes.filter(nodeId => nodeId !== id);
+            }
+            else{
+                const parent = state.entities[node.parent];
+                if(!parent) return;
+                parent.childs = parent.childs.filter(nodeId => nodeId !== id);
+            }
+            adapter.removeMany(state, nodeIds);
+            state.modified = true;
+        })
     }
 });
 export const {
@@ -135,8 +129,8 @@ function selectFocusedSceneNode(state: RootState){
     if(!focusedId) return null;
     return selectSceneNodeById(state, focusedId);
 }
-export const { updateScene, updateSceneModified, updateScenePath, focusSceneNode,
-    unfocusSceneNode, addSceneNodeChild, removeChildSceneNode, removeTopSceneNode, addTopSceneNode,
+export const { updateSceneModified, updateScenePath, focusSceneNode,
+    unfocusSceneNode,
     updateComponentOfSceneNode, removeComponentOfSceneNode,
     renameSceneNode, addUniqueComponentToSceneNode } = slice.actions;
 export { selectFocusedSceneNode }

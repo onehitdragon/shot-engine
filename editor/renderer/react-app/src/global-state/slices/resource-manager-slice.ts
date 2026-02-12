@@ -30,10 +30,26 @@ const slice = createSlice({
         },
         addManyResource: (state, action: PayloadAction<{ resources: ResourceManager.Resource[] }>) => {
             adapter.addMany(state, action.payload.resources);
+        },
+        reduceResoures: (state, action: PayloadAction<{ reduceGuids: string[] }>) => {
+            const { reduceGuids } = action.payload;
+            const deleteGuids: string[] = [];
+            for(const guid of reduceGuids){
+                const resource = state.entities[guid];
+                if (!resource) continue;
+                resource.usedCount--;
+                if(resource.usedCount <= 0){
+                    deleteGuids.push(guid);
+                }
+            }
+            adapter.removeMany(state, deleteGuids);
         }
     }
 });
 export const {
+    selectById: selectResourceByGuid,
+    selectEntities: selectResourceRecord,
+    selectAll: selectResources
 } = adapter.getSelectors((state: RootState) => state.resourceManager);
-export const { updateStatus, recreate, addManyResource } = slice.actions;
+export const { updateStatus, recreate, addManyResource, reduceResoures } = slice.actions;
 export default slice.reducer;

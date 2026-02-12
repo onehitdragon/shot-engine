@@ -9,6 +9,7 @@ declare namespace SceneFormat{
         id: string,
         name: string,
         components: Components.Component[],
+        parent: string | null,
         childs: string[],
     }
     export type SceneOrbitCamera = {

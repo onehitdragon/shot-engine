@@ -8,3 +8,16 @@ export function createEmptyScene(){
     }
     return scene;
 }
+export function loop(
+    nodeId: string,
+    sceneNodeRecord: Record<string, SceneFormat.SceneNode>,
+    result: (node: SceneFormat.SceneNode) => void
+){
+    const node = sceneNodeRecord[nodeId];
+    if(!node) return;
+    result(node);
+    const { childs } = node;
+    for(const child of childs){
+        loop(child, sceneNodeRecord, result);
+    }
+}

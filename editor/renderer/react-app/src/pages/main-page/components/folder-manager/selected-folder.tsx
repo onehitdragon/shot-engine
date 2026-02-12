@@ -1,5 +1,8 @@
 import { FolderPlusIcon, FolderIcon, DocumentTextIcon,
-    ArrowDownOnSquareIcon, PhotoIcon
+    ArrowDownOnSquareIcon, PhotoIcon,
+    Square3Stack3DIcon,
+    GlobeAltIcon,
+    CubeTransparentIcon
  } from "@heroicons/react/24/solid";
 import { chooseEntry, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, focusEntry, type FolderManager, selectEntryByPath, selectSelectedEntry } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
@@ -90,14 +93,34 @@ type FileEntryProps = {
 }
 function FileEntry(props: FileEntryProps){
     const { file } = props;
+    const isMeta = file.path.endsWith(".meta.json");
+    const isScene = file.path.endsWith(".scene.json");
+    const isMesh = file.path.endsWith(".mesh.json");
+    const isPrefab = file.path.endsWith(".prefab.json");
+    const iconGenerator = () => {
+        if(isScene){
+            return <Square3Stack3DIcon className='size-4 text-white'/>
+        }
+        else if(isMesh){
+            return <GlobeAltIcon className='size-4 text-green-500'/>
+        }
+        else if(isPrefab){
+            return <CubeTransparentIcon className='size-4 text-red-500'/>
+        }
+        else if(fileIsImage(file)){
+            return <PhotoIcon className='size-4 text-white'/>
+        }
+        else{
+            return <DocumentTextIcon className='size-4 text-white'/>
+        }
+    }
 
     return (
         <>
-            {
-                fileIsImage(file) ? <PhotoIcon className='size-4 text-white'/>
-                : <DocumentTextIcon className='size-4 text-white'/>
-            }
-            <span className='text-sm ml-2 text-white select-none'>{file.name}</span>
+            {iconGenerator()}
+            <span className={`text-sm ml-2 text-white ${isMeta && "opacity-40"} select-none`}>
+                {file.name}
+            </span>
         </>
     );
 }
@@ -121,7 +144,7 @@ function DirectoryEntry(props: DirectoryEntryProps){
 function Empty(props: { name: string }){
     return (
         <>
-            <FolderEmptyIcon className='size-4 text-white'/>
+            <FolderEmptyIcon className='size-4 text-yellow-500'/>
             <span className='text-sm ml-2 text-white select-none'>{props.name}</span>
         </>
     );
@@ -129,7 +152,7 @@ function Empty(props: { name: string }){
 function NonEmpty(props: { name: string }){
     return (
         <>
-            <FolderIcon className='size-4 text-white'/>
+            <FolderIcon className='size-4 text-yellow-500'/>
             <span className='text-sm ml-2 text-white select-none'>{props.name}</span>
         </>
     );
