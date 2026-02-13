@@ -5,7 +5,7 @@ import { WebglResourceManager } from "../../helpers/resource-manager-helper/Webg
 export function ResourceManager(){
     const resources = useAppSelector(state => selectResources(state));
     return <div className='flex-1 flex overflow-hidden'>
-        <div className="flex flex-col flex-1 overflow-scroll scrollbar-thin">
+        <div className="flex flex-col flex-1 overflow-auto scrollbar-thin p-1">
             <p className="select-none text-white text-xl font-bold">Resource</p>
             <ul className="flex flex-col gap-3">
                 {

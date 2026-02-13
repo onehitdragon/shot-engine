@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, session } from "electron";
 import path from "path";
 import fs from "fs-extra";
 import { showErrorDialog } from "./message-boxes";
@@ -273,6 +273,24 @@ app.whenReady()
         return metaHash;
     });
 
+    // extensions
+    if (!app.isPackaged){
+        const reduxDevToolsPath = path.join(
+            process.env.LOCALAPPDATA!,
+            "Google",
+            "Chrome",
+            "User Data",
+            "Default",
+            "Extensions",
+            "lmhkpmbekcpmknklioeibfkpmmfibljd",
+            "3.2.10_0"
+        );
+        session.defaultSession.extensions.loadExtension(reduxDevToolsPath)
+        .then(() => { console.log("added reduxDevTool extension!") })
+        .catch((err) => { console.log("error while adding reduxDevTool: ", err) });
+    }
+
+    //
     app.on("activate", () => {
         if(BrowserWindow.getAllWindows().length == 0) createWindow();
     });

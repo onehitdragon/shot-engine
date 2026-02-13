@@ -22,8 +22,8 @@ const slice = createSlice({
         addAsset: (state, action: PayloadAction<{ metaObject: Assets.MetaObject }>) => {
             adapter.addOne(state, action.payload.metaObject);
         },
-        deleteAsset: (state, action: PayloadAction<{ guid: string }>) => {
-            adapter.removeOne(state, action.payload.guid);
+        removeManyAsset: (state, action: PayloadAction<{ guids: string[] }>) => {
+            adapter.removeMany(state, action.payload.guids);
         },
         updateAsset: (state, action: PayloadAction<{ metaObject: Assets.MetaObject }>) => {
             const { metaObject } = action.payload;
@@ -34,10 +34,11 @@ const slice = createSlice({
 
 export const {
   selectById: selectAssetByGuid,
-  selectEntities: selectAssetEntities,
+  selectEntities: selectAssetRecord,
+  selectAll: selectAssets
 } = adapter.getSelectors((state: RootState) => state.assetManager);
-export const selectAssetImages = createSelector(selectAssetEntities, (metaObjects) => {
+export const selectAssetImages = createSelector(selectAssetRecord, (metaObjects) => {
     return Object.values(metaObjects).filter(metaObject => isAssetImage(metaObject.asset));
 });
-export const { recreate, addAsset, deleteAsset, updateAsset } = slice.actions;
+export const { recreate, addAsset, removeManyAsset, updateAsset } = slice.actions;
 export default slice.reducer;

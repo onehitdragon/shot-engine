@@ -3,11 +3,12 @@ import type { AppDispatch, RootState } from "../store";
 import { addEntry, deleteEntry, type FolderManager } from "../slices/folder-manager-slice";
 import { addLog, updateLoading } from "../slices/app-loading-slice";
 import { createAssetFolder, createAssetImage, createAssetMesh, createAssetPrefab, type Assets } from "../../engine-zod";
-import { pathIsImage } from "../../pages/main-page/helpers/folder-manager-helper/helper";
-import { addAsset, deleteAsset, recreate } from "../slices/asset-manager-slice";
+import { createFolder, loop, pathIsImage } from "../../pages/main-page/helpers/folder-manager-helper/helper";
+import { addAsset, recreate } from "../slices/asset-manager-slice";
 import { createAssimpPrefab } from "../../pages/main-page/helpers/scene-manager-helper/SceneNodeHelper";
 import { createPrimitivesAssetMesh } from "../../pages/main-page/helpers/scene-manager-helper/mesh-datas";
 import { closeSceneThunk } from "./scene-manager-thunks";
+import { deleteManyAssetThunk } from "./asset-manager-thunks";
 
 export const openProjectThunk = createAsyncThunk
 <
@@ -37,11 +38,11 @@ export const openProjectThunk = createAsyncThunk
                 resource: await window.fsPath.join(path, "Library", "Resource"),
             }
             await window.api.folder.create(projectPaths.asset);
-            await window.api.folder.create(await window.fsPath.join(projectPaths.asset, "Scenes"));
-            await window.api.folder.create(await window.fsPath.join(projectPaths.asset, "Prefabs"));
-            await window.api.folder.create(await window.fsPath.join(projectPaths.asset, "Scripts"));
-            await window.api.folder.create(projectPaths.assetDefault);
             await window.api.folder.create(projectPaths.resource);
+            await createFolder(projectPaths.assetDefault);
+            await createFolder(await window.fsPath.join(projectPaths.asset, "Scenes"));
+            await createFolder(await window.fsPath.join(projectPaths.asset, "Prefabs"));
+            await createFolder(await window.fsPath.join(projectPaths.asset, "Scripts"));
             await createPrimitivesAssetMesh(projectPaths.assetDefault);
 
             const entries = await window.api.folder.load(projectPaths.asset);
@@ -62,7 +63,7 @@ export const openProjectThunk = createAsyncThunk
             };
         }
         catch(err){
-            dispatch(closeProjectThunk());
+            await dispatch(closeProjectThunk());
             await window.api.showError(String(err));
             return rejectWithValue(err);
         }
@@ -133,7 +134,7 @@ export const createFolderThunk = createAsyncThunk
             dispatch(addEntry({ parentPath, entry: created }));
         }
         catch(err){
-            dispatch(closeProjectThunk());
+            await dispatch(closeProjectThunk());
             await window.api.showError(String(err));
         }
     }
@@ -167,8 +168,15 @@ export const importFileThunk = createAsyncThunk
             const importName = await window.fsPath.basename(importPath);
 
             if(importPath.endsWith(".fbx")){
-                const { data: assimp } = await window.api.file.assimpImporter(importPath);
+                const fbxDirPath = await window.fsPath.join(destFolder, `[${importName}]`);
+                const fbxDirExist = await window.api.file.exist(fbxDirPath);
+                if(fbxDirExist){
+                    await window.api.showError(String("fbx dir was existed"));
+                    return;
+                }
+                await createFolder(fbxDirPath, dispatch);
 
+                const { data: assimp } = await window.api.file.assimpImporter(importPath);
                 const meshAssets: Assets.AssetMesh[] = [];
                 for(const assimpMesh of assimp.meshes){
                     const mesh: MeshFormat.Mesh = {
@@ -177,14 +185,14 @@ export const importFileThunk = createAsyncThunk
                         normals: assimpMesh.normals
                     }
                     const meshName = `[${importName}]${assimpMesh.name}.mesh.json`;
-                    const meshPath = await window.fsPath.join(destFolder, meshName);
+                    const meshPath = await window.fsPath.join(fbxDirPath, meshName);
                     await window.api.file.save(meshPath, JSON.stringify(mesh, null, 2));
                     const meshCreated: DirectoryTree.File = {
                         type: "File",
                         name: meshName,
                         path: meshPath
                     };
-                    dispatch(addEntry({ parentPath: destFolder, entry: meshCreated }));
+                    dispatch(addEntry({ parentPath: fbxDirPath, entry: meshCreated }));
 
                     const asset = createAssetMesh();
                     const metaName = meshName + ".meta.json";
@@ -195,21 +203,21 @@ export const importFileThunk = createAsyncThunk
                         name: metaName,
                         path: metaPath
                     };
-                    dispatch(addEntry({ parentPath: destFolder, entry: metaCreated }));
+                    dispatch(addEntry({ parentPath: fbxDirPath, entry: metaCreated }));
                     dispatch(addAsset({ metaObject: { path: meshPath, asset } }));
                     meshAssets.push(asset);
                 }
 
                 const prefab = createAssimpPrefab(assimp.rootnode, meshAssets);
                 const prefabName = `[${importName}]${assimp.rootnode.name}.prefab.json`;
-                const prefabPath = await window.fsPath.join(destFolder, prefabName);
+                const prefabPath = await window.fsPath.join(fbxDirPath, prefabName);
                 await window.api.file.save(prefabPath, JSON.stringify(prefab, null, 2));
                 const prefabCreated: DirectoryTree.File = {
                     type: "File",
                     name: prefabName,
                     path: prefabPath
                 };
-                dispatch(addEntry({ parentPath: destFolder, entry: prefabCreated }));
+                dispatch(addEntry({ parentPath: fbxDirPath, entry: prefabCreated }));
 
                 const asset = createAssetPrefab();
                 const metaName = prefabName + ".meta.json";
@@ -220,7 +228,7 @@ export const importFileThunk = createAsyncThunk
                     name: metaName,
                     path: metaPath
                 };
-                dispatch(addEntry({ parentPath: destFolder, entry: metaCreated }));
+                dispatch(addEntry({ parentPath: fbxDirPath, entry: metaCreated }));
                 dispatch(addAsset({ metaObject: { path: prefabPath, asset } }));
             }
             else if(pathIsImage(importPath)){
@@ -251,7 +259,7 @@ export const importFileThunk = createAsyncThunk
             }
         }
         catch(err){
-            dispatch(closeProjectThunk());
+            await dispatch(closeProjectThunk());
             await window.api.showError(String(err));
         }
     }
@@ -269,6 +277,7 @@ export const deleteEntryThunk = createAsyncThunk
     "folder-manager/deleteEntry",
     async ({ parentPath, entryPath, recycle }, { getState, dispatch }) => {
         try{
+            dispatch(updateLoading({ loading: true }));
             const projectPaths = getState().folderManager.projectPaths;
             if(!projectPaths) throw "no project has been opened yet";
 
@@ -286,18 +295,33 @@ export const deleteEntryThunk = createAsyncThunk
                 return;
             }
             
-            await window.api.file.delete(entryPath, recycle);
-            dispatch(deleteEntry({ parentPath, entryPath }));
+            const metaEntryPath = entryPath + ".meta.json";
+            const paths: string[] = [];
+            const metaPaths: string[] = [];
+            loop(entryPath, getState().folderManager.entities, (entry, metatEntry) => {
+                paths.push(entry.path);
+                metaPaths.push(metatEntry.path);
+            });
 
-            const metaPath = entryPath + ".meta.json";
-            const metaObject = JSON.parse(await window.api.file.getText(metaPath));
-            await window.api.file.delete(metaPath, recycle);
-            dispatch(deleteEntry({ parentPath, entryPath: metaPath }));
-            dispatch(deleteAsset({ guid: metaObject["guid"] }));
+            const guids: string[] = [];
+            for(const metaPath of metaPaths){
+                const metaObject = JSON.parse(await window.api.file.getText(metaPath)) as Assets.Asset;
+                guids.push(metaObject.guid);
+            }
+            await dispatch(deleteManyAssetThunk({ guids }));
+
+            for(const path of paths.concat(metaPaths)){
+                await window.api.file.delete(path, recycle);
+            }
+            dispatch(deleteEntry({ entryPath, parentPath, paths }));
+            dispatch(deleteEntry({ entryPath: metaEntryPath, parentPath, paths: metaPaths }));
         }
         catch(err){
-            dispatch(closeProjectThunk());
+            await dispatch(closeProjectThunk());
             await window.api.showError(String(err));
+        }
+        finally{
+            dispatch(updateLoading({ loading: false }));
         }
     }
 );

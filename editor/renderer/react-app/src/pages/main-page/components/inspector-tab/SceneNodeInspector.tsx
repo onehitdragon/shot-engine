@@ -4,9 +4,11 @@ import type { SceneNodeInspector } from "../../../../global-state/slices/inspect
 import { updateComponentOfSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { clamp } from "@math.gl/core";
-import { CheckBox, OneValueRow, Selection } from "./components";
+import { CheckBox, OneValueRow, Selection, TextRow, TextRowErr } from "./components";
 import { selectAssetImages } from "../../../../global-state/slices/asset-manager-slice";
 import { createOptions, findGuid } from "../../helpers/meta-helper/meta-helper";
+import { selectResourceByGuid } from "../../../../global-state/slices/resource-manager-slice";
+import { getMeshGuid } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
 
 export function SceneNodeInspector(props: { sceneNodeInspector: SceneNodeInspector }){
     const { sceneNodeInspector } = props;
@@ -76,21 +78,23 @@ function TransformSection(props: { node: SceneFormat.SceneNode, component: Compo
 }
 function MeshSection(props: { scene: SceneFormat.Scene, node: SceneFormat.SceneNode, component: Components.Mesh }){
     const { node, component } = props;
+    const guid = getMeshGuid(component);
+    const resource = useAppSelector(state => selectResourceByGuid(state, guid));
     
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
             <Header label={component.meshType} node={node} component={component}/>
+            <TextRow label="meshType" content={component.meshType}/>
             {
-                component.meshType === "PrimitiveMesh" ?
-                <div className="flex gap-2 mb-1">
-                    <span className="select-none text-xs text-white">
-                        {component.primitiveType}
-                    </span>
-                </div> :
-                <div className="flex gap-2 mb-1">
-                    <span className="select-none text-xs text-white">
-                        guid: {component.guid}
-                    </span>
+                !resource &&
+                <TextRowErr label="Error: " content={`missing resource guid: ${guid}`}/>
+            }
+            {
+                resource &&
+                <div className="flex flex-col gap-2">
+                    <TextRow label="guid" content={resource.guid}/>
+                    <TextRow label="fileName" content={resource.fileName}/>
+                    <TextRow label="usedCount" content={resource.usedCount.toString()}/>
                 </div>
             }
         </div>
@@ -271,10 +275,11 @@ function Header(props: { label: string, node: SceneFormat.SceneNode, component: 
     }
 
     return (
-        <div className="flex flex-1 items-center mb-1 transition hover:opacity-80 cursor-pointer"
+        <div className="flex flex-1 items-center justify-center mb-1 transition hover:opacity-80 cursor-pointer"
             onContextMenu={onRightClick}
         >
             <span className="select-none text-sm text-white font-bold">{label}</span>
+            <div className="flex-1 h-0.5 bg-slate-700 ml-2"></div>
         </div>
     );
 }

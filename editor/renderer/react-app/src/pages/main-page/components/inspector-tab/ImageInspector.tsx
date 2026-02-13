@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import type { AssetInspector } from "../../../../global-state/slices/inspector-slice";
+import { showInspector, type AssetInspector } from "../../../../global-state/slices/inspector-slice";
 import { selectAssetByGuid, updateAsset } from "../../../../global-state/slices/asset-manager-slice";
 import { createTexture, isAssetImage, type Assets } from "../../../../engine-zod";
 import { ButtonRow, CheckBox, Image, OneValueRow, Selection, TextRow } from "./components";
@@ -8,7 +8,12 @@ import { ButtonRow, CheckBox, Image, OneValueRow, Selection, TextRow } from "./c
 export function AssetInspector(props: { inspector: AssetInspector }){
     const { guid } = props.inspector;
     const asset = useAppSelector(state => selectAssetByGuid(state, guid));
+    const dispatch = useAppDispatch();
+    useEffect(() => {
+        if(!asset) dispatch(showInspector({ inspector: null }));
+    }, [asset])
     return (
+        !asset ? <div></div> :
         <div className="flex flex-col gap-1 flex-1 p-1 overflow-auto scrollbar-thin">
             <TextRow label="guid" content={asset.asset.guid}/>
             {

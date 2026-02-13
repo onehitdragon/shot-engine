@@ -39,6 +39,9 @@ const slice = createSlice({
                 }
             }
             adapter.removeMany(state, deleteGuids);
+        },
+        removeManyResource: (state, action: PayloadAction<{ guids: string[] }>) => {
+            adapter.removeMany(state, action.payload.guids);
         }
     }
 });
@@ -47,5 +50,5 @@ export const {
     selectEntities: selectResourceRecord,
     selectAll: selectResources
 } = adapter.getSelectors((state: RootState) => state.resourceManager);
-export const { removeAllResource, upsertManyResource, reduceResoures } = slice.actions;
+export const { removeAllResource, upsertManyResource, reduceResoures, removeManyResource } = slice.actions;
 export default slice.reducer;

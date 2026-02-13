@@ -14,6 +14,18 @@ export function TextRow(props: {
         </div>
     );
 }
+export function TextRowErr(props: {
+    label: string,
+    content: string
+}){
+    const { label, content } = props;
+    return (
+        <div className="flex gap-1">
+            <span className="text-white text-sm select-none font-bold">{label}:</span>
+            <span className="text-red-500 text-sm select-none">{content}</span>
+        </div>
+    );
+}
 export function Selection<T extends number | string>(
     props: {
         label: string,

@@ -49,6 +49,8 @@ export async function createPrimitivesAssetMesh(assetDefaultPath: string){
 
     const meshName = `cube.mesh.json`;
     const meshPath = await window.fsPath.join(assetDefaultPath, meshName);
+    const meshExist = await window.api.file.exist(meshPath);
+    if(meshExist) return;
     await window.api.file.save(meshPath, JSON.stringify(cubeMesh, null, 2));
     const cubeMeshMeta: Assets.AssetMesh = {
         guid: "CUBE" as Components.PrimitiveMesh["primitiveType"],

@@ -63,17 +63,16 @@ const slice = createSlice({
         deleteEntry: (
             state,
             action: PayloadAction<{
+                entryPath: string,
                 parentPath: string,
-                entryPath: string
+                paths: string[]
             }>
         ) => {
-            const { parentPath, entryPath } = action.payload;
+            const { parentPath, entryPath, paths } = action.payload;
             const parent = state.entities[parentPath];
             if(!parent || parent.type === "File") return;
-            const index = parent.children.findIndex(path => path === entryPath);
-            if(index == -1) return;
-            parent.children.splice(index, 1);
-            adapter.removeOne(state, entryPath);
+            parent.children = parent.children.filter(child => child !== entryPath);
+            adapter.removeMany(state, paths);
         }
     },
     extraReducers(builder){

@@ -9,10 +9,15 @@ export class WebglResourceManager{
         return this._instance;
     }
     private _gl: WebGL2RenderingContext;
+    private _fallbackWebglMesh: WebglMesh;
     private _webglMeshMap: Map<string, WebglMesh>;
     private constructor(gl: WebGL2RenderingContext){
         this._gl = gl;
         this._webglMeshMap = new Map();
+        this._fallbackWebglMesh = new WebglMesh(gl, {
+            interleave: new Float32Array(),
+            indices: new Uint32Array()
+        });
     }
     public info(){
         return {
@@ -54,7 +59,7 @@ export class WebglResourceManager{
             else throw "cant find guid";
         }
         const webglMesh = this._webglMeshMap.get(guid);
-        if(!webglMesh) throw "cant find meshId: " + guid;
+        if(!webglMesh) return this._fallbackWebglMesh;
         return webglMesh;
     }
 }
