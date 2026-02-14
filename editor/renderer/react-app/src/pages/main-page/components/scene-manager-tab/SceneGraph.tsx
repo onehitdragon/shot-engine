@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { focusSceneNode, renameSceneNode, selectSceneNodeById, unfocusSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { addSceneNodeThunk, saveSceneThunk } from "../../../../global-state/thunks/scene-manager-thunks";
+import { addSceneNodeThunk, sceneSavedThunk } from "../../../../global-state/thunks/scene-manager-thunks";
 import { createEmptySceneNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 
 export function Scene(props: { scene: SceneFormat.Scene }){
@@ -15,17 +15,18 @@ export function Scene(props: { scene: SceneFormat.Scene }){
 
     useEffect(() => {
         const handler = async (e: KeyboardEvent) => {
-            if(e.ctrlKey && e.key == "s") dispatch(saveSceneThunk());
+            if(e.ctrlKey && e.key == "s") dispatch(sceneSavedThunk());
         }
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
     }, []);
     const createEmptyChild = () => {
-        const node = createEmptySceneNode(null);
+        const [node, components] = createEmptySceneNode(null);
         dispatch(addSceneNodeThunk({
             nodeId: node.id,
             parentId: null,
-            nodes: [node]
+            nodes: [node],
+            components
         }));
     }
 

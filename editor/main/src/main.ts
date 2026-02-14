@@ -5,12 +5,9 @@ import { showErrorDialog } from "./message-boxes";
 import trash from "trash";
 import { assimpImporter } from "./importer/assimp/assimp-importer";
 import crypto from "crypto";
-import ktxParser from "ktx-parse";
-import { Worker } from "worker_threads";
 import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
-import sharp from "sharp";
-import { saveMeshToBuffer, readMeshBinary } from "./importer/binary/meshBinary";
+import { saveMeshToBuffer, readMeshBinary, saveImageToBuffer, readImageBinary } from "./importer/binary/resourceBinary";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -219,17 +216,6 @@ app.whenReady()
         const buffer = await fs.readFile(path);
         return `data:image/png;base64,${buffer.toString("base64")}`;
     });
-    ipcMain.handle("file:readImage", async (e, path: string) => {
-        const { data, info } = await sharp(path)
-        .ensureAlpha()
-        .raw()
-        .toBuffer({resolveWithObject: true});
-        return {
-            width: info.width,
-            height: info.height,
-            data: new Uint8Array(data)
-        };
-    });
     ipcMain.handle(
         "resource:saveMesh",
         async (e, destPath: string, mesh: Resource.Mesh) => {
@@ -243,35 +229,17 @@ app.whenReady()
         }
     );
     ipcMain.handle(
-        "ktx2:createTextureKTX2",
-        async (e, sourcePath: string, destPath: string, metaHash: string, settings: KTX2.TextureKTX2Settings) => {
-            const worker = new Worker(
-                path.join(__dirname, "importer", "ktx-encode", "ktx-encoder.js"),
-                {
-                    workerData: { sourcePath, destPath, settings }
-                }
-            )
-            await new Promise<void>((resolve, reject) => {
-                worker.once("exit", () => { resolve() });
-                worker.once("error", (err) => { reject(err) });
-            });
-            const ktx = ktxParser.read(await fs.readFile(destPath));
-            ktx.keyValue["metaHash"] = new TextEncoder().encode(metaHash);
-            await fs.writeFile(destPath, ktxParser.write(ktx));
-            const created: DirectoryTree.File = {
-                type: "File",
-                name: path.basename(destPath),
-                path: destPath
-            }
-            return created;
+        "resource:saveImage",
+        async (e, destPath: string, imagePath: string) => {
+            await saveImageToBuffer(destPath, imagePath);
         }
     );
-    ipcMain.handle("ktx2:getMetaHash", async (e, path: string) => {
-        const ktx = ktxParser.read(await fs.readFile(path));
-        const buffer = ktx.keyValue["metaHash"] as Uint8Array<ArrayBufferLike>;
-        const metaHash = new TextDecoder().decode(buffer);
-        return metaHash;
-    });
+    ipcMain.handle(
+        "resource:loadImage",
+        async (e, destPath: string) => {
+            return await readImageBinary(destPath);
+        }
+    );
 
     // extensions
     if (!app.isPackaged){

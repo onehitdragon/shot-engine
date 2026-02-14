@@ -32,7 +32,7 @@ export class WebglSimpleShader{
         const vao = gl.createVertexArray();
         gl.bindVertexArray(vao);
             vbos.bindVertexVBO();
-            const stride = (3 + 3) * 4; // (3 verter float, 3 normal float) * floatSize = 4
+            const stride = (3 + 3 + 2) * 4; // (3 verter, 3 normal, 2 uv) * floatSize = 4
             gl.vertexAttribPointer(this._a_PositionLoc, 3, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(this._a_PositionLoc);
             vbos.bindIndexVBO();

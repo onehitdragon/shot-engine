@@ -4,7 +4,6 @@ import phongShadingFShaderSource from "../shaders/phong-shader/fshader.glsl?raw"
 import type { mat3, mat4, vec3 } from "gl-matrix";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
 import { LightSceneNodeManager } from "./LightSceneNodeManager";
-import { getDirectionalLightInfo, getPointLightInfo } from "./LighSceneNodeHelper";
 
 export class WebglPhongShader{
     private static _instance: WebglPhongShader;
@@ -76,7 +75,7 @@ export class WebglPhongShader{
         const vao = gl.createVertexArray();
         gl.bindVertexArray(vao);
             vbos.bindVertexVBO();
-            const stride = (3 + 3) * 4; // (3 verter float, 3 normal float) * floatSize = 4
+            const stride = (3 + 3 + 2) * 4; // (3 verter, 3 normal, 2 uv) * floatSize = 4
             gl.vertexAttribPointer(this._a_PositionLoc, 3, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(this._a_PositionLoc);
             gl.vertexAttribPointer(this._a_NormalLoc, 3, gl.FLOAT, false, stride, 3 * 4);
@@ -96,7 +95,7 @@ export class WebglPhongShader{
     ){
         const gl = this._gl;
         const vbos = meshVBOs;
-        const { pointLightSceneNodes, directionalLightSceneNodes } = LightSceneNodeManager.getInstance();
+        const { pointLightInfos, directionalInfos } = LightSceneNodeManager.getInstance();
         const { ambient, shininess } = shadingComponent;
         gl.useProgram(this._program);
         gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4);
@@ -105,17 +104,16 @@ export class WebglPhongShader{
         gl.uniform3fv(this._u_CamWorldPosLoc, camPos);
         gl.uniform3fv(this._u_ambientLoc, ambient);
         gl.uniform1f(this._u_shininessLoc, shininess);
-        gl.uniform1i(this._u_PointLightSizeLoc, pointLightSceneNodes.length);
-        gl.uniform1i(this._u_DirectionalLightSizeLoc, directionalLightSceneNodes.length);
-        for(let i = 0; i < pointLightSceneNodes.length; i++){
-            const sceneNode = pointLightSceneNodes[i];
-            const lightInfo = getPointLightInfo(sceneNode);
+        gl.uniform1i(this._u_PointLightSizeLoc, pointLightInfos.length);
+        gl.uniform1i(this._u_DirectionalLightSizeLoc, directionalInfos.length);
+        // todo light local -> world position
+        for(let i = 0; i < pointLightInfos.length; i++){
+            const lightInfo = pointLightInfos[i];
             gl.uniform3fv(this._programLoc.u_PointLights[i].position, lightInfo.position);
             gl.uniform3fv(this._programLoc.u_PointLights[i].color, lightInfo.color);
         }
-        for(let i = 0; i < directionalLightSceneNodes.length; i++){
-            const sceneNode = directionalLightSceneNodes[i];
-            const lightInfo = getDirectionalLightInfo(sceneNode);
+        for(let i = 0; i < directionalInfos.length; i++){
+            const lightInfo = directionalInfos[i];
             gl.uniform3fv(this._programLoc.u_DirectionalLights[i].dir, lightInfo.dir);
             gl.uniform3fv(this._programLoc.u_DirectionalLights[i].color, lightInfo.color);
         }

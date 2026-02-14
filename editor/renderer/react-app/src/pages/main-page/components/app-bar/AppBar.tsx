@@ -3,7 +3,7 @@ import logoUrl from '../../../../assets/dragon_logo.svg';
 import { useAppDispatch, useAppSelector } from '../../../../global-state/hooks';
 import { FileMenu } from './file-menu';
 import { WindowControls } from './WindowControls';
-import { closeProjectThunk, openProjectThunk } from '../../../../global-state/thunks/folder-manager-thunks';
+import { projectClosedThunk, projectOpenedThunk } from '../../../../global-state/thunks/folder-manager-thunks';
 
 export function AppBar(){
     const dispatch = useAppDispatch();
@@ -18,13 +18,13 @@ export function AppBar(){
                         shortcutLabel: "Ctrl + O",
                         click: async () => {
                             const path = await window.api.folder.open();
-                            if(path) dispatch(openProjectThunk({ path }));
+                            if(path) dispatch(projectOpenedThunk({ path }));
                         }
                     } : {
                         optionLabel: "Close Folder",
                         shortcutLabel: "Ctrl + K",
                         click: () => {
-                            dispatch(closeProjectThunk());
+                            dispatch(projectClosedThunk());
                         }
                     },
                     {

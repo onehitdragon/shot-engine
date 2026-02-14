@@ -27,6 +27,7 @@ function createMeshes(meshesJson: any){
             name: name,
             vertices: meshJson["vertices"] ?? [],
             normals: meshJson["normals"] ?? [],
+            uvs: meshJson["texturecoords"][0] ?? [],
             faces: meshJson["faces"] ?? []
         }
         meshes.push(mesh);

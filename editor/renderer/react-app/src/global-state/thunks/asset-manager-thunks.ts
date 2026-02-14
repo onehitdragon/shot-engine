@@ -30,7 +30,7 @@ export const deleteManyAssetThunk = createAsyncThunk
                 WebglResourceManager.getInstance().deleteMesh(guid);
             }
             else if(isAssetImage(asset.asset)){
-                // todo
+                WebglResourceManager.getInstance().deleteTexture(guid);
             }
         }
 

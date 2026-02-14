@@ -37,6 +37,43 @@ export async function createPrimitivesAssetMesh(assetDefaultPath: string){
             ...down, ...down, ...down, ...down,
             ...back, ...back, ...back, ...back,
         ],
+        uvs: [
+            // front
+            1, 1,
+            0, 1,
+            0, 0,
+            1, 0,
+
+            // right
+            1, 1,
+            0, 1,
+            0, 0,
+            1, 0,
+
+            // top
+            1, 1,
+            0, 1,
+            0, 0,
+            1, 0,
+
+            // left
+            1, 1,
+            0, 1,
+            0, 0,
+            1, 0,
+
+            // down
+            1, 1,
+            0, 1,
+            0, 0,
+            1, 0,
+
+            // back
+            1, 1,
+            0, 1,
+            0, 0,
+            1, 0,
+        ],
         vertexIndices: [
             0, 1, 2, 0, 2, 3,       // front
             4, 5, 6, 4, 6, 7,       // right

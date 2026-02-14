@@ -6,7 +6,7 @@ import { ButtonRow, TextRow } from "./components";
 
 export function PrefabInspector(props: { inspector: PrefabInspector }){
     const { prefab } = props.inspector;
-    const { nodeId, nodes } = prefab;
+    const { nodeId, nodes, components } = prefab;
     const scene = useAppSelector(state => state.sceneManager.scene);
     const dispatch = useAppDispatch();
     return (
@@ -21,7 +21,8 @@ export function PrefabInspector(props: { inspector: PrefabInspector }){
                     dispatch(addSceneNodeThunk({
                         nodeId: newPrefab.nodeId,
                         parentId: null,
-                        nodes: newPrefab.nodes
+                        nodes: newPrefab.nodes,
+                        components: newPrefab.components
                     }));
                 } }]}/>
             }
@@ -29,6 +30,9 @@ export function PrefabInspector(props: { inspector: PrefabInspector }){
             <div className="flex flex-col gap-5">
                 {
                     nodes.map(node => <Node key={node.id} node={node}/>)
+                }
+                {
+                    components.map(component => <Component key={component.id} component={component}/>)
                 }
             </div>
         </div>
@@ -46,30 +50,41 @@ function Node(props: { node: SceneFormat.SceneNode }){
                     node id: {id}
                 </span>
             </div>
-            {
-                components.map((component) => {
-                    if(component.type === "Transform"){
-                        return <div key={component.id} className="flex flex-col">
-                            <span className="text-white text-sm">
-                                - pos: { component.position.toString() }
-                            </span>
-                            <span className="text-white text-sm">
-                                - rot: { component.rotation.toString() }
-                            </span>
-                            <span className="text-white text-sm">
-                                - scale: { component.scale.toString() }
-                            </span>
-                        </div>
-                    }
-                    else{
-                        return <div key={component.id} className="flex flex-col">
-                            <span className="text-white text-sm">{component.type}</span>
-                        </div>
-                    }
-                })
-            }
-            <span className="text-white text-sm">[{childs.join(", ")}]</span>
+            <p className="text-white text-sm">components: [{components.join(", ")}]</p>
+            <p className="text-white text-sm">childs: [{childs.join(", ")}]</p>
         </div>
     );
 }
-
+function Component(props: { component: Components.Component }){
+    const { component } = props;
+    const { id, type } = component;
+    return (
+        <div className="flex flex-col">
+            <div className="flex flex-col">
+                <span className="select-none text-white font-bold text-sm rounded-lg">
+                    {type}
+                </span>
+                <span className="select-none text-white text-sm rounded-lg">
+                    component id: {id}
+                </span>
+            </div>
+            {
+                type === "Transform" ?
+                <div className="flex flex-col">
+                    <span className="text-white text-sm">
+                        - pos: { component.position.toString() }
+                    </span>
+                    <span className="text-white text-sm">
+                        - rot: { component.rotation.toString() }
+                    </span>
+                    <span className="text-white text-sm">
+                        - scale: { component.scale.toString() }
+                    </span>
+                </div> :
+                <div key={component.id} className="flex flex-col">
+                    <span className="text-white text-sm">{component.type}</span>
+                </div>
+            }
+        </div>
+    );
+}

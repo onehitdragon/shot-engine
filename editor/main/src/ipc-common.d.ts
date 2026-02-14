@@ -73,6 +73,7 @@ declare namespace AssimpFormat{
         name: string,
         vertices: number[],
         normals: number[],
+        uvs: number[],
         faces: number[][]
     }
     export type Node = {
@@ -97,10 +98,16 @@ declare namespace Resource{
     export type Mesh = {
         vertices: number[], // 3 FLOAT
         normals: number[], // 3 FLOAT
+        uvs: number[], // 2 FLOAT
         vertexIndices: number[] // 1 UINT32
     }
     export type MeshBin = {
-        interleave: Float32Array, // 3 FLOAT
+        interleave: Float32Array,
         indices: Uint32Array // 1 UINT32
+    }
+    export type ImageBin = {
+        width: number,
+        height: number,
+        data: Uint8Array
     }
 }

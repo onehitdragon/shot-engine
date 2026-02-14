@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { useEffect, useRef, useState } from "react";
 import { showDialog } from "../../../../global-state/slices/app-confirm-dialog-slice";
 import { fileIsImage } from "../../helpers/folder-manager-helper/helper";
-import { createFolderThunk, deleteEntryThunk, importFileThunk } from "../../../../global-state/thunks/folder-manager-thunks";
+import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk } from "../../../../global-state/thunks/folder-manager-thunks";
 import { inspectAssetThunk } from "../../../../global-state/thunks/inspector-thunks";
 
 export function SelectedFolder(){
@@ -168,7 +168,7 @@ function ButtonBar(props: ButtonBarProps){
         const handler = async (e: KeyboardEvent) => {
             if(!focused) return;
             if(!e.shiftKey && e.key == "Delete"){
-                dispatch(deleteEntryThunk({
+                dispatch(entryDeletedThunk({
                     parentPath: selectedDirectory.path,
                     entryPath: focused.path,
                     recycle: true
@@ -178,7 +178,7 @@ function ButtonBar(props: ButtonBarProps){
                 dispatch(showDialog({
                     content: "Permanent deleting?",
                     yesCallback: () => {
-                        dispatch(deleteEntryThunk({
+                        dispatch(entryDeletedThunk({
                             parentPath: selectedDirectory.path,
                             entryPath: focused.path,
                             recycle: false
@@ -211,7 +211,7 @@ function CreateFolderButton(props: { selectedDirectory: FolderManager.DirectoryS
     const [enteringName, setEnteringName] = useState(false);
     const dispatch = useAppDispatch();
     const create = async (name: string) => {
-        dispatch(createFolderThunk({ parentPath: selectedDirectory.path, name }));
+        dispatch(folderCreatedThunk({ parentPath: selectedDirectory.path, name }));
     }
     const close = () => {
         setEnteringName(false);
@@ -262,7 +262,7 @@ function ImportFileButton(props: { selectedDirectory: FolderManager.DirectorySta
     const { selectedDirectory } = props;
     const dispatch = useAppDispatch();
     const open = () => {
-        dispatch(importFileThunk({ destFolder: selectedDirectory.path }));
+        dispatch(fileImportedThunk({ destFolder: selectedDirectory.path }));
     }
     return (
         <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'

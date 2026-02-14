@@ -1,31 +1,33 @@
 import { createEntityAdapter, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
+import { sceneOpenedThunk, sceneSavedThunk } from "../thunks/scene-manager-thunks";
 
-interface SceneEntityState extends EntityState<SceneFormat.SceneNode, string> {
+const nodeAdapter = createEntityAdapter<SceneFormat.SceneNode, string>({
+    selectId: (node) => node.id
+});
+const componentAdapter = createEntityAdapter<Components.Component, string>({
+    selectId: (component) => component.id
+});
+interface InitState{
+    nodes: EntityState<SceneFormat.SceneNode, string>,
+    components: EntityState<Components.Component, string>,
     scene: SceneFormat.Scene | null,
     path: string | null,
     modified: boolean,
     focusedId: string | null,
 }
-const adapter = createEntityAdapter<SceneFormat.SceneNode, string>({
-    selectId: (entry) => entry.id
-});
-const initialState: SceneEntityState = adapter.getInitialState({
+const initialState: InitState = {
+    nodes: nodeAdapter.getInitialState(),
+    components: componentAdapter.getInitialState(),
     scene: null,
     path: null,
     modified: false,
     focusedId: null
-});
+};
 const slice = createSlice({
     initialState,
     name: "sceneManager",
     reducers: {
-        updateSceneModified: (state, action: PayloadAction<{ value: boolean }>) => {
-            state.modified = action.payload.value;
-        },
-        updateScenePath: (state, action: PayloadAction<{ path: string | null }>) => {
-            state.path = action.payload.path;
-        },
         focusSceneNode: (state, action: PayloadAction<{ id: string }>) => {
             state.focusedId = action.payload.id;
         },
@@ -33,46 +35,42 @@ const slice = createSlice({
             state.focusedId = null;
         },
 
-        openScene: (state, action: PayloadAction<{
-            scene: SceneFormat.Scene,
-            nodes: SceneFormat.SceneNode[]
-        }>) => {
-            state.scene = action.payload.scene;
-            adapter.removeAll(state);
-            adapter.addMany(state, action.payload.nodes)
-        },
         closeScene: (state) => {
             state.scene = null;
             state.focusedId = null;
             state.path = null;
             state.modified = false;
-            adapter.removeAll(state);
+            nodeAdapter.removeAll(state.nodes);
+            componentAdapter.removeAll(state.components);
         },
         addSceneNode: (state, action: PayloadAction<{
             nodeId: string,
             parentId: SceneFormat.SceneNode["parent"],
-            nodes: SceneFormat.SceneNode[]
+            nodes: SceneFormat.SceneNode[],
+            components: Components.Component[]
         }>) => {
-            const { nodeId, parentId, nodes } = action.payload;
+            const { nodeId, parentId, nodes, components } = action.payload;
             if(!parentId){
                 const scene = state.scene;
                 if(!scene) return;
                 scene.nodes.push(nodeId);
             }
             else{
-                const parent = state.entities[parentId];
+                const parent = state.nodes.entities[parentId];
                 if(!parent) return;
                 parent.childs.push(nodeId);
             }
-            adapter.addMany(state, nodes);
+            nodeAdapter.addMany(state.nodes, nodes);
+            componentAdapter.addMany(state.components, components);
             state.modified = true;
         },
         removeSceneNode: (state, action: PayloadAction<{
             id: string,
-            nodeIds: string[]
+            nodeIds: string[],
+            componentIds: string[]
         }>) => {
-            const { id, nodeIds } = action.payload;
-            const node = state.entities[id];
+            const { id, nodeIds, componentIds } = action.payload;
+            const node = state.nodes.entities[id];
             if(!node) return;
             if(!node.parent){
                 const scene = state.scene;
@@ -80,17 +78,26 @@ const slice = createSlice({
                 scene.nodes = scene.nodes.filter(nodeId => nodeId !== id);
             }
             else{
-                const parent = state.entities[node.parent];
+                const parent = state.nodes.entities[node.parent];
                 if(!parent) return;
                 parent.childs = parent.childs.filter(nodeId => nodeId !== id);
             }
-            adapter.removeMany(state, nodeIds);
+            nodeAdapter.removeMany(state.nodes, nodeIds);
+            componentAdapter.removeMany(state.components, componentIds);
+            state.modified = true;
+        },
+        updateComponentOfSceneNode: (
+            state,
+            action: PayloadAction<{ component: Components.Component }>
+        ) => {
+            const { component } = action.payload;
+            componentAdapter.updateOne(state.components, { id: component.id, changes: component });
             state.modified = true;
         },
 
         renameSceneNode: (state, action: PayloadAction<{ nodeId: string, newName: string }>) => {
             const { nodeId, newName } = action.payload;
-            adapter.updateOne(state, { id: nodeId, changes: { name: newName } });
+            nodeAdapter.updateOne(state.nodes, { id: nodeId, changes: { name: newName } });
             state.modified = true;
         },
         addUniqueComponentToSceneNode: (
@@ -98,11 +105,16 @@ const slice = createSlice({
             action: PayloadAction<{ nodeId: string, component: Components.Component }>
         ) => {
             const { nodeId, component } = action.payload;
-            const nodeFound = state.entities[nodeId];
+            const nodeFound = state.nodes.entities[nodeId];
             if(!nodeFound) return;
-            const sameComponent = nodeFound.components.find(c => c.type === component.type);
-            if(sameComponent) return;
-            nodeFound.components.push(component);
+            for(const componentId of nodeFound.components){
+                const componentFound = state.components.entities[componentId];
+                if(!componentFound) continue;
+                if(componentFound.type === component.type) return;
+                if(componentFound.id === component.id) return;
+            }
+            nodeFound.components.push(component.id);
+            componentAdapter.addOne(state.components, component);
             state.modified = true;
         },
         removeComponentOfSceneNode: (
@@ -110,43 +122,55 @@ const slice = createSlice({
             action: PayloadAction<{ nodeId: string, componentId: string }>
         ) => {
             const { nodeId, componentId } = action.payload;
-            const nodeFound = state.entities[nodeId];
+            const nodeFound = state.nodes.entities[nodeId];
             if(!nodeFound) return;
-            const index = nodeFound.components.findIndex((c) => c.id == componentId);
-            if(index == -1) return;
-            const component = nodeFound.components[index];
-            const { type } = component;
+            const componentFound = state.components.entities[componentId];
+            if(!componentFound) return;
+            const { type } = componentFound;
             if(type === "Transform" || type === "Mesh") return;
-            nodeFound.components.splice(index, 1);
-            state.modified = true;
-        },
-        updateComponentOfSceneNode: (
-            state,
-            action: PayloadAction<{ nodeId: string, component: Components.Component }>
-        ) => {
-            const { nodeId, component } = action.payload;
-            const nodeFound = state.entities[nodeId];
-            if(!nodeFound) return;
-            const index = nodeFound.components.findIndex((c) => c.id == component.id);
-            if(index == -1) return;
-            nodeFound.components[index] = component;
+            nodeFound.components = nodeFound.components.filter((id) => id !== componentId);
+            componentAdapter.removeOne(state.components, componentId);
             state.modified = true;
         }
+    },
+    extraReducers(builder){
+        builder.addAsyncThunk(
+            sceneSavedThunk,
+            {
+                fulfilled: (state, action) => {
+                    const { savedPath } = action.payload;
+                    state.path = savedPath;
+                    state.modified = false;
+                }
+            }
+        );
+        builder.addAsyncThunk(
+            sceneOpenedThunk,
+            {
+                fulfilled: (state, action) => {
+                    const { scene, nodes, components } = action.meta.arg;
+                    state.scene = scene;
+                    nodeAdapter.removeAll(state.nodes);
+                    componentAdapter.removeAll(state.components);
+                    nodeAdapter.addMany(state.nodes, nodes);
+                    componentAdapter.addMany(state.components, components);
+                }
+            }
+        );
     }
 });
 export const {
-  selectById: selectSceneNodeById,
-  selectEntities: selectSceneNodeRecord,
-  selectAll: selectSceneNodes
-} = adapter.getSelectors((state: RootState) => state.sceneManager);
-function selectFocusedSceneNode(state: RootState){
-    const { focusedId } = state.sceneManager;
-    if(!focusedId) return null;
-    return selectSceneNodeById(state, focusedId);
-}
-export const { updateSceneModified, updateScenePath, focusSceneNode,
-    unfocusSceneNode, openScene, closeScene, addSceneNode, removeSceneNode,
+    selectById: selectSceneNodeById,
+    selectEntities: selectSceneNodeRecord,
+    selectAll: selectSceneNodes
+} = nodeAdapter.getSelectors((state: RootState) => state.sceneManager.nodes);
+export const {
+    selectById: selectComponentById,
+    selectEntities: selectComponentRecord,
+    selectAll: selectComponents
+} = componentAdapter.getSelectors((state: RootState) => state.sceneManager.components);
+export const { focusSceneNode,
+    unfocusSceneNode, closeScene, addSceneNode, removeSceneNode,
     updateComponentOfSceneNode, removeComponentOfSceneNode,
     renameSceneNode, addUniqueComponentToSceneNode } = slice.actions;
-export { selectFocusedSceneNode }
 export default slice.reducer;

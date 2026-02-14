@@ -1,7 +1,4 @@
-import { createAssetFolder } from "../../../../engine-zod";
-import { addAsset } from "../../../../global-state/slices/asset-manager-slice";
-import { addEntry } from "../../../../global-state/slices/folder-manager-slice";
-import type { AppDispatch } from "../../../../global-state/store";
+import { createAssetFolder, type Assets } from "../../../../engine-zod";
 
 export function fileIsImage(file: DirectoryTree.File){
     return pathIsImage(file.path);
@@ -10,31 +7,29 @@ export function pathIsImage(path: string){
     const pathLC = path.toLocaleLowerCase();
     return (pathLC.endsWith(".jpg") || pathLC.endsWith(".png"));
 }
-export async function createFolder(path: string, dispatch?: AppDispatch){
+export async function createDefaultFolder(path: string){
     await window.api.folder.create(path);
-    const asset = createAssetFolder();
     const metaPath = path + ".meta.json";
     const metaExist = await window.api.file.exist(metaPath);
     if(metaExist) return;
+    const asset = createAssetFolder();
     await window.api.file.save(metaPath, JSON.stringify(asset, null, 2));
+}
+export async function createFolderWithMeta(path: string){
+    const folderCreated = await window.api.folder.create(path);
 
-    if(dispatch){
-        const parentPath = await window.fsPath.dirname(path);
-        const folder: DirectoryTree.Directory = {
-            type: "Directory",
-            path: path,
-            name: await window.fsPath.basename(path),
-            children: []
-        };
-        dispatch(addEntry({ parentPath, entry: folder }));
-        const meta: DirectoryTree.File = {
-            type: "File",
-            path: metaPath,
-            name: await window.fsPath.basename(metaPath)
-        };
-        dispatch(addEntry({ parentPath, entry: meta }));
-        dispatch(addAsset({ metaObject: { path, asset } }));
-    }
+    const metaPath = path + ".meta.json";
+    const asset = createAssetFolder();
+    await window.api.file.save(metaPath, JSON.stringify(asset, null, 2));
+    const metaCreated: DirectoryTree.File = {
+        type: "File",
+        path: metaPath,
+        name: await window.fsPath.basename(metaPath)
+    };
+
+    const metaObject: Assets.MetaObject = { path, asset };
+
+    return [folderCreated, metaCreated, metaObject] as const;
 }
 export function loop(
     path: string,

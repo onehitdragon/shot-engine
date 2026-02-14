@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import type { SceneNodeInspector } from "../../../../global-state/slices/inspector-slice";
-import { updateComponentOfSceneNode } from "../../../../global-state/slices/scene-manager-slice";
+import { selectComponentRecord, selectSceneNodeById, updateComponentOfSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { clamp } from "@math.gl/core";
 import { CheckBox, OneValueRow, Selection, TextRow, TextRowErr } from "./components";
@@ -12,22 +12,30 @@ import { getMeshGuid } from "../../helpers/scene-manager-helper/SceneNodeCompone
 
 export function SceneNodeInspector(props: { sceneNodeInspector: SceneNodeInspector }){
     const { sceneNodeInspector } = props;
-    const { scene, node } = sceneNodeInspector;
+    const { nodeId } = sceneNodeInspector;
+    const node = useAppSelector(state => selectSceneNodeById(state, nodeId));
+    const componentRecord = useAppSelector(state => selectComponentRecord(state));
 
     return (
         <div className="flex flex-col gap-3 flex-1 p-1 overflow-auto scrollbar-thin">
             {
-                node.components.map((c) => <ComponentSection key={c.id} scene={scene} node={node} component={c}/>)
+                node.components.map( componentId => 
+                    <ComponentSection
+                        key={componentId}
+                        node={node}
+                        component={componentRecord[componentId]}
+                    />
+                )
             }
         </div>
     );
 }
-function ComponentSection(props: { scene: SceneFormat.Scene, node: SceneFormat.SceneNode, component: Components.Component }){
-    const { scene, node, component } = props;
+function ComponentSection(props: { node: SceneFormat.SceneNode, component: Components.Component }){
+    const { node, component } = props;
     const { type } = component;
     return (
         type === "Transform" ? <TransformSection node={node} component={component}/> :
-        type === "Mesh" ? <MeshSection scene={scene} node={node} component={component}/> :
+        type === "Mesh" ? <MeshSection node={node} component={component}/> :
         type === "Shading" ? <ShadingSection node={node} component={component}/> :
         type === "Light" ? <LightSection node={node} component={component}/> :
         <div>Dont support this component</div>
@@ -76,7 +84,7 @@ function TransformSection(props: { node: SceneFormat.SceneNode, component: Compo
         </div>
     );
 }
-function MeshSection(props: { scene: SceneFormat.Scene, node: SceneFormat.SceneNode, component: Components.Mesh }){
+function MeshSection(props: { node: SceneFormat.SceneNode, component: Components.Mesh }){
     const { node, component } = props;
     const guid = getMeshGuid(component);
     const resource = useAppSelector(state => selectResourceByGuid(state, guid));
@@ -150,30 +158,30 @@ function PhongShadingEditor(props: {
     shadingComponent: Components.PhongShading
 }){
     const { node, shadingComponent } = props;
-    const { diffuse, normal, ambient, shininess } = shadingComponent;
-    const assetImages = useAppSelector(selectAssetImages);
+    const { diffuseGuid, normalGuid, ambient, shininess } = shadingComponent;
+    const assetImages = useAppSelector(state => selectAssetImages(state));
     const dispatch = useAppDispatch();
     return (
         <div className="flex flex-col">
             <Selection
                 label="Diffuse"
                 options={createOptions(assetImages)}
-                value={findGuid(diffuse, assetImages)}
+                value={findGuid(diffuseGuid, assetImages)}
                 onChange={(value) => {
                     dispatch(updateComponentOfSceneNode({
                         nodeId: node.id,
-                        component: { ...shadingComponent, diffuse: value }
+                        component: { ...shadingComponent, diffuseGuid: value }
                     }));
                 }}
             />
             <Selection
                 label="Normal"
                 options={createOptions(assetImages)}
-                value={findGuid(normal, assetImages)}
+                value={findGuid(normalGuid, assetImages)}
                 onChange={(value) => {
                     dispatch(updateComponentOfSceneNode({
                         nodeId: node.id,
-                        component: { ...shadingComponent, normal: value }
+                        component: { ...shadingComponent, normalGuid: value }
                     }));
                 }}
             />

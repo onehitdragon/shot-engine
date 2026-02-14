@@ -20,12 +20,12 @@ export type SceneInspector = {
     type: "scene",
     path: string,
     scene: SceneFormat.Scene,
-    nodes: SceneFormat.SceneNode[]
+    nodes: SceneFormat.SceneNode[],
+    components: Components.Component[]
 }
 export type SceneNodeInspector = {
     type: "scene-node",
-    scene: SceneFormat.Scene,
-    node: SceneFormat.SceneNode
+    nodeId: string
 }
 export type AssetInspector = {
     type: "asset",

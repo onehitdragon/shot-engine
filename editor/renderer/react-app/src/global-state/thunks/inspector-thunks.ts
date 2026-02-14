@@ -68,7 +68,8 @@ export const inspectAssetThunk = createAsyncThunk
                 type: "scene",
                 path,
                 scene: jsonObject.data.scene,
-                nodes: jsonObject.data.nodes
+                nodes: jsonObject.data.nodes,
+                components: jsonObject.data.components
             } }));
             return;
         }

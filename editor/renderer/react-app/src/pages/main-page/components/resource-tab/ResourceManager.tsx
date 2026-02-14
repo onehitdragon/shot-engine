@@ -32,6 +32,9 @@ export function ResourceManager(){
                     <p className="select-none text-white">
                         meshCount: {WebglResourceManager.getInstance().info().meshCount}
                     </p>
+                    <p className="select-none text-white">
+                        textureCount: {WebglResourceManager.getInstance().info().textureCount}
+                    </p>
                 </li>
             </ul>
         </div>

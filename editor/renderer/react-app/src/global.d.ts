@@ -25,20 +25,13 @@ export type ApiType = {
         openSave: (fileName: string, data: string) => Promise<string | null>,
         save: (destPath: string, data: string) => Promise<void>,
         getSha256: (path: string) => Promise<string>,
-        loadDataURL: (path: string) => Promise<string>,
-        readImage: (path: string) => Promise<{
-            width: number,
-            height: number,
-            data: Uint8Array<ArrayBuffer>
-        }>
+        loadDataURL: (path: string) => Promise<string>
     },
     resource: {
         saveMesh: (path: string, mesh: Resource.Mesh) => Promise<void>,
-        loadMesh: (path: string) => Promise<Resource.MeshBin>
-    },
-    ktx2: {
-        createTextureKTX2: (sourcePath: string, destPath: string, metaHash: string, settings: KTX2.TextureKTX2Settings) => Promise<DirectoryTree.File>,
-        getMetaHash: (path: string) => Promise<string>
+        loadMesh: (path: string) => Promise<Resource.MeshBin>,
+        saveImage: (destPath: string, imagePath: string) => Promise<void>,
+        loadImage: (destPath: string) => Promise<Resource.ImageBin>,
     }
 }
 export type fsPathType = {

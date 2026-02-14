@@ -8,7 +8,7 @@ declare namespace SceneFormat{
     export type SceneNode = {
         id: string,
         name: string,
-        components: Components.Component[],
+        components: string[],
         parent: string | null,
         childs: string[],
     }
@@ -22,13 +22,15 @@ declare namespace MeshFormat{
     export type Mesh = {
         vertices: number[],
         normals: number[],
+        uvs: number[],
         vertexIndices: number[]
     }
 }
 declare namespace PrefabFormat{
     export type Prefab = {
         nodeId: string,
-        nodes: SceneFormat.SceneNode[]
+        nodes: SceneFormat.SceneNode[],
+        components: Components.Component[]
     }
 }
 declare namespace Components{
@@ -66,8 +68,8 @@ declare namespace Components{
     }
     export type PhongShading = ShadingBase & {
         shaderType: "phong",
-        diffuse: string,
-        normal: string,
+        diffuseGuid: string,
+        normalGuid: string,
         ambient: vec3,
         shininess: float
     }

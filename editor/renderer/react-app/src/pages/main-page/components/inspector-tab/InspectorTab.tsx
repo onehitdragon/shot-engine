@@ -4,7 +4,6 @@ import { FBXInspector } from "./FBXInspector";
 import { TextInspector } from "./TextInspector";
 import { showInspector } from "../../../../global-state/slices/inspector-slice";
 import { SceneInspector } from "./SceneInspector";
-import { selectFocusedSceneNode } from "../../../../global-state/slices/scene-manager-slice";
 import { SceneNodeInspector } from "./SceneNodeInspector";
 import { PrefabInspector } from "./PrefabInspector";
 import { AssetInspector } from "./ImageInspector";
@@ -12,25 +11,24 @@ import { MeshInspector } from "./MeshInspector";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
-    const focusedSceneNode = useAppSelector(selectFocusedSceneNode);
-    const scene = useAppSelector(state => state.sceneManager.scene);
+    const focusedId = useAppSelector((state) => state.sceneManager.focusedId);
     const dispatch = useAppDispatch();
     useEffect(() => {
-        if(focusedSceneNode && scene){
+        if(focusedId){
             dispatch(showInspector({
                 inspector: {
                     type: "scene-node",
-                    scene: scene,
-                    node: focusedSceneNode
+                    nodeId: focusedId
                 }
             }));
         }
-    }, [focusedSceneNode, scene]);
+    }, [focusedId]);
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             const target = e.target as HTMLElement | null;
             if(!target) return;
             if(target.closest("#inspector")) return;
+            if(target.closest("#component-context-menu")) return;
             dispatch(showInspector({ inspector: null }));
         }
         window.addEventListener("mousedown", handler);

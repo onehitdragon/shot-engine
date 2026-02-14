@@ -1,6 +1,7 @@
-import { createEntityAdapter, createSelector, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit"
+import { createEntityAdapter, createSelector, createSlice, type EntityState, type PayloadAction, type WritableDraft } from "@reduxjs/toolkit"
 import type { RootState } from "../store";
-import { closeProjectThunk, openProjectThunk } from "../thunks/folder-manager-thunks";
+import { entryDeletedThunk, fileImportedThunk, folderCreatedThunk, projectClosedThunk, projectOpenedThunk } from "../thunks/folder-manager-thunks";
+import { newSceneFileSaved } from "../thunks/scene-manager-thunks";
 
 export namespace FolderManager {
     export type ProjectPaths = {
@@ -45,49 +46,86 @@ const slice = createSlice({
         },
         unfocusEntry: (state) => {
             state.focusedPath = null;
-        },
-        addEntry: (
-            state,
-            action: PayloadAction<{
-                parentPath: string,
-                entry: DirectoryTree.Directory | DirectoryTree.File
-            }>
-        ) => {
-            const { parentPath, entry } = action.payload;
-            if(state.entities[entry.path]) return;
-            const parent = state.entities[parentPath];
-            if(!parent || parent.type === "File") return;
-            parent.children.push(entry.path);
-            adapter.addOne(state, entry);
-        },
-        deleteEntry: (
-            state,
-            action: PayloadAction<{
-                entryPath: string,
-                parentPath: string,
-                paths: string[]
-            }>
-        ) => {
-            const { parentPath, entryPath, paths } = action.payload;
-            const parent = state.entities[parentPath];
-            if(!parent || parent.type === "File") return;
-            parent.children = parent.children.filter(child => child !== entryPath);
-            adapter.removeMany(state, paths);
         }
     },
     extraReducers(builder){
-        builder.addCase(openProjectThunk.fulfilled, (state, action) => {
+        builder.addCase(projectOpenedThunk.fulfilled, (state, action) => {
             state.projectPaths = action.payload.projectPaths;
             adapter.addMany(state, action.payload.entries);
         });
-        builder.addCase(closeProjectThunk.fulfilled, (state) => {
+        builder.addCase(projectClosedThunk.fulfilled, (state) => {
             state.projectPaths = null;
             adapter.removeAll(state);
             state.selectedPath = null;
             state.focusedPath = null;
         });
+        builder.addCase(folderCreatedThunk.fulfilled, (state, action) => {
+            const { parentPath } = action.meta.arg;
+            const { dirCreated, metaCreated } = action.payload;
+            addEntry(state, parentPath, dirCreated);
+            addEntry(state, parentPath, metaCreated);
+        });
+        builder.addCase(fileImportedThunk.fulfilled, (state, action) => {
+            const { destFolder } = action.meta.arg;
+            const { fbxImport, imageImport } = action.payload;
+            if(fbxImport){
+                const { fbxDirCreated, fbxDirMetaCreated, meshFiles, prefab } = fbxImport;
+                addEntry(state, destFolder, fbxDirCreated);
+                addEntry(state, destFolder, fbxDirMetaCreated);
+                for(const { meshCreated, metaCreated } of meshFiles){
+                    addEntry(state, fbxDirCreated.path, meshCreated);
+                    addEntry(state, fbxDirCreated.path, metaCreated);
+                }
+                addEntry(state, fbxDirCreated.path, prefab.prefabCreated);
+                addEntry(state, fbxDirCreated.path, prefab.metaCreated);
+            }
+            if(imageImport){
+                const { copyCreated, metaCreated } = imageImport;
+                addEntry(state, destFolder, copyCreated);
+                addEntry(state, destFolder, metaCreated);
+            }
+        });
+        builder.addCase(entryDeletedThunk.fulfilled, (state, action) => {
+            const { parentPath, entryPath } = action.meta.arg;
+            const { paths, metaEntryPath, metaPaths } = action.payload;
+            deleteEntry(state, { entryPath, parentPath, paths });
+            deleteEntry(state, { entryPath: metaEntryPath, parentPath, paths: metaPaths });
+        });
+        builder.addCase(
+            newSceneFileSaved,
+            (state, action) => {
+                const { savedDir, sceneSaved, metaSaved } = action.payload;
+                addEntry(state, savedDir, sceneSaved);
+                addEntry(state, savedDir, metaSaved);
+            }
+        );
     }
 });
+const addEntry = (
+    state: WritableDraft<DirectoryEntityState>,
+    parentPath: string,
+    entry: DirectoryTree.Entry
+) => {
+    if(state.entities[entry.path]) return;
+    const parent = state.entities[parentPath];
+    if(!parent || parent.type === "File") return;
+    parent.children.push(entry.path);
+    adapter.addOne(state, entry);
+}
+const deleteEntry = (
+    state: WritableDraft<DirectoryEntityState>,
+    inputs: {
+        entryPath: string,
+        parentPath: string,
+        paths: string[]
+    }
+) => {
+    const { parentPath, entryPath, paths } = inputs;
+    const parent = state.entities[parentPath];
+    if(!parent || parent.type === "File") return;
+    parent.children = parent.children.filter(child => child !== entryPath);
+    adapter.removeMany(state, paths);
+}
 export const {
   selectById: selectEntryByPath,
   selectEntities: selectEntryRecord
@@ -110,7 +148,7 @@ function selectFocusedEntry(state: RootState){
     if(focusedPath) return selectEntryByPath(state, focusedPath);
 }
 export const { toggleExpandDirectory, chooseEntry,
-    focusEntry, unfocusEntry, addEntry, deleteEntry
+    focusEntry, unfocusEntry,
 } = slice.actions;
 export { selectChildren, selectSelectedEntry, selectFocusedEntry }
 export default slice.reducer;

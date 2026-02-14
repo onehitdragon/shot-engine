@@ -15,7 +15,7 @@ async function createTextureKTX2(
     settings: KTX2.TextureKTX2Settings
 ){
     const { data, info } = await sharp(sourcePath).ensureAlpha().raw().toBuffer({resolveWithObject: true});
-    const rgbaPixels = new Uint8Array(data);
+    const rgbaPixels = data;
     const width = info.width;
     const height = info.height;
 
@@ -35,13 +35,15 @@ async function createTextureKTX2(
         info.height,
         false // isGrayscale
     );
+    encoder.setUASTC(true);
     encoder.setCreateKTX2File(true);
     encoder.setQualityLevel(settings.qualityLevel);
     encoder.setPerceptual(settings.sRGB);
     encoder.setMipGen(settings.mipGen);
 
     // encode and write
-    const outBuffer = new Uint8Array(width * height * 4);
+    const MAX_KTX2_SIZE = width * height * 4 * 2; // safe over-allocation
+    const outBuffer = new Uint8Array(MAX_KTX2_SIZE);
     const bytesWritten: number = encoder.encode(outBuffer);
     await fs.writeFile(destPath, outBuffer.subarray(0, bytesWritten));
     encoder.delete();

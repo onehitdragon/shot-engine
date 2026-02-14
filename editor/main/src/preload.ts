@@ -44,17 +44,15 @@ contextBridge.exposeInMainWorld("api", {
         openSave: (fileName: string, data: string) => ipcRenderer.invoke("file:openSave", fileName, data),
         save: (destPath: string, data: string) => ipcRenderer.invoke("file:save", destPath, data),
         getSha256: (path: string) => ipcRenderer.invoke("file:getSha256", path),
-        loadDataURL: (path: string) => ipcRenderer.invoke("file:loadDataURL", path),
-        readImage: (path: string) => ipcRenderer.invoke("file:readImage", path),
+        loadDataURL: (path: string) => ipcRenderer.invoke("file:loadDataURL", path)
     },
     resource: {
         saveMesh: (path: string, mesh: Resource.Mesh) => ipcRenderer.invoke("resource:saveMesh", path, mesh),
         loadMesh: (path: string) => ipcRenderer.invoke("resource:loadMesh", path),
-    },
-    ktx2: {
-        createTextureKTX2: (sourcePath: string, destPath: string, metaHash: string, settings: KTX2.TextureKTX2Settings) => 
-            ipcRenderer.invoke("ktx2:createTextureKTX2", sourcePath, destPath, metaHash, settings),
-        getMetaHash: (path: string) => ipcRenderer.invoke("ktx2:getMetaHash", path)
+        saveImage: (destPath: string, imagePath: string) => 
+            ipcRenderer.invoke("resource:saveImage", destPath, imagePath),
+        loadImage: (destPath: string) => 
+            ipcRenderer.invoke("resource:loadImage", destPath)
     }
 });
 contextBridge.exposeInMainWorld("fsPath", {

@@ -1,6 +1,5 @@
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import { updateSceneModified, updateScenePath } from "../../../../global-state/slices/scene-manager-slice";
-import { openSceneThunk } from "../../../../global-state/thunks/scene-manager-thunks";
+import { sceneOpenedThunk } from "../../../../global-state/thunks/scene-manager-thunks";
 import { createEmptyScene } from "../../helpers/scene-manager-helper/helper";
 import { Scene } from "./SceneGraph";
 
@@ -10,9 +9,13 @@ export function SceneManagerTab(){
     const dispatch = useAppDispatch();
 
     const createEmptySceneClick = () => {
-        dispatch(openSceneThunk({ scene: createEmptyScene(), nodes: [] }));
-        dispatch(updateScenePath({ path: null }));
-        dispatch(updateSceneModified({ value: true }));
+        dispatch(sceneOpenedThunk({
+            scene: createEmptyScene(),
+            nodes: [],
+            components: [],
+            path: null,
+            modified: true
+        }));
     }
 
     return (

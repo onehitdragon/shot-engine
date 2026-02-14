@@ -12,22 +12,24 @@ export function SceneNodeContextMenu(
     const { sceneNode } = contextMenu;
     const dispatch = useAppDispatch();
     const createEmptyChild = () => {
-        const node = createEmptySceneNode(sceneNode.id);
+        const [node, components] = createEmptySceneNode(sceneNode.id);
         dispatch(addSceneNodeThunk({
             nodeId: node.id,
             parentId: sceneNode.id,
-            nodes: [node]
+            nodes: [node],
+            components
         }));
     }
     const remmove = () => {
         dispatch(removeSceneNodeThunk({ id: sceneNode.id }));
     }
     const createCubeChild = () => {
-        const node = createCubeSceneNode(sceneNode.id);
+        const [node, components] = createCubeSceneNode(sceneNode.id);
         dispatch(addSceneNodeThunk({
             nodeId: node.id,
             parentId: sceneNode.id,
-            nodes: [node]
+            nodes: [node],
+            components
         }));
     }
     const addPointLightComponent = () => {

@@ -5,7 +5,7 @@ import { sphereCoordinateToCartesian } from "../../helpers/math-helpers/sphere-c
 import { clamp } from "@math.gl/core";
 import { addAppListener } from "../../../../global-state/listenerMiddleware";
 import { getSceneCanvas, getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
-import { selectSceneNodeRecord, selectSceneNodes } from "../../../../global-state/slices/scene-manager-slice";
+import { selectComponentRecord, selectSceneNodeRecord, selectSceneNodes } from "../../../../global-state/slices/scene-manager-slice";
 import { WebglRenderer } from "../../helpers/resource-manager-helper/WebglRenderer";
 import { OrbitCameraHelper } from "../../helpers/resource-manager-helper/OrbitCameraHelper";
 import { selectResourceRecord } from "../../../../global-state/slices/resource-manager-slice";
@@ -13,6 +13,7 @@ import { selectResourceRecord } from "../../../../global-state/slices/resource-m
 export function SceneRenderer(){
     const scene = useAppSelector(state => state.sceneManager.scene);
     const sceneNodeRecord = useAppSelector(state => selectSceneNodeRecord(state));
+    const componentRecord = useAppSelector(state => selectComponentRecord(state));
     const resourceRecord = useAppSelector(state => selectResourceRecord(state));
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [camera, setCamera] = useState<SceneFormat.SceneOrbitCamera | null>(null);
@@ -46,11 +47,13 @@ export function SceneRenderer(){
         if(!webglRenderer) return;
         const unsub1 = dispatch(addAppListener({
             predicate: (_, curState, originState) => {
-                return curState.sceneManager.entities != originState.sceneManager.entities;
+                return curState.sceneManager.nodes.entities != originState.sceneManager.nodes.entities ||
+                curState.sceneManager.components.entities != curState.sceneManager.components.entities
             },
             effect: (_, { getState }) => {
                 const nodes = selectSceneNodes(getState());
-                webglRenderer.lightSceneNodeManager.update(nodes); // todo
+                const componentRecord = selectComponentRecord(getState());
+                webglRenderer.lightSceneNodeManager.update(nodes, componentRecord); // todo
             }
         }));
         return () => {
@@ -64,7 +67,7 @@ export function SceneRenderer(){
         if(!camera) return;
         const handler = () => {
             const renderer = new SceneNodeRenderer(camera, webglRenderer);
-            renderer.renderSceneNodes(scene.nodes, sceneNodeRecord, null);
+            renderer.renderSceneNodes(scene.nodes, sceneNodeRecord, componentRecord, null);
         }
         handler();
         webglRenderer.renderGrid(OrbitCameraHelper.createVPMatrix(camera));
@@ -72,7 +75,7 @@ export function SceneRenderer(){
         return () => {
             
         }
-    }, [scene, sceneNodeRecord, resourceRecord, webglRenderer, camera]);
+    }, [scene, sceneNodeRecord, componentRecord, resourceRecord, webglRenderer, camera]);
 
     return (
         <div className="flex-1 flex">
@@ -196,16 +199,21 @@ class SceneNodeRenderer{
     renderSceneNodes(
         nodes: string[],
         nodeRecord: Record<string, SceneFormat.SceneNode>,
+        componentRecord: Record<string, Components.Component>,
         parentDataIn: ParentData | null
     ){
         for(const nodeId of nodes){
             const node = nodeRecord[nodeId];
-            const parentData = this.renderNode(node, parentDataIn);
-            this.renderSceneNodes(node.childs, nodeRecord, parentData);
+            const components = node.components.map(componentId => componentRecord[componentId]);
+            const parentData = this.renderNode(components, parentDataIn);
+            this.renderSceneNodes(node.childs, nodeRecord, componentRecord, parentData);
         }
     }
-    renderNode(node: SceneFormat.SceneNode, parentDataIn: ParentData | null): ParentData | null{
-        const { components } = node;
+    renderNode(
+        components: Components.Component[],
+        parentDataIn: ParentData | null
+    ): ParentData | null
+    {
         const transformComponent = this.findComponentByType(components, "Transform");
         if(!transformComponent) throw "dont find Transform component";
         const modelMat4 = this.createModelMatrix(transformComponent);
