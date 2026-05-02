@@ -1,0 +1,135 @@
+import { WebglHelper } from "./WebglHelper";
+import phongShadingVShaderSource from "../shaders/phong-shader/vshader.glsl?raw";
+import phongShadingFShaderSource from "../shaders/phong-shader/fshader.glsl?raw";
+import type { mat3, mat4, vec3 } from "gl-matrix";
+import type { WebglMeshVBOs } from "./WebglMeshVBOs";
+import { LightSceneNodeManager } from "./LightSceneNodeManager";
+import { WebglResourceManager } from "./WebglResourceManager";
+
+export class WebglPhongShader{
+    private static _instance: WebglPhongShader;
+    static getInstance(gl: WebGL2RenderingContext){
+        if(!this._instance) this._instance = new WebglPhongShader(gl);
+        return this._instance;
+    }
+    private _gl: WebGL2RenderingContext;
+    private _program: WebGLProgram;
+    private _u_MvpMatrixLoc: WebGLUniformLocation;
+    private _u_ModelMatrixLoc: WebGLUniformLocation;
+    private _u_NormalMatrixLoc: WebGLUniformLocation;
+    private _a_PositionLoc: number;
+    private _a_NormalLoc: number;
+    private _a_TextCoordLoc: number;
+    private _u_CamWorldPosLoc: WebGLUniformLocation;
+    private _u_ambientLoc: WebGLUniformLocation;
+    private _u_shininessLoc: WebGLUniformLocation;
+    private _u_PointLightSizeLoc: WebGLUniformLocation;
+    private _u_DirectionalLightSizeLoc: WebGLUniformLocation;
+    private _u_DiffuseSampler: WebGLUniformLocation;
+    private readonly NUM_LIGHTS = 32;
+    private _programLoc: {
+        u_PointLights: {
+            position: WebGLUniformLocation,
+            color: WebGLUniformLocation
+        }[],
+        u_DirectionalLights: {
+            dir: WebGLUniformLocation,
+            color: WebGLUniformLocation
+        }[]
+    }
+    private constructor(gl: WebGL2RenderingContext){
+        this._gl = gl;
+        this._program = WebglHelper.createProgram(
+            gl,
+            [
+                { type: gl.VERTEX_SHADER, source: phongShadingVShaderSource },
+                { type: gl.FRAGMENT_SHADER, source: phongShadingFShaderSource },
+            ]
+        );
+        const program = this._program;
+        this._u_MvpMatrixLoc = WebglHelper.getUniformLocation(gl, program, "u_MvpMatrix");
+        this._u_ModelMatrixLoc = WebglHelper.getUniformLocation(gl, program, "u_ModelMatrix");
+        this._u_NormalMatrixLoc = WebglHelper.getUniformLocation(gl, program, "u_NormalMatrix");
+        this._a_PositionLoc = WebglHelper.getAttrLocation(gl, program, "a_Position");
+        this._a_NormalLoc = WebglHelper.getAttrLocation(gl, program, "a_Normal");
+        this._a_TextCoordLoc = WebglHelper.getAttrLocation(gl, program, "a_TextCoord");
+        this._u_CamWorldPosLoc = WebglHelper.getUniformLocation(gl, program, "u_CamWorldPos");
+        this._u_ambientLoc = WebglHelper.getUniformLocation(gl, program, "u_ambient");
+        this._u_shininessLoc = WebglHelper.getUniformLocation(gl, program, "u_shininess");
+        this._u_PointLightSizeLoc = WebglHelper.getUniformLocation(gl, program, "u_PointLightSize");
+        this._u_DirectionalLightSizeLoc = WebglHelper.getUniformLocation(gl, program, "u_DirectionalLightSize");
+        this._u_DiffuseSampler = WebglHelper.getUniformLocation(gl, program, "u_DiffuseSampler");
+        this._programLoc = {
+            u_PointLights: [],
+            u_DirectionalLights: []
+        };
+        for(let i = 0; i < this.NUM_LIGHTS; i++){
+            this._programLoc.u_PointLights.push({
+                position: WebglHelper.getUniformLocation(gl, program, `u_PointLights[${i}].position`),
+                color: WebglHelper.getUniformLocation(gl, program, `u_PointLights[${i}].color`)
+            });
+            this._programLoc.u_DirectionalLights.push({
+                dir: WebglHelper.getUniformLocation(gl, program, `u_DirectionalLights[${i}].dir`),
+                color: WebglHelper.getUniformLocation(gl, program, `u_DirectionalLights[${i}].color`)
+            });
+        }
+    }
+    createMeshVAOs(meshVBOs: WebglMeshVBOs){
+        const gl = this._gl;
+        const vbos = meshVBOs;
+        const vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
+            vbos.bindVertexVBO();
+            const stride = (3 + 3 + 2) * 4; // (3 verter, 3 normal, 2 uv) * floatSize = 4
+            gl.vertexAttribPointer(this._a_PositionLoc, 3, gl.FLOAT, false, stride, 0);
+            gl.enableVertexAttribArray(this._a_PositionLoc);
+            gl.vertexAttribPointer(this._a_NormalLoc, 3, gl.FLOAT, false, stride, 3 * 4);
+            gl.enableVertexAttribArray(this._a_NormalLoc);
+            gl.vertexAttribPointer(this._a_TextCoordLoc, 2, gl.FLOAT, false, stride, (3 + 3) * 4);
+            gl.enableVertexAttribArray(this._a_TextCoordLoc);
+            vbos.bindIndexVBO();
+        gl.bindVertexArray(null);
+        return vao;
+    }
+    renderMesh(
+        meshVBOs: WebglMeshVBOs,
+        vao: WebGLVertexArrayObject,
+        mvpMat4: mat4,
+        modelMat4: mat4,
+        normalMat3: mat3,
+        camPos: vec3,
+        shadingComponent: Components.PhongShading
+    ){
+        const gl = this._gl;
+        const vbos = meshVBOs;
+        const { pointLightInfos, directionalInfos } = LightSceneNodeManager.getInstance();
+        const { diffuseGuid, ambient, shininess } = shadingComponent;
+        gl.useProgram(this._program);
+        gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4);
+        gl.uniformMatrix4fv(this._u_ModelMatrixLoc, false, modelMat4);
+        gl.uniformMatrix3fv(this._u_NormalMatrixLoc, false, normalMat3);
+        gl.uniform3fv(this._u_CamWorldPosLoc, camPos);
+        gl.uniform3fv(this._u_ambientLoc, ambient);
+        gl.uniform1f(this._u_shininessLoc, shininess);
+        gl.uniform1i(this._u_PointLightSizeLoc, pointLightInfos.length);
+        gl.uniform1i(this._u_DirectionalLightSizeLoc, directionalInfos.length);
+        // todo: light local -> world position
+        for(let i = 0; i < pointLightInfos.length; i++){
+            const lightInfo = pointLightInfos[i];
+            gl.uniform3fv(this._programLoc.u_PointLights[i].position, lightInfo.position);
+            gl.uniform3fv(this._programLoc.u_PointLights[i].color, lightInfo.color);
+        }
+        for(let i = 0; i < directionalInfos.length; i++){
+            const lightInfo = directionalInfos[i];
+            gl.uniform3fv(this._programLoc.u_DirectionalLights[i].dir, lightInfo.dir);
+            gl.uniform3fv(this._programLoc.u_DirectionalLights[i].color, lightInfo.color);
+        }
+        gl.activeTexture(gl.TEXTURE0);
+        const diffuseWebglTexture = WebglResourceManager.getInstance().getWebglTexture(diffuseGuid);
+        gl.bindTexture(gl.TEXTURE_2D, diffuseWebglTexture.webglTexture);
+        gl.uniform1i(this._u_DiffuseSampler, 0);
+        gl.bindVertexArray(vao);
+            gl.drawElements(gl.TRIANGLES, vbos.indexCount, gl.UNSIGNED_INT, 0);
+        gl.bindVertexArray(null);
+    }
+}

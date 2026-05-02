@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@plugin 'tailwind-scrollbar';
+@theme {
+  --animate-rotateOnce: rotateOnce 0.5s ease forwards;
+  @keyframes rotateOnce {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(90deg);
+    }
+  }
+}
+html{
+  @apply scrollbar-track-gray-600 scrollbar-thumb-gray-300
+}
+@layer base {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}

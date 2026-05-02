@@ -1,0 +1,1 @@
+flatc --ts --ts-no-import-ext --gen-all -o fbs-gen ./fbs/index.fbs

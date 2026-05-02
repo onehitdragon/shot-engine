@@ -1,0 +1,13 @@
+{
+  "name": "shot-engine",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build-types": "npm run build -w @shot-engine/types",
+    "build-asset-manager": "npm run build -w @shot-engine/asset-manager",
+    "editor": "npm run dev -w @shot-engine/electron"
+  }
+}

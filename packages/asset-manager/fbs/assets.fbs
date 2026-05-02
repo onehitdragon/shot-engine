@@ -1,0 +1,28 @@
+include "engine.fbs";
+
+namespace FBSEngine;
+
+table ImageAsset{
+    width: uint;
+    height: uint;
+    data: [ubyte];
+}
+
+table PrimitiveAttribute{
+    positions: [float];
+    normals: [float];
+    uvs: [float];
+}
+
+table Primitive{
+    attribute: PrimitiveAttribute;
+    indices: [uint];
+}
+
+table MeshAsset{
+    primitives: [Primitive];
+}
+
+table PrefabAsset{
+    root: GameObject;
+}

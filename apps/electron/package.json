@@ -1,0 +1,37 @@
+{
+  "name": "@shot-engine/electron",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "dir/main.js",
+  "scripts": {
+    "dev:react": "cd ../react-app && npm run dev",
+    "dev:electron": "tsc && copyfiles -f src/wasm/* dir/wasm && wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
+    "rebuild": "electron-rebuild -f -w better-sqlite3"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "@types/fs-extra": "^11.0.4",
+    "@types/lodash": "^4.17.23",
+    "concurrently": "^9.2.1",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^10.1.0",
+    "electron": "^38.8.6",
+    "typescript": "^5.9.3",
+    "wait-on": "^9.0.1"
+  },
+  "dependencies": {
+    "@nodelib/fs.walk": "^3.0.1",
+    "better-sqlite3": "^12.9.0",
+    "fs-extra": "^11.3.3",
+    "ktx-parse": "^1.1.0",
+    "lodash": "^4.17.23",
+    "sharp": "^0.34.5",
+    "trash": "^10.0.0",
+    "uuid": "^13.0.0",
+    "zod": "^4.3.6"
+  }
+}
