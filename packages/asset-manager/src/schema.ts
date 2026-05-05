@@ -19,7 +19,11 @@ export const defaultMeshAsset: AssetProperty.Mesh = {
 export const defaultPrefabAsset: AssetProperty.Prefab = {
     type: "prefab"
 };
+export const defaultSceneAsset: AssetProperty.Scene = {
+    type: "scene"
+};
 export const defaultOtherAssetJSON = JSON.stringify(defaultOtherAsset);
 export const defaultImageAssetJSON = JSON.stringify(defaultImageAsset);
 export const defaultMeshAssetJSON = JSON.stringify(defaultMeshAsset);
 export const defaultPrefabAssetJSON = JSON.stringify(defaultPrefabAsset);
+export const defaultSceneAssetJSON = JSON.stringify(defaultSceneAsset);

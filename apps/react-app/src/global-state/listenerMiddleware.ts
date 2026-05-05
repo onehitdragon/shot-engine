@@ -2,6 +2,7 @@ import { createListenerMiddleware, addListener } from '@reduxjs/toolkit'
 import type { RootState, AppDispatch } from './store'
 import { inspectorComponentsListener } from './thunks/inspector-components-thunks';
 import { prefabAssetListener } from './thunks/prefab-asset-thunk';
+import { sceneAssetListener } from './thunks/scene-asset-thunk';
 export const listenerMiddleware = createListenerMiddleware();
 
 export const startAppListening = listenerMiddleware.startListening.withTypes<
@@ -16,3 +17,4 @@ export type AppAddListener = typeof addAppListener;
 // listeners
 inspectorComponentsListener(startAppListening);
 prefabAssetListener(startAppListening);
+sceneAssetListener(startAppListening);

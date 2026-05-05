@@ -1,10 +1,11 @@
-import type { AssetManager, AssetType, Asset, PrefabAsset } from "@shot-engine/types";
+import type { AssetManager, AssetType, Asset, PrefabAsset, SceneAsset } from "@shot-engine/types";
 
 export type ApiType = {
     close: () => void,
     maximize: () => void,
     minimize: () => void,
     showError: (reason: string) => Promise<void>,
+    showConfirm: (msg: string) => Promise<boolean>,
     win: {
         isFocused: () => Promise<boolean>,
         onFocus: (callback: () => void) => Function,
@@ -34,12 +35,13 @@ export type ApiType = {
         rescan: () => Promise<void>,
         close: () => Promise<void>,
         getAssetInfos: (filePath: string) => Promise<AssetManager.AssetInfo[]>,
-        getAssetFromUuid: (uuid: string, type: AssetType) => Promise<Asset>,
+        getAssetFromUuid: (uuid: string, type: AssetType) => Promise<Asset | undefined>,
         updateAssetPropertyByUuid: (uuid: string, property: string) => Promise<void>,
-        getAssetInfoFromUuid: (uuid: string) => Promise<AssetManager.AssetInfo | undefined>
-        getAssetInfosFromType: (type: AssetType) => Promise<AssetManager.AssetInfo[]>
-        savePrefabAssetBinary: (prefabAsset: PrefabAsset, filePath: string) => Promise<void>
-        getFilePathFromAssetId: (uuid: string) => Promise<string | undefined>
+        getAssetInfoFromUuid: (uuid: string) => Promise<AssetManager.AssetInfo | undefined>,
+        getAssetInfosFromType: (type: AssetType) => Promise<AssetManager.AssetInfo[]>,
+        savePrefabAssetBinary: (prefabAsset: PrefabAsset, filePath: string) => Promise<void>,
+        saveSceneAssetBinary: (sceneAsset: SceneAsset, filePath: string) => Promise<void>,
+        getFilePathFromAssetId: (uuid: string) => Promise<string | undefined>,
     },
     resource: {
         saveMesh: (path: string, mesh: Resource.Mesh) => Promise<void>,

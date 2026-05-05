@@ -117,7 +117,7 @@ export function prefabAssetListener(startListening: AppStartListening){
                     root: sceneNodes[0] as GameObject
                 }
                 const filePath = await window.api.assetManager.getFilePathFromAssetId(prefabAssetInfo.uuid);
-                if(!filePath) throw "cant asset find path to save";
+                if(!filePath) throw "cant find asset path to save";
                 await window.api.assetManager.savePrefabAssetBinary(prefabAsset, filePath);
                 await window.api.assetManager.rescan();
             }

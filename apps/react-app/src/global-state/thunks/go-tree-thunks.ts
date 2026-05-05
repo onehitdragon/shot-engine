@@ -1,9 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { AppDispatch, RootState } from "../store";
-import type { AssetManager, PrefabAsset, SceneNode } from "@shot-engine/types";
+import type { AssetManager, PrefabAsset } from "@shot-engine/types";
 import { componentsInpectedThunk } from "./inspector-components-thunks";
 import { showInspector } from "../slices/inspector-slice";
-import { selectNodes, type NodeState } from "../slices/go-tree-slice";
+import { type NodeState } from "../slices/go-tree-slice";
 import { cloneDeep } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 
@@ -25,12 +25,13 @@ export const nodeFocusedThunk = createAsyncThunk
             if("prefabRef" in node){
                 const assetInfo = await window.api.assetManager.getAssetInfoFromUuid(node.prefabRef);
                 if(!assetInfo) throw "cant find asset info";
-                const prefabAsset = await window.api.assetManager.getAssetFromUuid(node.prefabRef, "prefab") as PrefabAsset;
+                const asset = await window.api.assetManager.getAssetFromUuid(node.prefabRef, "prefab");
+                if(!asset) throw "asset is bad";
                 dispatch(showInspector({
                     inspector: {
                         type: "prefab",
                         assetInfo,
-                        prefabAsset,
+                        prefabAsset: asset as PrefabAsset,
                     }
                 }));
             }
@@ -91,9 +92,37 @@ export const goTreeOpenedThunk = createAsyncThunk
 >
 (
     "goTree/goTreeOpened",
-    async ({ }, { rejectWithValue }) => {
+    async (_, { getState, rejectWithValue }) => {
         try{
+            if(getState().goTree.opened && getState().goTree.modified){
+                const yes = await window.api.showConfirm("without saving?");
+                if(!yes) return rejectWithValue("require save");
+            }
             return {}
+        }
+        catch(err){
+            await window.api.showError(String(err));
+            return rejectWithValue(err);
+        }
+    }
+);
+export const goTreeClosedThunk = createAsyncThunk
+<
+    void,
+    void,
+    {
+        dispatch: AppDispatch,
+        state: RootState
+    }
+>
+(
+    "goTree/goTreeClosed",
+    async (_, { getState, rejectWithValue }) => {
+        try{
+            if(getState().goTree.opened && getState().goTree.modified){
+                const yes = await window.api.showConfirm("without saving?");
+                if(!yes) return rejectWithValue("require save");
+            }
         }
         catch(err){
             await window.api.showError(String(err));

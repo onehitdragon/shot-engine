@@ -1,17 +1,18 @@
 import { CubeIcon } from "@heroicons/react/24/outline";
-import { ChevronDownIcon, ChevronRightIcon, Square3Stack3DIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, ChevronRightIcon, Square3Stack3DIcon, NoSymbolIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { renameGameObject, selectNodeById } from "../../../../global-state/slices/go-tree-slice";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { createEmptyNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 import type { NodeState } from "../../../../global-state/slices/go-tree-slice";
-import { goAddedThunk, goTreeSavedThunk, nodeFocusedThunk, nodeUnfocusedThunk } from "../../../../global-state/thunks/go-tree-thunks";
+import { goAddedThunk, goTreeClosedThunk, goTreeSavedThunk, nodeFocusedThunk, nodeUnfocusedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 
 export function GameObjectTree(){
     const rootIds = useAppSelector(state => state.goTree.rootIds);
-    const modified = useAppSelector(state => state.goTree.modified);
     const allowModify = useAppSelector(state => state.goTree.allowModify);
+    const modified = useAppSelector(state => state.goTree.modified);
+    const opened = useAppSelector(state => state.goTree.opened);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -26,9 +27,12 @@ export function GameObjectTree(){
             node: createEmptyNode()
         }));
     }
+    const close = () => {
+        dispatch(goTreeClosedThunk());
+    }
 
     return (
-        rootIds.length === 0 ?
+        !opened ?
         <div></div>:
         <div className={`flex flex-1 flex-col h-full p-1 overflow-auto scrollbar-thin
             ${allowModify ? "opacity-100" : "opacity-70"}`}>
@@ -37,12 +41,17 @@ export function GameObjectTree(){
                 <span className="text-sm text-white font-medium select-none">
                     {`Root count: ${rootIds.length}` + (modified ? "*" : "")}
                 </span>
-                <div className="flex items-center justify-end flex-1">
+                <div className="flex items-center justify-end flex-1 gap-1">
                     <button className="flex items-center cursor-pointer transition hover:opacity-80"
                         onClick={createEmptyRoot}
                     >
                         <CubeIcon className="size-4 text-white"/>
                         <span className="text-xs text-white">+</span>
+                    </button>
+                    <button className="flex items-center cursor-pointer transition hover:opacity-80"
+                        onClick={close}
+                    >
+                        <NoSymbolIcon className="size-4 text-red-500"/>
                     </button>
                 </div>
             </div>

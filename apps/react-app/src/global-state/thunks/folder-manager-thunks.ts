@@ -5,7 +5,7 @@ import { addLog } from "../slices/app-loading-slice";
 import { loop } from "../../pages/main-page/helpers/folder-manager-helper/helper";
 import { createEmptyPrefab } from "../../pages/main-page/helpers/scene-manager-helper/SceneNodeHelper";
 import { showInspector } from "../slices/inspector-slice";
-// import { sceneClosedThunk } from "./scene-manager-thunks";
+import { goTreeClosedThunk } from "./go-tree-thunks";
 
 export const projectOpenedThunk = createAsyncThunk
 <
@@ -74,15 +74,17 @@ export const projectClosedThunk = createAsyncThunk
 >
 (
     "project/projectClosed",
-    async (_, { getState, dispatch }) => {
+    async (_, { getState, dispatch, rejectWithValue }) => {
         try{
             const projectPaths = getState().folderManager.projectPaths;
             if(!projectPaths) throw "no project has been opened yet";
-            // await dispatch(sceneClosedThunk());
+            await dispatch(goTreeClosedThunk()).unwrap();
             await window.api.assetManager.close();
         }
         catch(err){
+            if(err === "require save") return rejectWithValue(err);
             await window.api.showError(String(err));
+            return rejectWithValue(err);
         }
     }
 );
@@ -265,6 +267,55 @@ export const prefabFileCreatedThunk = createAsyncThunk
             await window.api.assetManager.savePrefabAssetBinary(
                 {
                     root: createEmptyPrefab()
+                },
+                path
+            );
+
+            await window.api.assetManager.rescan();
+
+            return {
+                fileCreated: {
+                    type: "File",
+                    name,
+                    path
+                }
+            }
+        }
+        catch(err){
+            await window.api.showError(String(err));
+            return rejectWithValue(err);
+        }
+    }
+);
+export const sceneFileCreatedThunk = createAsyncThunk
+<
+    {
+        fileCreated: DirectoryTree.File
+    },
+    { parentPath: string, name: string },
+    {
+        dispatch: AppDispatch,
+        state: RootState
+    }
+>
+(
+    "folder-manager/sceneFileCreated",
+    async ({ parentPath, name }, { getState, rejectWithValue }) => {
+        try{
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "no project has been opened yet";
+            
+            if(parentPath.startsWith(projectPaths.assetDefault)) throw "Dont create inside default";
+            if(!parentPath.startsWith(projectPaths.asset)) throw "Dont create outside asset folder";
+
+            const path = await window.fsPath.join(parentPath, name);
+            await window.api.assetManager.saveSceneAssetBinary(
+                {
+                    scene: {
+                        id: "",
+                        name: "EmptyScene",
+                        roots: []
+                    }
                 },
                 path
             );

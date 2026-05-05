@@ -1,8 +1,6 @@
 import { BrowserWindow, dialog } from "electron";
 
-async function showConfirmDialog(message: string) {
-    const window = BrowserWindow.getFocusedWindow();
-    if(!window) return false;
+async function showConfirmDialog(window: BrowserWindow, message: string) {
     const result = await dialog.showMessageBox(window, {
         message,
         type: 'question',

@@ -23,7 +23,7 @@ export type SceneAsset = {
 }
 export type Asset = ImageAsset | MeshAsset | PrefabAsset | SceneAsset;
 
-export type AssetType = "other" | "image" | "mesh" | "prefab";
+export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene";
 export namespace AssetProperty{
     export type Other = {
         type: "other"
@@ -56,5 +56,9 @@ export namespace AssetProperty{
         type: "prefab"
     }
 
-    export type AssetProperty = Other | Image | Mesh | Prefab;
+    export type Scene = {
+        type: "scene"
+    }
+
+    export type AssetProperty = Other | Image | Mesh | Prefab | Scene;
 }

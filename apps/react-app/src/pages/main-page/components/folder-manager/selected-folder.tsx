@@ -2,14 +2,15 @@ import { FolderPlusIcon, FolderIcon, DocumentTextIcon,
     ArrowDownOnSquareIcon, PhotoIcon,
     GlobeAltIcon,
     TruckIcon, XCircleIcon,
-    ArrowTurnDownRightIcon, PuzzlePieceIcon
+    ArrowTurnDownRightIcon, PuzzlePieceIcon,
+    Square3Stack3DIcon
  } from "@heroicons/react/24/solid";
 import { chooseEntry, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, focusEntry, type FolderManager, selectEntryByPath, selectSelectedEntry } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { useEffect, useRef, useState } from "react";
 import { showDialog } from "../../../../global-state/slices/app-confirm-dialog-slice";
-import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk, prefabFileCreatedThunk } from "../../../../global-state/thunks/folder-manager-thunks";
+import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk, prefabFileCreatedThunk, sceneFileCreatedThunk } from "../../../../global-state/thunks/folder-manager-thunks";
 import { inspectAssetThunk } from "../../../../global-state/thunks/inspector-thunks";
 import type { AssetManager, AssetType } from "@shot-engine/types";
 import { getBaseName } from "../../helpers/utils/utils";
@@ -116,14 +117,17 @@ function FileEntry(props: FileEntryProps){
     }, [isFoucused]);
 
     function iconFromType(type: AssetType){
-        if(type === "mesh"){
+        if(type === "image"){
+            return <PhotoIcon className='size-4 text-white'/>
+        }
+        else if(type === "mesh"){
             return <GlobeAltIcon className='size-4 text-green-500'/>
         }
         else if(type === "prefab"){
             return <PuzzlePieceIcon className='size-4 text-cyan-500'/>
         }
-        else if(type === "image"){
-            return <PhotoIcon className='size-4 text-white'/>
+        else if(type === "scene"){
+            return <Square3Stack3DIcon className='size-4 text-white'/>
         }
         else{
             return <DocumentTextIcon className='size-4 text-white'/>
@@ -254,10 +258,8 @@ function ButtonBar(props: ButtonBarProps){
                 <ImportFileButton selectedDirectory={selectedDirectory}/>
             </ul>
             <ul className='flex-1 flex justify-end items-center'>
+                <CreateSceneButton selectedDirectory={selectedDirectory}/>
                 <CreatePrefabButton selectedDirectory={selectedDirectory}/>
-                {/* <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'>
-                    <ArrowPathIcon className='size-4 text-white'/>
-                </button> */}
             </ul>
         </div>
     );
@@ -284,6 +286,7 @@ function CreateFolderButton(props: { selectedDirectory: FolderManager.DirectoryS
             children={selectedDirectory.children.map(e => getBaseName(e))}
             create={create}
             close={close}
+            className="ml-1"
         />
     );
 }
@@ -300,7 +303,7 @@ function CreatePrefabButton(props: { selectedDirectory: FolderManager.DirectoryS
 
     return (
         !enteringName ?
-        <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity flex items-center'
+        <button className='size-8 hover:cursor-pointer hover:opacity-50 transition-opacity flex items-center'
             onClick={() => { setEnteringName(true); }}>
             <PuzzlePieceIcon className='size-4 text-cyan-500'/>
             <span className='text-xs text-cyan-500 select-none'>+</span>
@@ -311,6 +314,35 @@ function CreatePrefabButton(props: { selectedDirectory: FolderManager.DirectoryS
             children={selectedDirectory.children.map(e => getBaseName(e))}
             create={create}
             close={close}
+            className="mr-1"
+        />
+    );
+}
+function CreateSceneButton(props: { selectedDirectory: FolderManager.DirectoryState }){
+    const { selectedDirectory } = props;
+    const [enteringName, setEnteringName] = useState(false);
+    const dispatch = useAppDispatch();
+    const create = async (name: string) => {
+        dispatch(sceneFileCreatedThunk({ parentPath: selectedDirectory.path, name }));
+    }
+    const close = () => {
+        setEnteringName(false);
+    }
+
+    return (
+        !enteringName ?
+        <button className='size-8 hover:cursor-pointer hover:opacity-50 transition-opacity flex items-center'
+            onClick={() => { setEnteringName(true); }}>
+            <Square3Stack3DIcon className='size-4 text-white'/>
+            <span className='text-xs text-white select-none'>+</span>
+        </button>
+        :
+        <EntryNameInput
+            extension=".scene"
+            children={selectedDirectory.children.map(e => getBaseName(e))}
+            create={create}
+            close={close}
+            className="mr-1"
         />
     );
 }
@@ -358,15 +390,16 @@ type EntryNameInputProps = {
     extension?: string,
     children: string[],
     create: (name: string) => void,
-    close: () => void
+    close: () => void,
+    className?: string
 }
 function EntryNameInput(props: EntryNameInputProps){
     const { extension, children, close, create } = props;
     const [name, setName] = useState("");
     const isValid = () => {
-        const nameTrim = name.trim() + (extension ?? "");
+        let nameTrim = name.trim();
         if(nameTrim == "") return false;
-        return !children.some(child => child === nameTrim);
+        return !children.some(child => child === nameTrim + (extension ?? ""));
     }
     const keyDown = async (value: string) => {
         if(/^[^/\\:*?"<>|]$/.test(value)){
@@ -394,8 +427,8 @@ function EntryNameInput(props: EntryNameInputProps){
 
     return (
         <div ref={ref} className="flex">
-            <input className={`ml-2 outline-none h-5 text-sm text-white border
-                ${isValid() ? "border-blue-500" : "border-red-500"}`}
+            <input className={`${props.className ?? ""} outline-none h-5 text-sm text-white border
+                ${isValid() ? "border-green-500" : "border-red-500"}`}
                 autoFocus spellCheck={false} value={name}
                 onKeyDown={(e) => { keyDown(e.key); }}
                 onChange={() => {}}

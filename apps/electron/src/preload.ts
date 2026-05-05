@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld("api", {
     maximize: () => ipcRenderer.send("window:maximize"),
     minimize: () => ipcRenderer.send("window:minimize"),
     showError: (reason: string) => ipcRenderer.invoke("window:showError", reason),
+    showConfirm: (msg: string) => ipcRenderer.invoke("window:showConfirm", msg),
     win: {
         isFocused: () => ipcRenderer.invoke("win:isFocus"),
         onFocus: (callback: any) => {
@@ -58,6 +59,8 @@ contextBridge.exposeInMainWorld("api", {
         getAssetInfosFromType: (type: any) => ipcRenderer.invoke("assetManager:getAssetInfosFromType", type),
         savePrefabAssetBinary: (prefabAsset: any, filePath: string) => 
             ipcRenderer.invoke("assetManager:savePrefabAssetBinary", prefabAsset, filePath),
+        saveSceneAssetBinary: (sceneAsset: any, filePath: string) => 
+            ipcRenderer.invoke("assetManager:saveSceneAssetBinary", sceneAsset, filePath),
         getFilePathFromAssetId: (uuid: string) => 
             ipcRenderer.invoke("assetManager:getFilePathFromAssetId", uuid),
     },

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, session } from "electron";
 import path from "path";
 import fs from "fs-extra";
-import { showErrorDialog } from "./message-boxes";
+import { showConfirmDialog, showErrorDialog } from "./message-boxes";
 import trash from "trash";
 import { assimpImporter } from "./importer/assimp/assimp-importer";
 import crypto from "crypto";
@@ -9,7 +9,7 @@ import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
 import { saveMeshToBuffer, readMeshBinary, saveImageToBuffer, readImageBinary } from "./importer/binary/resourceBinary";
 import * as asssetManager from "@shot-engine/asset-manager";
-import { AssetManager, AssetType, PrefabAsset } from "@shot-engine/types";
+import { AssetManager, AssetType, PrefabAsset, SceneAsset } from "@shot-engine/types";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -59,6 +59,11 @@ app.whenReady()
     });
     ipcMain.handle("window:showError", async (e, reason: string) => {
         await showErrorDialog(reason);
+    });
+    ipcMain.handle("window:showConfirm", async (e, msg: string) => {
+        const win = BrowserWindow.fromWebContents(e.sender);
+        if(!win) return false;
+        return await showConfirmDialog(win, msg);
     });
     ipcMain.handle("win:isFocus", async (e) => {
         const win = BrowserWindow.fromWebContents(e.sender);
@@ -271,6 +276,12 @@ app.whenReady()
         "assetManager:savePrefabAssetBinary",
         (e, prefabAsset: PrefabAsset, filePath: string) => {
             asssetManager.savePrefabAssetBinary(prefabAsset, filePath);
+        }
+    );
+    ipcMain.handle(
+        "assetManager:saveSceneAssetBinary",
+        (e, sceneAsset: SceneAsset, filePath: string) => {
+            asssetManager.saveSceneAssetBinary(sceneAsset, filePath);
         }
     );
     ipcMain.handle(

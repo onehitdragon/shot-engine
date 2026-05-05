@@ -72,5 +72,5 @@ export type SceneNode = GameObjectPrefab | GameObject;
 export type Scene = {
     id: string,
     name: string,
-    sceneNodes: SceneNode[],
+    roots: SceneNode[],
 }

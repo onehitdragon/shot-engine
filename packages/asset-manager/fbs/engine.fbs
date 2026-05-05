@@ -23,5 +23,5 @@ table GameObject{
 table Scene{
     id: string;
     name: string;
-    scene_nodes: [SceneNode];
+    roots: [SceneNode];
 }

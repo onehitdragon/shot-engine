@@ -8,7 +8,7 @@ import { createDBIfNotExist, FileRow, AssetRow, closeDB } from "./db";
 import * as ShotEngineType from "@shot-engine/types";
 import { AssetManager } from "@shot-engine/types";
 import { readGLBFile } from './glb';
-import { readImageAsset, readMeshAsset, readPrefabAsset, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
+import { readImageAsset, readMeshAsset, readPrefabAsset, readSceneAsset, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
 import { imageToRaw } from './imageToRaw';
 import { createDefaultCubeAssetMesh } from './createDefaultAssetMesh';
 
@@ -93,6 +93,9 @@ export function query(){
         }
         if(type === "prefab"){
             return readPrefabAsset(filePath);
+        }
+        if(type === "scene"){
+            return readSceneAsset(filePath);
         }
     }
     function updateAssetPropertyByUuid(uuid: string, property: string){
@@ -224,6 +227,9 @@ export async function rescan(){
             }
             else if(isPrefabFile(fileRow.path)){
                 await syncNotContainer(fileRow, assetRows, "prefab");
+            }
+            else if(isSceneFile(fileRow.path)){
+                await syncNotContainer(fileRow, assetRows, "scene");
             }
             else{
                 await syncNotContainer(fileRow, assetRows, "other");
@@ -464,7 +470,7 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
     assetsQuery.deletesTransaction(uuids);
     uuids.forEach(e => deleteGenAsset(e))
 }
-function createAssetDefaultProterpty(type: AssetRow["type"]){
+function createAssetDefaultProterpty(type: AssetRow["type"]): string{
     if(type === "image"){
         return schema.defaultImageAssetJSON;
     }
@@ -473,6 +479,9 @@ function createAssetDefaultProterpty(type: AssetRow["type"]){
     }
     else if(type === "prefab"){
         return schema.defaultPrefabAssetJSON;
+    }
+    else if(type === "scene"){
+        return schema.defaultSceneAssetJSON;
     }
     else{
         return schema.defaultOtherAssetJSON;
@@ -496,6 +505,10 @@ function isPrefabFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return ext === ".prefab";
 }
+function isSceneFile(filePath: string){
+    const ext = path.extname(filePath).toLowerCase();
+    return ext === ".scene";
+}
 
 async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: AssetRow["type"]) {
     if(!fileRow.path) return;
@@ -513,6 +526,9 @@ async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: Asse
         genAssetFromFile(fileRow, assetRow);
     }
     else if(type === "prefab"){
+        genAssetFromFile(fileRow, assetRow);
+    }
+    else if(type === "scene"){
         genAssetFromFile(fileRow, assetRow);
     }
     else genDefaultAsset(fileRow, assetRow);

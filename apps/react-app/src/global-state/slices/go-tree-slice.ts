@@ -1,7 +1,7 @@
 import { createEntityAdapter, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
-import type { AssetManager, GameObject, GameObjectPrefab, SceneNode } from "@shot-engine/types";
-import { goAddedThunk, goRemovedThunk, goTreeOpenedThunk, goTreeSavedThunk, nodeFocusedThunk, nodeUnfocusedThunk } from "../thunks/go-tree-thunks";
+import type { AssetManager, GameObject, GameObjectPrefab } from "@shot-engine/types";
+import { goAddedThunk, goRemovedThunk, goTreeClosedThunk, goTreeOpenedThunk, goTreeSavedThunk, nodeFocusedThunk, nodeUnfocusedThunk } from "../thunks/go-tree-thunks";
 import { componentsChangedThunk } from "../thunks/inspector-components-thunks";
 
 type GameObjectState = (Omit<GameObject, "childs"> & {
@@ -20,6 +20,7 @@ interface InitState{
     allowModify?: boolean,
     allowAddRoot?: boolean,
     allowRemoveRoot?: boolean,
+    opened?: boolean,
     modified: boolean,
     focusedId: string | null,
 }
@@ -58,6 +59,18 @@ const slice = createSlice({
             state.allowRemoveRoot = allowRemoveRoot;
             state.modified = false;
             state.focusedId = null;
+            state.opened = true;
+        });
+        builder.addCase(goTreeClosedThunk.fulfilled, (state) => {
+            state.assetInfo = undefined;
+            state.rootIds = [];
+            nodeAdapter.removeAll(state.nodes);
+            state.allowModify = false;
+            state.allowAddRoot = false;
+            state.allowRemoveRoot = false;
+            state.modified = false;
+            state.focusedId = null;
+            state.opened = false;
         });
         builder.addCase(goTreeSavedThunk.fulfilled, (state) => {
             state.modified = false;
