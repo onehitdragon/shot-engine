@@ -1,5 +1,4 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { componentRemovedThunk, componentUpdatedThunk, sceneClosedThunk, sceneNodeAddedThunk, sceneNodeRemovedThunk, sceneOpenedThunk, sceneSavedThunk, uniqueComponentAddedThunk } from "../thunks/scene-manager-thunks";
 import { entryDeletedThunk, fileImportedThunk, folderCreatedThunk, projectClosedThunk, projectOpenedThunk, projectRescanThunk } from "../thunks/folder-manager-thunks";
 import { assetUpdatedThunk } from "../thunks/asset-manager-thunk";
 
@@ -85,94 +84,6 @@ const slice = createSlice({
         );
         builder.addAsyncThunk(
             entryDeletedThunk,
-            {
-                pending: (state) => {
-                    state.loading = true;
-                },
-                settled: (state) => {
-                    state.loading = false;
-                }
-            }
-        );
-        builder.addAsyncThunk(
-            sceneSavedThunk,
-            {
-                pending: (state) => {
-                    state.loading = true;
-                },
-                settled: (state) => {
-                    state.loading = false;
-                }
-            }
-        );
-        builder.addAsyncThunk(
-            sceneOpenedThunk,
-            {
-                pending: (state) => {
-                    state.loading = true;
-                },
-                settled: (state) => {
-                    state.loading = false;
-                }
-            }
-        );
-        builder.addAsyncThunk(
-            sceneClosedThunk,
-            {
-                pending: (state) => {
-                    state.loading = true;
-                },
-                settled: (state) => {
-                    state.loading = false;
-                }
-            }
-        );
-        builder.addAsyncThunk(
-            sceneNodeAddedThunk,
-            {
-                pending: (state) => {
-                    state.loading = true;
-                },
-                settled: (state) => {
-                    state.loading = false;
-                }
-            }
-        );
-        builder.addAsyncThunk(
-            sceneNodeRemovedThunk,
-            {
-                pending: (state) => {
-                    state.loading = true;
-                },
-                settled: (state) => {
-                    state.loading = false;
-                }
-            }
-        );
-        builder.addAsyncThunk(
-            uniqueComponentAddedThunk,
-            {
-                pending: (state) => {
-                    state.loading = true;
-                },
-                settled: (state) => {
-                    state.loading = false;
-                }
-            }
-        );
-        builder.addAsyncThunk(
-            componentRemovedThunk,
-            {
-                pending: (state) => {
-                    state.loading = true;
-                },
-                settled: (state) => {
-                    state.loading = false;
-                }
-            }
-        );
-        builder.addAsyncThunk(
-            componentUpdatedThunk,
             {
                 pending: (state) => {
                     state.loading = true;

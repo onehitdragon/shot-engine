@@ -1,22 +1,29 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { sceneNodeRemovedThunk } from "../thunks/scene-manager-thunks";
+import type { ImageAsset, AssetManager, MeshAsset, PrefabAsset } from "@shot-engine/types";
 
-export type TextInspector = {
+export type TextAssetInspector = {
     type: "text",
     content: string
 }
-export type FBXInspector = {
-    type: "fbx",
-    fbx: FBXFormat.FBX
+export type ImageAssetInspector = {
+    type: "image",
+    assetInfo: AssetManager.AssetInfo,
+    imageAsset: ImageAsset,
 }
-export type MeshInspector = {
+export type MeshAssetInspector = {
     type: "mesh",
-    mesh: MeshFormat.Mesh
+    assetInfo: AssetManager.AssetInfo,
+    meshAsset: MeshAsset
 }
-export type PrefabInspector = {
+export type PrefabAssetInspector = {
     type: "prefab",
-    prefab: PrefabFormat.Prefab
+    assetInfo: AssetManager.AssetInfo,
+    prefabAsset: PrefabAsset
 }
+export type ComponentsInspector = {
+    type: "components"
+}
+
 export type SceneInspector = {
     type: "scene",
     path: string,
@@ -24,19 +31,9 @@ export type SceneInspector = {
     nodes: SceneFormat.SceneNode[],
     components: Components.Component[]
 }
-export type SceneNodeInspector = {
-    type: "scene-node",
-    nodeId: string
-}
-export type AssetInspector = {
-    type: "asset",
-    guid: string,
-    path: string,
-    metaPath: string
-}
 type State = {
-    inspector: null | TextInspector | FBXInspector | PrefabInspector | SceneInspector | SceneNodeInspector
-    | AssetInspector | MeshInspector
+    inspector: null | ImageAssetInspector | TextAssetInspector | PrefabAssetInspector
+    | SceneInspector | MeshAssetInspector | ComponentsInspector
 };
 const initialState: State = {
     inspector: null
@@ -48,17 +45,7 @@ const slice = createSlice({
         showInspector: (state, action: PayloadAction<{ inspector: State["inspector"] }>) => {
             state.inspector = action.payload.inspector;
         }
-    },
-    extraReducers(builder){
-        builder.addCase(sceneNodeRemovedThunk.fulfilled, (state, action) => {
-            const { id } = action.meta.arg;
-            const inspector = state.inspector;
-            if(!inspector) return;
-            if(inspector.type === "scene-node" && inspector.nodeId === id){
-                state.inspector = null;
-            }
-        });
-    },
+    }
 });
 export const { showInspector } = slice.actions;
 export default slice.reducer;

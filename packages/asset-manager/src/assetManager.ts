@@ -6,8 +6,9 @@ import { v4 as uuidv4 } from "uuid";
 import * as schema from "./schema";
 import { createDBIfNotExist, FileRow, AssetRow, closeDB } from "./db";
 import * as ShotEngineType from "@shot-engine/types";
+import { AssetManager } from "@shot-engine/types";
 import { readGLBFile } from './glb';
-import { saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
+import { readImageAsset, readMeshAsset, readPrefabAsset, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
 import { imageToRaw } from './imageToRaw';
 import { createDefaultCubeAssetMesh } from './createDefaultAssetMesh';
 
@@ -19,14 +20,7 @@ let ASSET_GENERATED_DIR = "";
 let filesQuery: ReturnType<typeof createDBIfNotExist>["filesQuery"] = {} as any;
 let assetsQuery: ReturnType<typeof createDBIfNotExist>["assetsQuery"] = {} as any; 
 
-export type Config = {
-    assetDir: string,
-    assetDefaultDir: string,
-    assetGenerateDir: string,
-    dbFilePath: string,
-}
-
-export function config(config: Config){
+export function config(config: AssetManager.Config){
     ASSET_DIR = config.assetDir;
     ASSET_DEFAULT_DIR = config.assetDefaultDir;
     ASSET_GENERATED_DIR = config.assetGenerateDir;
@@ -38,6 +32,89 @@ export function config(config: Config){
 
 export function close(){
     closeDB();
+}
+
+export function query(){
+    function getAssetInfosFromPath(filePath: string){
+        const relativePath = path.relative(ASSET_DIR, filePath);
+        const assetInfos: AssetManager.AssetInfo[] = [];
+        const fileRow = filesQuery.getByPath.get(relativePath);
+        if(!fileRow){
+            return assetInfos;
+        };
+        const assetRows = assetsQuery.getByFileId.all(fileRow.uuid);
+        for(const assetRow of assetRows){
+            assetInfos.push({
+                uuid: assetRow.uuid,
+                name: assetRow.name,
+                type: assetRow.type,
+                property: JSON.parse(assetRow.property),
+                allowModify: assetRow.modifiable > 0
+            });
+        }
+        return assetInfos;
+    }
+    function getAssetInfoFromUuid(uuid: string){
+        const assetRow = assetsQuery.getById.get(uuid);
+        if(!assetRow) return;
+        const assetInfo: AssetManager.AssetInfo = {
+            uuid: assetRow.uuid,
+            name: assetRow.name,
+            type: assetRow.type,
+            property: JSON.parse(assetRow.property),
+            allowModify: assetRow.modifiable > 0
+        }
+        return assetInfo;
+    }
+    function getAssetInfosFromType(type: ShotEngineType.AssetType){
+        const assetInfos: AssetManager.AssetInfo[] = [];
+        const assetRows = assetsQuery.getByType.all(type);
+        for(const assetRow of assetRows){
+            assetInfos.push({
+                uuid: assetRow.uuid,
+                name: assetRow.name,
+                type: assetRow.type,
+                property: JSON.parse(assetRow.property),
+                allowModify: assetRow.modifiable > 0
+            });
+        }
+        return assetInfos;
+    }
+    function getAssetFromUuid(uuid: string, type: ShotEngineType.AssetType){
+        if(type === "other"){
+            return;
+        }
+        const filePath = path.join(ASSET_GENERATED_DIR, uuid);
+        if(type === "image"){
+            return readImageAsset(filePath);
+        }
+        if(type === "mesh"){
+            return readMeshAsset(filePath);
+        }
+        if(type === "prefab"){
+            return readPrefabAsset(filePath);
+        }
+    }
+    function updateAssetPropertyByUuid(uuid: string, property: string){
+        assetsQuery.updateProperty.run(property, uuid);
+    }
+    function getFilePathFromAssetId(uuid: string){
+        const assetRow = assetsQuery.getById.get(uuid);
+        if(!assetRow) return;
+        const fileRow = filesQuery.getById.get(assetRow.fileId);
+        if(!fileRow) return;
+        if(!fileRow.path) return;
+        const fullPath = path.join(ASSET_DIR, fileRow.path);
+        return fullPath;
+    }
+    return {
+        getAssetInfosFromPath,
+        getAssetInfoFromUuid,
+        getAssetInfosFromType,
+        getAssetFromUuid,
+        updateAssetPropertyByUuid,
+        getFilePathFromAssetId
+    }
 }
 
 export async function rescan(){
@@ -140,10 +217,13 @@ export async function rescan(){
                 await syncNotContainer(fileRow, assetRows, "image");
             }
             else if(isGLBFile(fileRow.path)){
-                syncGLBContainer(fileRow, assetRows);
+                await syncGLBContainer(fileRow, assetRows);
             }
             else if(isMeshFile(fileRow.path)){
                 await syncNotContainer(fileRow, assetRows, "mesh");
+            }
+            else if(isPrefabFile(fileRow.path)){
+                await syncNotContainer(fileRow, assetRows, "prefab");
             }
             else{
                 await syncNotContainer(fileRow, assetRows, "other");
@@ -245,6 +325,7 @@ async function syncNotContainer(fileRow: FileRow, assetRows: AssetRow[], type: A
             hash: fileRow.hash,
             type,
             name: path.basename(fileRow.path || ""),
+            modifiable: 1,
             property: createAssetDefaultProterpty(type)
         };
         assetsQuery.insert.run(
@@ -253,6 +334,7 @@ async function syncNotContainer(fileRow: FileRow, assetRows: AssetRow[], type: A
             assetRow.hash,
             assetRow.type,
             assetRow.name,
+            assetRow.modifiable,
             assetRow.property
         );
         usedSet.add(assetRow.uuid);
@@ -286,6 +368,7 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
                 hash,
                 type: "image",
                 name: path.basename(fileRow.path) + "/" + texture.name,
+                modifiable: 0,
                 property: createAssetDefaultProterpty("image")
             };
             assetsQuery.insert.run(
@@ -294,6 +377,7 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
                 assetRow.hash,
                 assetRow.type,
                 assetRow.name,
+                assetRow.modifiable,
                 assetRow.property
             );
             usedSet.add(assetRow.uuid);
@@ -316,6 +400,7 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
                 hash,
                 type: "mesh",
                 name: path.basename(fileRow.path) + "/" + mesh.name,
+                modifiable: 0,
                 property: createAssetDefaultProterpty("mesh")
             };
             assetsQuery.insert.run(
@@ -324,6 +409,7 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
                 assetRow.hash,
                 assetRow.type,
                 assetRow.name,
+                assetRow.modifiable,
                 assetRow.property
             );
             usedSet.add(assetRow.uuid);
@@ -356,6 +442,7 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
                 hash,
                 type: "prefab",
                 name: path.basename(fileRow.path) + "/" + prefabAsset.root.name,
+                modifiable: 0,
                 property: createAssetDefaultProterpty("prefab")
             };
             assetsQuery.insert.run(
@@ -364,6 +451,7 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
                 assetRow.hash,
                 assetRow.type,
                 assetRow.name,
+                assetRow.modifiable,
                 assetRow.property
             );
             usedSet.add(assetRow.uuid);
@@ -404,6 +492,10 @@ function isMeshFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return ext === ".mesh";
 }
+function isPrefabFile(filePath: string){
+    const ext = path.extname(filePath).toLowerCase();
+    return ext === ".prefab";
+}
 
 async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: AssetRow["type"]) {
     if(!fileRow.path) return;
@@ -418,6 +510,9 @@ async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: Asse
         genImageAsset(assetRow, imageAsset);
     }
     else if(type === "mesh"){
+        genAssetFromFile(fileRow, assetRow);
+    }
+    else if(type === "prefab"){
         genAssetFromFile(fileRow, assetRow);
     }
     else genDefaultAsset(fileRow, assetRow);

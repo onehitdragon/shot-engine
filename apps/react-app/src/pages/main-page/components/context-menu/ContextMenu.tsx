@@ -22,7 +22,7 @@ export function ContextMenu(){
     return (
         <div id="context-menu">
             {
-                context && context.type == "scene-node" && 
+                context && context.type == "node" && 
                 <SceneNodeContextMenu contextMenu={context} x={x} y ={y}/>
             }
             {

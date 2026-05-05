@@ -1,28 +1,15 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import { FBXInspector } from "./FBXInspector";
-import { TextInspector } from "./TextInspector";
+import { TextAssetInspector } from "./TextAssetInspector";
 import { showInspector } from "../../../../global-state/slices/inspector-slice";
-import { SceneInspector } from "./SceneInspector";
-import { SceneNodeInspector } from "./SceneNodeInspector";
-import { PrefabInspector } from "./PrefabInspector";
-import { AssetInspector } from "./ImageInspector";
-import { MeshInspector } from "./MeshInspector";
+import { ImageAssetInspector } from "./ImageAssetInspector";
+import { MeshAssetInspector } from "./MeshAssetInspector";
+import { ComponentsInspector } from "./ComponentsInspector";
+import { PrefabAssetInspector } from "./PrefabAssetInspector";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
-    const focusedId = useAppSelector((state) => state.sceneManager.focusedId);
     const dispatch = useAppDispatch();
-    useEffect(() => {
-        if(focusedId){
-            dispatch(showInspector({
-                inspector: {
-                    type: "scene-node",
-                    nodeId: focusedId
-                }
-            }));
-        }
-    }, [focusedId]);
     useEffect(() => {
         const handler = (event: MouseEvent) => {
             if(event.button !== 0) return;
@@ -43,13 +30,12 @@ export function InspectorTab(){
                 <div className="flex items-center justify-center flex-1 text-white text-sm">
                 </div>
                 :
-                inspector.type === "text" ? <TextInspector textInspector={inspector}/> :
-                inspector.type === "fbx" ? <FBXInspector fbxInspector={inspector}/> :
-                inspector.type === "mesh" ? <MeshInspector inspector={inspector}/> :
-                inspector.type === "prefab" ? <PrefabInspector inspector={inspector}/> :
-                inspector.type === "scene" ? <SceneInspector sceneInspector={inspector}/> :
-                inspector.type === "scene-node" ? <SceneNodeInspector sceneNodeInspector={inspector}/> :
-                inspector.type === "asset" ? <AssetInspector inspector={inspector}/> :
+                inspector.type === "text" ? <TextAssetInspector textInspector={inspector}/> :
+                inspector.type === "image" ? <ImageAssetInspector inspector={inspector}/> :
+                inspector.type === "mesh" ? <MeshAssetInspector inspector={inspector}/> :
+                inspector.type === "components" ? <ComponentsInspector /> :
+                inspector.type === "prefab" ? <PrefabAssetInspector inspector={inspector}/> :
+                // inspector.type === "scene" ? <SceneInspector sceneInspector={inspector}/> ::
                 <div className="flex items-center justify-center flex-1 text-white text-sm">
                     This type is not supported in the inspector yet!
                 </div>

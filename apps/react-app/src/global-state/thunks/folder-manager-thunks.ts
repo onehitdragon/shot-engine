@@ -3,7 +3,9 @@ import type { AppDispatch, RootState } from "../store";
 import { type FolderManager } from "../slices/folder-manager-slice";
 import { addLog } from "../slices/app-loading-slice";
 import { loop } from "../../pages/main-page/helpers/folder-manager-helper/helper";
-import { sceneClosedThunk } from "./scene-manager-thunks";
+import { createEmptyPrefab } from "../../pages/main-page/helpers/scene-manager-helper/SceneNodeHelper";
+import { showInspector } from "../slices/inspector-slice";
+// import { sceneClosedThunk } from "./scene-manager-thunks";
 
 export const projectOpenedThunk = createAsyncThunk
 <
@@ -76,7 +78,7 @@ export const projectClosedThunk = createAsyncThunk
         try{
             const projectPaths = getState().folderManager.projectPaths;
             if(!projectPaths) throw "no project has been opened yet";
-            await dispatch(sceneClosedThunk());
+            // await dispatch(sceneClosedThunk());
             await window.api.assetManager.close();
         }
         catch(err){
@@ -206,14 +208,14 @@ export const entryDeletedThunk = createAsyncThunk
 >
 (
     "folder-manager/entryDeleted",
-    async ({ entryPath, recycle }, { getState, rejectWithValue }) => {
+    async ({ entryPath, recycle }, { getState, dispatch, rejectWithValue }) => {
         try{
             const projectPaths = getState().folderManager.projectPaths;
             if(!projectPaths) throw "no project has been opened yet";
 
             if(entryPath.startsWith(projectPaths.assetDefault)) throw "Dont delete default file";
-            const { path: scenePath } = getState().sceneManager;
-            if(entryPath === scenePath) throw "Cant delete opening scene";
+            // const { path: scenePath } = getState().sceneManager;
+            // if(entryPath === scenePath) throw "Cant delete opening scene";
             
             const paths: string[] = [];
             loop(entryPath, getState().folderManager.entities, (entry) => {
@@ -226,8 +228,55 @@ export const entryDeletedThunk = createAsyncThunk
 
             await window.api.assetManager.rescan();
 
+            dispatch(showInspector({ inspector: null }));
+
             return {
                 paths
+            }
+        }
+        catch(err){
+            await window.api.showError(String(err));
+            return rejectWithValue(err);
+        }
+    }
+);
+export const prefabFileCreatedThunk = createAsyncThunk
+<
+    {
+        fileCreated: DirectoryTree.File
+    },
+    { parentPath: string, name: string },
+    {
+        dispatch: AppDispatch,
+        state: RootState
+    }
+>
+(
+    "folder-manager/prefabFileCreated",
+    async ({ parentPath, name }, { getState, rejectWithValue }) => {
+        try{
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "no project has been opened yet";
+            
+            if(parentPath.startsWith(projectPaths.assetDefault)) throw "Dont create inside default";
+            if(!parentPath.startsWith(projectPaths.asset)) throw "Dont create outside asset folder";
+
+            const path = await window.fsPath.join(parentPath, name);
+            await window.api.assetManager.savePrefabAssetBinary(
+                {
+                    root: createEmptyPrefab()
+                },
+                path
+            );
+
+            await window.api.assetManager.rescan();
+
+            return {
+                fileCreated: {
+                    type: "File",
+                    name,
+                    path
+                }
             }
         }
         catch(err){

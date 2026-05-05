@@ -14,7 +14,49 @@ table Mesh{
     mesh_ref: string;
 }
 
+table SimpleShading{
+    id: string;
+    culling: string;
+    transparent: bool;
+}
+
+table ImageDiffuse{
+    imageRef: string;
+}
+
+table ColorDiffuse{
+    color: Vec3;
+}
+
+union Diffuse{
+    ImageDiffuse,
+    ColorDiffuse
+}
+
+table PhongShading{
+    id: string;
+    culling: string;
+    transparent: bool;
+    diffuse: Diffuse;
+    ambient: Vec3;
+    shininess: double;
+}
+
+table PointLight{
+    id: string;
+    color: Vec3;
+}
+
+table DirectionalLight{
+    id: string;
+    dir: Vec3;
+}
+
 union Component{
     Transform,
-    Mesh
+    Mesh,
+    SimpleShading,
+    PhongShading,
+    PointLight,
+    DirectionalLight
 }

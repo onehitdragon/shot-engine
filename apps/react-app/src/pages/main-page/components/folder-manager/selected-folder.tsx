@@ -1,17 +1,18 @@
 import { FolderPlusIcon, FolderIcon, DocumentTextIcon,
     ArrowDownOnSquareIcon, PhotoIcon,
-    Square3Stack3DIcon,
     GlobeAltIcon,
-    CubeTransparentIcon
+    TruckIcon, XCircleIcon,
+    ArrowTurnDownRightIcon, PuzzlePieceIcon
  } from "@heroicons/react/24/solid";
 import { chooseEntry, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, focusEntry, type FolderManager, selectEntryByPath, selectSelectedEntry } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { useEffect, useRef, useState } from "react";
 import { showDialog } from "../../../../global-state/slices/app-confirm-dialog-slice";
-import { fileIsImage } from "../../helpers/folder-manager-helper/helper";
-import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk } from "../../../../global-state/thunks/folder-manager-thunks";
+import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk, prefabFileCreatedThunk } from "../../../../global-state/thunks/folder-manager-thunks";
 import { inspectAssetThunk } from "../../../../global-state/thunks/inspector-thunks";
+import type { AssetManager, AssetType } from "@shot-engine/types";
+import { getBaseName } from "../../helpers/utils/utils";
 
 export function SelectedFolder(){
     const selectedEntry = useAppSelector(state => selectSelectedEntry(state));
@@ -65,7 +66,6 @@ function Entry(props: EntryProps){
     const isFoucused = focused && focused.path == entry.path;
     const click = () => {
         dispatch(focusEntry(entry));
-        dispatch(inspectAssetThunk(entry));
     };
     const doubleClick = () => {
         if(entry.type == "Directory"){
@@ -76,69 +76,124 @@ function Entry(props: EntryProps){
     };
 
     return (
-        <div className={`flex items-center ${!isFoucused ? "hover:opacity-70" : "bg-gray-600"} hover:cursor-pointer`}
+        <div className={`flex items-center hover:cursor-pointer`}
             onClick={click}
             onDoubleClick={doubleClick}
         >
             {
                 entry.type == "Directory" ?
-                <DirectoryEntry key={entry.path} directory={entry}/> :
-                <FileEntry key={entry.path} file={entry}/>
+                <DirectoryEntry key={entry.path} directory={entry} isFoucused={isFoucused}/> :
+                <FileEntry key={entry.path} file={entry} isFoucused={isFoucused}
+                    onClick={(assetInfo) => {
+                        dispatch(inspectAssetThunk({ assetInfo }));
+                    }}
+                />
             }
         </div>
     );
 }
 type FileEntryProps = {
-    file: DirectoryTree.File
+    file: DirectoryTree.File,
+    isFoucused?: boolean,
+    onClick: (assetInfo: AssetManager.AssetInfo) => void
 }
 function FileEntry(props: FileEntryProps){
-    const { file } = props;
-    const isMeta = file.path.endsWith(".meta.json");
-    const isScene = file.path.endsWith(".scene.json");
-    const isMesh = file.path.endsWith(".mesh.json");
-    const isPrefab = file.path.endsWith(".prefab.json");
-    const iconGenerator = () => {
-        if(isScene){
-            return <Square3Stack3DIcon className='size-4 text-white'/>
+    const { file, isFoucused } = props;
+    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+    const [expand, setExpand] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            const assetInfos = await window.api.assetManager.getAssetInfos(file.path);
+            if(cancelled) return;
+            setAssetInfos(assetInfos);
         }
-        else if(isMesh){
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, [isFoucused]);
+
+    function iconFromType(type: AssetType){
+        if(type === "mesh"){
             return <GlobeAltIcon className='size-4 text-green-500'/>
         }
-        else if(isPrefab){
-            return <CubeTransparentIcon className='size-4 text-red-500'/>
+        else if(type === "prefab"){
+            return <PuzzlePieceIcon className='size-4 text-cyan-500'/>
         }
-        else if(fileIsImage(file)){
+        else if(type === "image"){
             return <PhotoIcon className='size-4 text-white'/>
         }
         else{
             return <DocumentTextIcon className='size-4 text-white'/>
         }
     }
+    const iconGenerator = () => {
+        if(assetInfos.length === 0){
+            return <XCircleIcon className='size-4 text-red-400'/>
+        }
+        if(assetInfos.length === 1){
+            return iconFromType(assetInfos[0].type);
+        }
+        if(assetInfos.length > 1){
+            return <TruckIcon className='size-4 text-green-500'/> 
+        }
+    }
 
     return (
-        <>
-            {iconGenerator()}
-            <span className={`text-sm ml-2 text-white ${isMeta && "opacity-40"} select-none`}>
-                {file.name}
-            </span>
-        </>
+        <div className="flex flex-1 flex-col">
+            <div className={`flex ${!isFoucused ? "hover:opacity-70" : "bg-gray-600"}`}
+                onClick={() => {
+                    setExpand(!expand);
+                    if(assetInfos.length === 1) props.onClick(assetInfos[0]);
+                }}>
+                {iconGenerator()}
+                <span className="text-sm ml-2 text-white select-none">
+                    {file.name}
+                </span>
+            </div>
+            {
+                assetInfos.length > 1 && expand &&
+                <div className="flex flex-col ml-2">
+                    {
+                        assetInfos.map((assetInfo) => {
+                            return <div
+                                key={assetInfo.uuid}
+                                className={`flex hover:opacity-70`}
+                                onClick={() => {
+                                    props.onClick(assetInfo);
+                                }}
+                            >
+                                <ArrowTurnDownRightIcon className='size-4 text-white'/>
+                                {iconFromType(assetInfo.type)}
+                                <span className="text-sm ml-2 text-white select-none">
+                                    {assetInfo.name}
+                                </span>
+                            </div>
+                        })
+                    }
+                </div>
+            }
+        </div>
     );
 }
 type DirectoryEntryProps = {
-    directory: FolderManager.DirectoryState
+    directory: FolderManager.DirectoryState,
+    isFoucused?: boolean,
 }
 function DirectoryEntry(props: DirectoryEntryProps){
-    const { directory } = props;
+    const { directory, isFoucused } = props;
     const { children: entries } = directory;
 
     return (
-        <>
+        <div className={`flex flex-1 ${!isFoucused ? "hover:opacity-70" : "bg-gray-600"}`}>
             {
                 entries.length == 0 ?
                 <Empty name={directory.name}/> :
                 <NonEmpty name={directory.name}/>
             }
-        </>
+        </div>
     );
 }
 function Empty(props: { name: string }){
@@ -198,7 +253,8 @@ function ButtonBar(props: ButtonBarProps){
                 {/* <CreateFileButton selectedDirectory={selectedDirectory}/> */}
                 <ImportFileButton selectedDirectory={selectedDirectory}/>
             </ul>
-            <ul className='flex-1 flex justify-end'>
+            <ul className='flex-1 flex justify-end items-center'>
+                <CreatePrefabButton selectedDirectory={selectedDirectory}/>
                 {/* <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity'>
                     <ArrowPathIcon className='size-4 text-white'/>
                 </button> */}
@@ -225,7 +281,34 @@ function CreateFolderButton(props: { selectedDirectory: FolderManager.DirectoryS
         </button>
         :
         <EntryNameInput
-            children={selectedDirectory.children}
+            children={selectedDirectory.children.map(e => getBaseName(e))}
+            create={create}
+            close={close}
+        />
+    );
+}
+function CreatePrefabButton(props: { selectedDirectory: FolderManager.DirectoryState }){
+    const { selectedDirectory } = props;
+    const [enteringName, setEnteringName] = useState(false);
+    const dispatch = useAppDispatch();
+    const create = async (name: string) => {
+        dispatch(prefabFileCreatedThunk({ parentPath: selectedDirectory.path, name }));
+    }
+    const close = () => {
+        setEnteringName(false);
+    }
+
+    return (
+        !enteringName ?
+        <button className='p-2 hover:cursor-pointer hover:opacity-50 transition-opacity flex items-center'
+            onClick={() => { setEnteringName(true); }}>
+            <PuzzlePieceIcon className='size-4 text-cyan-500'/>
+            <span className='text-xs text-cyan-500 select-none'>+</span>
+        </button>
+        :
+        <EntryNameInput
+            extension=".prefab"
+            children={selectedDirectory.children.map(e => getBaseName(e))}
             create={create}
             close={close}
         />
@@ -272,17 +355,18 @@ function ImportFileButton(props: { selectedDirectory: FolderManager.DirectorySta
     );
 }
 type EntryNameInputProps = {
+    extension?: string,
     children: string[],
     create: (name: string) => void,
     close: () => void
 }
 function EntryNameInput(props: EntryNameInputProps){
-    const { children, close, create } = props;
+    const { extension, children, close, create } = props;
     const [name, setName] = useState("");
     const isValid = () => {
-        const nameTrim = name.trim();
+        const nameTrim = name.trim() + (extension ?? "");
         if(nameTrim == "") return false;
-        return !children.some(child => child.endsWith(nameTrim));
+        return !children.some(child => child === nameTrim);
     }
     const keyDown = async (value: string) => {
         if(/^[^/\\:*?"<>|]$/.test(value)){
@@ -290,7 +374,7 @@ function EntryNameInput(props: EntryNameInputProps){
         }
         else if(value == "Backspace") setName(name.slice(0, name.length - 1));
         else if(value == "Enter" && isValid()){
-            create(name);
+            create(name + (extension ?? ""));
             close();
         }
     }

@@ -1,3 +1,5 @@
+import type { AssetManager, AssetType, Asset, PrefabAsset } from "@shot-engine/types";
+
 export type ApiType = {
     close: () => void,
     maximize: () => void,
@@ -28,14 +30,16 @@ export type ApiType = {
         loadDataURL: (path: string) => Promise<string>
     },
     assetManager: {
-        config: (config: {
-            assetDir: string;
-            assetDefaultDir: string;
-            assetGenerateDir: string;
-            dbFilePath: string;
-        }) => Promise<void>,
+        config: (config: AssetManager.Config) => Promise<void>,
         rescan: () => Promise<void>,
         close: () => Promise<void>,
+        getAssetInfos: (filePath: string) => Promise<AssetManager.AssetInfo[]>,
+        getAssetFromUuid: (uuid: string, type: AssetType) => Promise<Asset>,
+        updateAssetPropertyByUuid: (uuid: string, property: string) => Promise<void>,
+        getAssetInfoFromUuid: (uuid: string) => Promise<AssetManager.AssetInfo | undefined>
+        getAssetInfosFromType: (type: AssetType) => Promise<AssetManager.AssetInfo[]>
+        savePrefabAssetBinary: (prefabAsset: PrefabAsset, filePath: string) => Promise<void>
+        getFilePathFromAssetId: (uuid: string) => Promise<string | undefined>
     },
     resource: {
         saveMesh: (path: string, mesh: Resource.Mesh) => Promise<void>,

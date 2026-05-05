@@ -1,36 +1,25 @@
 import { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import { showInspector, type AssetInspector } from "../../../../global-state/slices/inspector-slice";
-import { selectAssetByGuid } from "../../../../global-state/slices/asset-manager-slice";
-import { createTexture, isAssetImage, type Assets } from "../../../../engine-zod";
-import { ButtonRow, CheckBox, Image, OneValueRow, Selection, TextRow } from "./components";
-import { assetUpdatedThunk } from "../../../../global-state/thunks/asset-manager-thunk";
+import { type ImageAssetInspector } from "../../../../global-state/slices/inspector-slice";
+import { ButtonRow, CheckBox, OneValueRow, RawImage, Selection, TextRow } from "./components";
+import type { AssetProperty } from "@shot-engine/types";
 
-export function AssetInspector(props: { inspector: AssetInspector }){
-    const { guid } = props.inspector;
-    const asset = useAppSelector(state => selectAssetByGuid(state, guid));
-    const dispatch = useAppDispatch();
-    useEffect(() => {
-        if(!asset) dispatch(showInspector({ inspector: null }));
-    }, [asset])
+export function ImageAssetInspector(props: { inspector: ImageAssetInspector }){
+    const { assetInfo } = props.inspector;
     return (
-        !asset ? <div></div> :
         <div className="flex flex-col gap-1 flex-1 p-1 overflow-auto scrollbar-thin">
-            <TextRow label="guid" content={asset.asset.guid}/>
-            {
-                isAssetImage(asset.asset) &&
-                <AssetImage asset={asset.asset} inspector={props.inspector}/>
-            }
+            <TextRow label="Id" content={assetInfo.uuid}/>
+            <AssetImage inspector={props.inspector}/>
         </div>
     );
 }
-function AssetImage(props: { asset: Assets.AssetImage, inspector: AssetInspector }){
-    const { asset, inspector } = props;
-    const { image } = asset;
-    const [imageType, setImageType] = useState(image.imageType);
+function AssetImage(props: { inspector: ImageAssetInspector }){
+    const { assetInfo, imageAsset } = props.inspector;
+    const property = assetInfo.property;
+    const [imageType, setImageType] = useState(property.type === "image" ? property.imageType : null);
+    if(property.type !== "image" || !imageType) return null;
     return (
         <>
-            <Image path={inspector.path}/>
+            <RawImage width={imageAsset.width} height={imageAsset.height} data={imageAsset.data}/>
             <Selection
                 label="Image type"
                 value={imageType}
@@ -44,9 +33,24 @@ function AssetImage(props: { asset: Assets.AssetImage, inspector: AssetInspector
                 }}
             />
             {
-                imageType === "Texture" &&
+                (imageType === "Texture" && imageType === property.imageType) &&
                 <TextureModifier
-                    texture={image.imageType === "Texture" ? image : createTexture()}
+                    texture={property}
+                    inspector={props.inspector}
+                />
+            }
+            {
+                (imageType === "Texture" && imageType !== property.imageType) &&
+                <TextureModifier
+                    texture={{
+                        type: "image",
+                        imageType: "Texture",
+                        sRGB: true,
+                        qualityLevel: 255,
+                        generateMipmaps: true,
+                        wrapMode: "REPEAT",
+                        filterMode: "BILINEAR"
+                    }}
                     inspector={props.inspector}
                 />
             }
@@ -55,11 +59,12 @@ function AssetImage(props: { asset: Assets.AssetImage, inspector: AssetInspector
 }
 function TextureBaseModifer(
     props: {
-        textureBase: Assets.TextureBase,
-        setTexture: (textureBase: Assets.TextureBase) => void
+        textureBase: AssetProperty.TextureBase,
+        setTexture: (textureBase: AssetProperty.TextureBase) => void
     }
 ){
     const { textureBase, setTexture } = props;
+
     return(
         <>
             <Selection
@@ -105,12 +110,23 @@ function TextureBaseModifer(
         </>
     );
 }
-function TextureModifier(props: { texture: Assets.Texture, inspector: AssetInspector }){
+function TextureModifier(props: { texture: AssetProperty.Texture, inspector: ImageAssetInspector }){
     const [texture, setTexture] = useState(props.texture);
+    const [saving, setSaving] = useState(false);
+
+    const save = async () => {
+        setSaving(true);
+        await window.api.assetManager.updateAssetPropertyByUuid(
+            props.inspector.assetInfo.uuid,
+            JSON.stringify(texture)
+        );
+        setSaving(false);
+    }
+
     useEffect(() => {
         setTexture(props.texture);
-    }, [props.texture])
-    const dispatch = useAppDispatch();
+    }, [props.texture]);
+
     return(
         <>
             <TextureBaseModifer textureBase={texture} setTexture={(textureBase => {
@@ -143,19 +159,9 @@ function TextureModifier(props: { texture: Assets.Texture, inspector: AssetInspe
                 texture !== props.texture &&
                 <ButtonRow buttons={[
                     {
-                        label: "Apply",
+                        label: !saving ? "Apply" : "Saving...",
                         onClick: async () => {
-                            const imageTexture: Assets.AssetImage = {
-                                guid: props.inspector.guid,
-                                image: { ...texture }
-                            }
-                            await window.api.file.save(
-                                props.inspector.metaPath,
-                                JSON.stringify(imageTexture, null, 2)
-                            );
-                            dispatch(assetUpdatedThunk({
-                                asset: imageTexture
-                            }));
+                            if(!saving) save();
                         }
                     }
                 ]}/>

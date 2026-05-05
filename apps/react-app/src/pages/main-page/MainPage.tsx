@@ -1,22 +1,20 @@
-import { AssetManagerTab } from './components/asset-tab/AssetManagerTab';
 import { InspectorTab } from './components/inspector-tab/InspectorTab';
 import { ProjectTab } from './components/project-tab/ProjectTab';
 import { ResourceManagerTab } from './components/resource-tab/ResourceManagerTab';
-import { SceneManagerTab } from './components/scene-manager-tab/SceneManagerTab';
+import { GameObjectTreeTab } from './components/game-object-tree-tab/GameObjectTreeTab';
 import { SceneTab } from './components/scene-tab/SceneTab';
 import { ActivedTabButton, DectivedTabButton } from './components/tab-buttons';
 import { TabManager } from './components/TabManager';
 import { CommandLineIcon, InformationCircleIcon, Bars4Icon, Square3Stack3DIcon,
     BookOpenIcon,
-    BeakerIcon,
-    FolderIcon
+    BeakerIcon
 } from '@heroicons/react/24/solid';
 
 const sceneManagerTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
     {
         ActivedButton: () => <ActivedTabButton Icon={Bars4Icon} label='Hierarchy'/>,
         DectivedButton: ({ click }) => <DectivedTabButton Icon={Bars4Icon} label='Hierarchy' click={click}/>,
-        Tab: () => <SceneManagerTab />
+        Tab: () => <GameObjectTreeTab />
     }
 ];
 const sceneTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
@@ -38,11 +36,6 @@ const projectTabs: React.ComponentProps<typeof TabManager>["tabs"] = [
         ActivedButton: () => <ActivedTabButton Icon={BookOpenIcon} label='Project'/>,
         DectivedButton: ({ click }) => <DectivedTabButton Icon={BookOpenIcon} label='Project' click={click}/>,
         Tab: () => <ProjectTab />
-    },
-    {
-        ActivedButton: () => <ActivedTabButton Icon={FolderIcon} label='Assets'/>,
-        DectivedButton: ({ click }) => <DectivedTabButton Icon={FolderIcon} label='Assets' click={click}/>,
-        Tab: () => <AssetManagerTab />
     },
     {
         ActivedButton: () => <ActivedTabButton Icon={BeakerIcon} label='Resource'/>,

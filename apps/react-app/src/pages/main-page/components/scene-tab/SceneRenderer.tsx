@@ -9,13 +9,11 @@ import { selectComponentRecord, selectSceneNodeRecord, selectSceneNodes } from "
 import { WebglRenderer } from "../../helpers/resource-manager-helper/WebglRenderer";
 import { OrbitCameraHelper } from "../../helpers/resource-manager-helper/OrbitCameraHelper";
 import { selectResourceRecord } from "../../../../global-state/slices/resource-manager-slice";
-import { selectAssetRecord } from "../../../../global-state/slices/asset-manager-slice";
 
 export function SceneRenderer(){
     const scene = useAppSelector(state => state.sceneManager.scene);
     const sceneNodeRecord = useAppSelector(state => selectSceneNodeRecord(state));
     const componentRecord = useAppSelector(state => selectComponentRecord(state));
-    const assetRecord = useAppSelector(state => selectAssetRecord(state));
     const resourceRecord = useAppSelector(state => selectResourceRecord(state));
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [camera, setCamera] = useState<SceneFormat.SceneOrbitCamera | null>(null);
@@ -77,7 +75,7 @@ export function SceneRenderer(){
         return () => {
             
         }
-    }, [scene, sceneNodeRecord, assetRecord, componentRecord, resourceRecord, webglRenderer, camera]);
+    }, [scene, sceneNodeRecord, componentRecord, resourceRecord, webglRenderer, camera]);
 
     return (
         <div className="flex-1 flex">

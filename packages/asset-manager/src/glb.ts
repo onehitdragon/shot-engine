@@ -93,7 +93,7 @@ function createGameObject(node: Node, meshMap: Map<Mesh, number>){
     };
     gameObject.components.push(
         {
-            type: "Transfrom",
+            type: "Transform",
             id: "",
             pos: {
                 x: node.getTranslation()[0],

@@ -1,14 +1,14 @@
 namespace FBSEngine;
 
 table Vec3{
-    x: float;
-    y: float;
-    z: float;
+    x: double;
+    y: double;
+    z: double;
 }
 
 table Vec4{
-    x: float;
-    y: float;
-    z: float;
-    w: float;
+    x: double;
+    y: double;
+    z: double;
+    w: double;
 }

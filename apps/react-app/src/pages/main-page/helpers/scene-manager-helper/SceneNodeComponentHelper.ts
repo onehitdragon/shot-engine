@@ -1,49 +1,46 @@
-import { v4 as uuidv4 } from 'uuid';
+import type { Light, PhongShading, SimpleShading } from '@shot-engine/types';
 
-export function createPointLightComponent(){
-    const light: Components.Light = {
-        id: uuidv4(),
-        type: "Light",
-        lightType: "PointLight",
-        color: [1, 1, 1]
-    }
-    return light;
-}
-export function createDirectionalLightComponent(){
-    const light: Components.Light = {
-        id: uuidv4(),
-        type: "Light",
-        lightType: "DirectionalLight",
-        dir: [0, -1, 0]
-    }
-    return light;
-}
 export function createSimpleShadingComponent(){
-    const component: Components.SimpleShading = {
-        id: uuidv4(),
+    const component: SimpleShading = {
+        id: "",
         type: "Shading",
+        shaderType: "simple",
         culling: "none",
         transparent: false,
-        shaderType: "simple",
     }
     return component;
 }
 export function createPhongShadingComponent(){
-    const component: Components.PhongShading = {
-        id: uuidv4(),
+    const component: PhongShading = {
+        id: "",
         type: "Shading",
         culling: "none",
         transparent: false,
         shaderType: "phong",
-        diffuseGuid: "",
-        normalGuid: "",
-        ambient: [0.1, 0.1, 0.1],
+        diffuse: {
+            type: "color",
+            color: { x: 1, y: 1, z: 1 }
+        },
+        ambient: {x: 0.1, y: 0.1, z: 0.1},
         shininess: 1
     }
     return component;
 }
-export function getMeshGuid(component: Components.Mesh){
-    if(component.meshType === "PrimitiveMesh") return component.primitiveType;
-    if(component.meshType === "ImportMesh") return component.guid;
-    throw "cant getMeshGuid"
+export function createPointLightComponent(){
+    const light: Light = {
+        id: "",
+        type: "Light",
+        lightType: "PointLight",
+        color: { x: 1, y: 1, z: 1 }
+    }
+    return light;
+}
+export function createDirectionalLightComponent(){
+    const light: Light = {
+        id: "",
+        type: "Light",
+        lightType: "DirectionalLight",
+        dir: { x: 0, y: -1, z: 0 }
+    }
+    return light;
 }

@@ -1,6 +1,6 @@
 import { createEntityAdapter, createSlice, type EntityState, type WritableDraft } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
-import { componentRemovedThunk, componentUpdatedThunk, sceneClosedThunk, sceneNodeAddedThunk, sceneNodeRemovedThunk, sceneOpenedThunk, uniqueComponentAddedThunk } from "../thunks/scene-manager-thunks";
+// import { componentRemovedThunk, componentUpdatedThunk, sceneClosedThunk, sceneNodeAddedThunk, sceneNodeRemovedThunk, sceneOpenedThunk, uniqueComponentAddedThunk } from "../thunks/scene-manager-thunks";
 
 export namespace ResourceManager{
     export type Resource = {
@@ -24,33 +24,33 @@ const slice = createSlice({
     reducers: {
     },
     extraReducers(builder){
-        builder.addCase(sceneOpenedThunk.fulfilled, (state, action) => {
-            const { resources } = action.payload;
-            updateResources(state, resources);
-        });
-        builder.addCase(sceneClosedThunk.fulfilled, (state) => {
-            adapter.removeAll(state);
-        });
-        builder.addCase(sceneNodeAddedThunk.fulfilled, (state, action) => {
-            const { resources } = action.payload;
-            updateResources(state, resources);
-        });
-        builder.addCase(sceneNodeRemovedThunk.fulfilled, (state, action) => {
-            const { resources } = action.payload;
-            updateResources(state, resources);
-        });
-        builder.addCase(uniqueComponentAddedThunk.fulfilled, (state, action) => {
-            const { resources } = action.payload;
-            updateResources(state, resources);
-        });
-        builder.addCase(componentRemovedThunk.fulfilled, (state, action) => {
-            const { resources } = action.payload;
-            updateResources(state, resources);
-        });
-        builder.addCase(componentUpdatedThunk.fulfilled, (state, action) => {
-            const { resources } = action.payload;
-            updateResources(state, resources);
-        });
+        // builder.addCase(sceneOpenedThunk.fulfilled, (state, action) => {
+        //     const { resources } = action.payload;
+        //     updateResources(state, resources);
+        // });
+        // builder.addCase(sceneClosedThunk.fulfilled, (state) => {
+        //     adapter.removeAll(state);
+        // });
+        // builder.addCase(sceneNodeAddedThunk.fulfilled, (state, action) => {
+        //     const { resources } = action.payload;
+        //     updateResources(state, resources);
+        // });
+        // builder.addCase(sceneNodeRemovedThunk.fulfilled, (state, action) => {
+        //     const { resources } = action.payload;
+        //     updateResources(state, resources);
+        // });
+        // builder.addCase(uniqueComponentAddedThunk.fulfilled, (state, action) => {
+        //     const { resources } = action.payload;
+        //     updateResources(state, resources);
+        // });
+        // builder.addCase(componentRemovedThunk.fulfilled, (state, action) => {
+        //     const { resources } = action.payload;
+        //     updateResources(state, resources);
+        // });
+        // builder.addCase(componentUpdatedThunk.fulfilled, (state, action) => {
+        //     const { resources } = action.payload;
+        //     updateResources(state, resources);
+        // });
     }
 });
 function updateResources(

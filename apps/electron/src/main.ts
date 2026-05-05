@@ -9,6 +9,7 @@ import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
 import { saveMeshToBuffer, readMeshBinary, saveImageToBuffer, readImageBinary } from "./importer/binary/resourceBinary";
 import * as asssetManager from "@shot-engine/asset-manager";
+import { AssetManager, AssetType, PrefabAsset } from "@shot-engine/types";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -220,7 +221,7 @@ app.whenReady()
 
     ipcMain.handle(
         "assetManager:config",
-        (e, config: asssetManager.Config) => {
+        (e, config: AssetManager.Config) => {
             asssetManager.config(config);
         }
     );
@@ -234,6 +235,48 @@ app.whenReady()
         "assetManager:close",
         (e) => {
             asssetManager.close();
+        }
+    );
+    ipcMain.handle(
+        "assetManager:getAssetInfos",
+        (e, filePath: string) => {
+            return asssetManager.query().getAssetInfosFromPath(filePath);
+        }
+    );
+    ipcMain.handle(
+        "assetManager:getAssetInfoFromUuid",
+        (e, uuid: string) => {
+            return asssetManager.query().getAssetInfoFromUuid(uuid);
+        }
+    );
+    ipcMain.handle(
+        "assetManager:getAssetInfosFromType",
+        (e, type: AssetType) => {
+            return asssetManager.query().getAssetInfosFromType(type);
+        }
+    );
+    ipcMain.handle(
+        "assetManager:getAssetFromUuid",
+        (e, uuid: string, type: AssetType) => {
+            return asssetManager.query().getAssetFromUuid(uuid, type);
+        }
+    );
+    ipcMain.handle(
+        "assetManager:updateAssetPropertyByUuid",
+        (e, uuid: string, property: string) => {
+            return asssetManager.query().updateAssetPropertyByUuid(uuid, property);
+        }
+    );
+    ipcMain.handle(
+        "assetManager:savePrefabAssetBinary",
+        (e, prefabAsset: PrefabAsset, filePath: string) => {
+            asssetManager.savePrefabAssetBinary(prefabAsset, filePath);
+        }
+    );
+    ipcMain.handle(
+        "assetManager:getFilePathFromAssetId",
+        (e, uuid: string) => {
+            return asssetManager.query().getFilePathFromAssetId(uuid);
         }
     );
 

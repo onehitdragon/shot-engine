@@ -1,12 +1,16 @@
 import { Builder, Offset, ByteBuffer } from "flatbuffers";
-import path from "node:path";
 import * as ShotEngineType from "@shot-engine/types";
 import fs from "fs-extra";
 import {
     Vec3, Vec4,
     ImageAsset, PrimitiveAttribute, Primitive, MeshAsset, PrefabAsset, 
     SceneNode, GameObject, GameObjectPrefab, Component, Transform, Mesh,
+    SimpleShading, PhongShading, ImageDiffuse, ColorDiffuse,
+    Diffuse,
+    PointLight,
+    DirectionalLight
 } from "../fbs-gen/fbsengine";
+import { getCulling, getVec3 } from "./flatbfUtil";
 
 export function saveImageAssetBinary(imageAsset: ShotEngineType.ImageAsset, filePath: string){
     const builder = new Builder(1024);
@@ -54,8 +58,10 @@ export function savePrefabAssetBinary(prefabAsset: ShotEngineType.PrefabAsset, f
     function recurGameObject(sceneNode: ShotEngineType.SceneNode): Offset{
         if("prefabRef" in sceneNode){
             const goPrefab = sceneNode;
+            const idOffset = builder.createString(goPrefab.id);
             const prefabRefOffset = builder.createString(goPrefab.prefabRef);
             GameObjectPrefab.startGameObjectPrefab(builder);
+            GameObjectPrefab.addId(builder, idOffset);
             GameObjectPrefab.addPrefabRef(builder, prefabRefOffset);
             const goPrefabOffset = GameObjectPrefab.endGameObjectPrefab(builder);
             return goPrefabOffset;
@@ -77,7 +83,7 @@ export function savePrefabAssetBinary(prefabAsset: ShotEngineType.PrefabAsset, f
         const componentTypeOffsets: Offset[] = [];
         for(const component of go.components){
             let componentOffset: number | undefined;
-            if(component.type === "Transfrom"){
+            if(component.type === "Transform"){
                 Vec3.startVec3(builder);
                 Vec3.addX(builder, component.pos.x);
                 Vec3.addY(builder, component.pos.y);
@@ -112,6 +118,81 @@ export function savePrefabAssetBinary(prefabAsset: ShotEngineType.PrefabAsset, f
                 componentOffset = Mesh.endMesh(builder);
                 componentTypeOffsets.push(Component.Mesh);
             }
+            else if(component.type === "Shading" && component.shaderType === "simple"){
+                const idOffset = builder.createString(component.id);
+                const cullingOffset = builder.createString(component.culling);
+                SimpleShading.startSimpleShading(builder);
+                SimpleShading.addId(builder, idOffset);
+                SimpleShading.addCulling(builder, cullingOffset);
+                SimpleShading.addTransparent(builder, component.transparent);
+                componentOffset = SimpleShading.endSimpleShading(builder);
+                componentTypeOffsets.push(Component.SimpleShading);
+            }
+            else if(component.type === "Shading" && component.shaderType === "phong"){
+                const idOffset = builder.createString(component.id);
+                const cullingOffset = builder.createString(component.culling);
+                let diffuseOffset: number;
+                let diffuseType: Diffuse;
+                if(component.diffuse.type === "image"){
+                    const imageRefOffset = builder.createString(component.diffuse.imageRef);
+                    ImageDiffuse.startImageDiffuse(builder);
+                    ImageDiffuse.addImageRef(builder, imageRefOffset);
+                    diffuseOffset = ImageDiffuse.endImageDiffuse(builder);
+                    diffuseType = Diffuse.ImageDiffuse;
+                }
+                else{
+                    Vec3.startVec3(builder);
+                    Vec3.addX(builder, component.diffuse.color.x);
+                    Vec3.addY(builder, component.diffuse.color.y);
+                    Vec3.addZ(builder, component.diffuse.color.z);
+                    const colorOffset = Vec3.endVec3(builder);
+                    ColorDiffuse.startColorDiffuse(builder);
+                    ColorDiffuse.addColor(builder, colorOffset);
+                    diffuseOffset = ColorDiffuse.endColorDiffuse(builder);
+                    diffuseType = Diffuse.ColorDiffuse;
+                }
+                Vec3.startVec3(builder);
+                Vec3.addX(builder, component.ambient.x);
+                Vec3.addY(builder, component.ambient.y);
+                Vec3.addZ(builder, component.ambient.z);
+                const ambientOffset = Vec3.endVec3(builder);
+                PhongShading.startPhongShading(builder);
+                PhongShading.addId(builder, idOffset);
+                PhongShading.addCulling(builder, cullingOffset);
+                PhongShading.addTransparent(builder, component.transparent);
+                PhongShading.addDiffuse(builder, diffuseOffset);
+                PhongShading.addDiffuseType(builder, diffuseType);
+                PhongShading.addAmbient(builder, ambientOffset);
+                PhongShading.addShininess(builder, component.shininess);
+                componentOffset = PhongShading.endPhongShading(builder);
+                componentTypeOffsets.push(Component.PhongShading);
+            }
+            else if(component.type === "Light" && component.lightType === "PointLight"){
+                const idOffset = builder.createString(component.id);
+                Vec3.startVec3(builder);
+                Vec3.addX(builder, component.color.x);
+                Vec3.addY(builder, component.color.y);
+                Vec3.addZ(builder, component.color.z);
+                const colorOffset = Vec3.endVec3(builder);
+                PointLight.startPointLight(builder);
+                PointLight.addId(builder, idOffset);
+                PointLight.addColor(builder, colorOffset);
+                componentOffset = PointLight.endPointLight(builder);
+                componentTypeOffsets.push(Component.PointLight);
+            }
+            else if(component.type === "Light" && component.lightType === "DirectionalLight"){
+                const idOffset = builder.createString(component.id);
+                Vec3.startVec3(builder);
+                Vec3.addX(builder, component.dir.x);
+                Vec3.addY(builder, component.dir.y);
+                Vec3.addZ(builder, component.dir.z);
+                const dirOffset = Vec3.endVec3(builder);
+                DirectionalLight.startDirectionalLight(builder);
+                DirectionalLight.addId(builder, idOffset);
+                DirectionalLight.addDir(builder, dirOffset);
+                componentOffset = DirectionalLight.endDirectionalLight(builder);
+                componentTypeOffsets.push(Component.DirectionalLight);
+            }
             if(componentOffset !== undefined){
                 componentOffsets.push(componentOffset);
             }
@@ -142,59 +223,155 @@ export function savePrefabAssetBinary(prefabAsset: ShotEngineType.PrefabAsset, f
     fs.writeFileSync(filePath, bytes);
 }
 
-function readImageAssetTest(){
-    const filePath = path.join(process.cwd(), ".assets", "d21150ca-3313-4a12-bc40-9216ea75b821");
+export function readImageAsset(filePath: string): ShotEngineType.ImageAsset{
     const bytes = new Uint8Array(fs.readFileSync(filePath));
     const byteBuffer = new ByteBuffer(bytes);
     const image = ImageAsset.getRootAsImageAsset(byteBuffer);
-    console.log(image.width(), image.height(), image.dataArray());
+    return {
+        width: image.width(),
+        height: image.height(),
+        data: image.dataArray() ?? new Uint8Array()
+    };
 }
-// readImageAssetTest();
-function readPrefabAssetTest(){
-    const filePath = path.join(process.cwd(), ".assets", "c2db5e8e-a5cc-4507-8059-d7eb57dc08c1");
+export function readMeshAsset(filePath: string){
+    const bytes = new Uint8Array(fs.readFileSync(filePath));
+    const byteBuffer = new ByteBuffer(bytes);
+    const mesh = MeshAsset.getRootAsMeshAsset(byteBuffer);
+
+    const asset: ShotEngineType.MeshAsset = {
+        primitives: []
+    }
+    for(let i = 0; i < mesh.primitivesLength(); i++){
+        const prim = mesh.primitives(i, new Primitive());
+        if(!prim) continue;
+        const attr = prim.attribute(new PrimitiveAttribute());
+        if(!attr) continue;
+        asset.primitives.push({
+            attribute: {
+                positions: attr.positionsArray() ?? new Float32Array(),
+                normals: attr.normalsArray() ?? new Float32Array(),
+                uvs:  attr.uvsArray() ?? new Float32Array(),
+            },
+            indices: prim.indicesArray() ?? new Uint32Array()
+        });
+    }
+    return asset;
+}
+export function readPrefabAsset(filePath: string){
     const bytes = new Uint8Array(fs.readFileSync(filePath));
     const byteBuffer = new ByteBuffer(bytes);
     const prefabAsset = PrefabAsset.getRootAsPrefabAsset(byteBuffer);
     const root = prefabAsset.root()!;
-    function recurPrint(gameObject: typeof root, space = 0){
-        let spaceStr = "";
-        for(let i = 0; i < space; i++) spaceStr += " ";
-        console.log(spaceStr, "name:", gameObject.name(), "id: ", gameObject.id());
-
-        console.log(spaceStr, "componentLength:", gameObject.componentsLength());
+    function recurPrint(gameObject: typeof root){
+        const gameObjectResult: ShotEngineType.GameObject = {
+            id: gameObject.id() ?? "",
+            name: gameObject.name() ?? "",
+            components: [],
+            childs: []
+        }
         for(let i = 0; i < gameObject.componentsLength(); i++){
             const componentType = gameObject.componentsType(i);
-            console.log(spaceStr, "componentType:", componentType);
             if(componentType === Component.Transform){
                 const transform = gameObject.components(i, new Transform()) as Transform;
                 const pos = transform.pos() as Vec3;
                 const rot = transform.rot() as Vec4;
                 const scale = transform.scale() as Vec3;
-                console.log(spaceStr, "pos:", pos.x(), pos.y(), pos.z());
-                console.log(spaceStr, "rot:", rot.x(), rot.y(), rot.z(), rot.w());
-                console.log(spaceStr, "scale:", scale.x(), scale.y(), scale.z());
+                gameObjectResult.components.push({
+                    type: "Transform",
+                    id: transform.id() ?? "",
+                    pos: { x: pos.x(), y: pos.y(), z: pos.z() },
+                    rot: { x: rot.x(), y: rot.y(), z: rot.z(), w: rot.w() },
+                    scale: { x: scale.x(), y: scale.y(), z: scale.z() }
+                });
             }
             if(componentType === Component.Mesh){
                 const mesh = gameObject.components(i, new Mesh()) as Mesh;
-                const meshRef = mesh.meshRef()!;
-                console.log(spaceStr, "meshRef:", meshRef);
+                gameObjectResult.components.push({
+                    type: "Mesh",
+                    id: mesh.id() ?? "",
+                    meshRef: mesh.meshRef() ?? ""
+                });
+            }
+            if(componentType === Component.SimpleShading){
+                const simpleShading = gameObject.components(i, new SimpleShading()) as SimpleShading;
+                gameObjectResult.components.push({
+                    type: "Shading",
+                    shaderType: "simple",
+                    id: simpleShading.id() ?? "",
+                    culling: getCulling(simpleShading.culling()),
+                    transparent: simpleShading.transparent()
+                });
+            }
+            if(componentType === Component.PhongShading){
+                const phongShading = gameObject.components(i, new PhongShading()) as PhongShading;
+                const diffuseType = phongShading.diffuseType();
+                let diffuse: ImageDiffuse | ColorDiffuse;
+                let diffuseOut: ShotEngineType.PhongShading["diffuse"];
+                if(diffuseType === Diffuse.ImageDiffuse){
+                    diffuse = phongShading.diffuse(new ImageDiffuse()) as ImageDiffuse;
+                    diffuseOut = {
+                        type: "image",
+                        imageRef: diffuse.imageRef() ?? ""
+                    }
+                }
+                else{
+                    diffuse = phongShading.diffuse(new ColorDiffuse()) as ColorDiffuse;
+                    diffuseOut = {
+                        type: "color",
+                        color: getVec3(diffuse.color())
+                    }
+                }
+                gameObjectResult.components.push({
+                    type: "Shading",
+                    shaderType: "phong",
+                    id: phongShading.id() ?? "",
+                    culling: getCulling(phongShading.culling()),
+                    transparent: phongShading.transparent(),
+                    diffuse: diffuseOut,
+                    ambient: getVec3(phongShading.ambient()),
+                    shininess: phongShading.shininess(),
+                });
+            }
+            if(componentType === Component.PointLight){
+                const pointLight = gameObject.components(i, new PointLight()) as PointLight;
+                gameObjectResult.components.push({
+                    type: "Light",
+                    lightType: "PointLight",
+                    id: pointLight.id() ?? "",
+                    color: getVec3(pointLight.color())
+                });
+            }
+            if(componentType === Component.DirectionalLight){
+                const directionalLight = gameObject.components(i, new DirectionalLight()) as DirectionalLight;
+                gameObjectResult.components.push({
+                    type: "Light",
+                    lightType: "DirectionalLight",
+                    id: directionalLight.id() ?? "",
+                    dir: getVec3(directionalLight.dir())
+                });
             }
         }
 
-        console.log(spaceStr, "childLength:", gameObject.childsLength());
         for(let i = 0; i < gameObject.childsLength(); i++){
             const childType = gameObject.childsType(i);
-            console.log(spaceStr, "childType:", childType);
             if(childType === SceneNode.GameObject){
                 const go = gameObject.childs(i, new GameObject()) as GameObject;
-                recurPrint(go, space + 1);
+                gameObjectResult.childs.push(recurPrint(go));
             }
             if(childType === SceneNode.GameObjectPrefab){
                 const goPrefab = gameObject.childs(i, new GameObjectPrefab()) as GameObjectPrefab;
-                console.log(spaceStr, "prefabRef:", goPrefab.prefabRef());
+                gameObjectResult.childs.push({
+                    id: goPrefab.id() ?? "",
+                    prefabRef: goPrefab.prefabRef() ?? ""
+                });
             }
         }
+
+        return gameObjectResult;
     }
-    recurPrint(root);
+    
+    const asset: ShotEngineType.PrefabAsset = {
+        root: recurPrint(root)
+    }
+    return asset;
 }
-// readPrefabAssetTest();

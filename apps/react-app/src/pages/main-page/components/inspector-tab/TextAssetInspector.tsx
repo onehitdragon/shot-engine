@@ -1,8 +1,8 @@
-import type { TextInspector } from "../../../../global-state/slices/inspector-slice";
+import type { TextAssetInspector } from "../../../../global-state/slices/inspector-slice";
 import { List } from "react-window";
 import { type RowComponentProps } from "react-window";
 
-export function TextInspector(props: { textInspector: TextInspector }){
+export function TextAssetInspector(props: { textInspector: TextAssetInspector }){
     const { content } = props.textInspector;
     const lines = content.split("\n");
     return (

@@ -50,6 +50,16 @@ contextBridge.exposeInMainWorld("api", {
         config: (config: any) => ipcRenderer.invoke("assetManager:config", config),
         rescan: () => ipcRenderer.invoke("assetManager:rescan"),
         close: () => ipcRenderer.invoke("assetManager:close"),
+        getAssetInfos: (filePath: string) => ipcRenderer.invoke("assetManager:getAssetInfos", filePath),
+        getAssetFromUuid: (uuid: string, type: any) => ipcRenderer.invoke("assetManager:getAssetFromUuid", uuid, type),
+        updateAssetPropertyByUuid: (uuid: string, property: string) => 
+            ipcRenderer.invoke("assetManager:updateAssetPropertyByUuid", uuid, property),
+        getAssetInfoFromUuid: (uuid: string) => ipcRenderer.invoke("assetManager:getAssetInfoFromUuid", uuid),
+        getAssetInfosFromType: (type: any) => ipcRenderer.invoke("assetManager:getAssetInfosFromType", type),
+        savePrefabAssetBinary: (prefabAsset: any, filePath: string) => 
+            ipcRenderer.invoke("assetManager:savePrefabAssetBinary", prefabAsset, filePath),
+        getFilePathFromAssetId: (uuid: string) => 
+            ipcRenderer.invoke("assetManager:getFilePathFromAssetId", uuid),
     },
     resource: {
         saveMesh: (path: string, mesh: Resource.Mesh) => ipcRenderer.invoke("resource:saveMesh", path, mesh),

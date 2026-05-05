@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
-import type { Statement, Transaction } from "better-sqlite3";
-import path from "node:path";
+import type { RunResult, Statement, Transaction } from "better-sqlite3";
 import fs from "fs-extra";
+import { AssetType } from "@shot-engine/types";
 
 export type FileRow = {
     uuid: string,
@@ -13,8 +13,9 @@ export type AssetRow = {
     uuid: string,
     fileId: string,
     hash: string,
-    type: "other" | "image" | "mesh" | "prefab",
+    type: AssetType,
     name: string,
+    modifiable: number,
     property: string
 }
 
@@ -36,6 +37,7 @@ export function createDBIfNotExist(dbFilePath: string){
             hash TEXT,
             type TEXT,
             name TEXT,
+            modifiable NUMBER,
             property TEXT,
             FOREIGN KEY (fileId) REFERENCES files(uuid) ON DELETE CASCADE
         );
@@ -43,12 +45,16 @@ export function createDBIfNotExist(dbFilePath: string){
 
     const filesQuery: {
         gets: Statement,
+        getByPath: Statement<[string], FileRow>,
+        getById: Statement<[string], FileRow>,
         updatePath: Statement,
         updateHash: Statement,
         insert: Statement,
         delete: Statement
     } = {
         gets: db.prepare("SELECT * FROM files"),
+        getById: db.prepare("SELECT * FROM files WHERE uuid = ?"),
+        getByPath: db.prepare("SELECT * FROM files WHERE path = ?"), 
         updatePath: db.prepare(`
             UPDATE files
             SET path = ?
@@ -70,20 +76,27 @@ export function createDBIfNotExist(dbFilePath: string){
 
     const assetsQuery: {
         gets: Statement,
+        getByFileId: Statement<[string], AssetRow>,
+        getById: Statement<[string], AssetRow>,
+        getByType: Statement<[string], AssetRow>,
         delete: Statement,
         deletesTransaction: Transaction,
-        insert: Statement,
+        insert: Statement<[string, string, string, string, string, number, string], RunResult>,
         updateHash: Statement,
-        updateName: Statement
+        updateName: Statement,
+        updateProperty: Statement<[string, string], RunResult>
     } = {
         gets: db.prepare("SELECT * FROM assets"),
+        getByFileId: db.prepare("SELECT * FROM assets WHERE fileId = ?"),
+        getById: db.prepare("SELECT * FROM assets WHERE uuid = ?"),
+        getByType: db.prepare("SELECT * FROM assets WHERE type = ?"),
         delete: db.prepare("DELETE FROM assets WHERE uuid = ?"),
         deletesTransaction: db.transaction((ids: string[]) => {
             for(const id of ids) assetsQuery.delete.run(id);
         }),
         insert: db.prepare(`
-            INSERT INTO assets (uuid, fileId, hash, type, name, property)
-            VALUES (?, ?, ?, ?, ?, ?);    
+            INSERT INTO assets (uuid, fileId, hash, type, name, modifiable, property)
+            VALUES (?, ?, ?, ?, ?, ?, ?);    
         `),
         updateHash: db.prepare(`
             UPDATE assets
@@ -93,6 +106,11 @@ export function createDBIfNotExist(dbFilePath: string){
         updateName: db.prepare(`
             UPDATE assets
             SET name = ?
+            WHERE uuid = ?
+        `),
+        updateProperty: db.prepare(`
+            UPDATE assets
+            SET property = ?
             WHERE uuid = ?
         `)
     }

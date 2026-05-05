@@ -1,17 +1,17 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type { Component } from "@shot-engine/types";
+import type { NodeState } from "./go-tree-slice";
 
-export type SceneNodeContextMenu = {
-    type: "scene-node",
-    parent?: string,
-    sceneNode: SceneFormat.SceneNode
+export type NodeContextMenu = {
+    type: "node",
+    node: NodeState
 }
 export type ComponentContextMenu = {
     type: "component",
-    sceneNode: SceneFormat.SceneNode,
-    component: Components.Component
+    component: Component
 }
 type State = {
-    contextMenu: null | SceneNodeContextMenu | ComponentContextMenu,
+    contextMenu: null | NodeContextMenu | ComponentContextMenu,
     mousePos: { x: number, y: number }
 };
 const initialState: State = {

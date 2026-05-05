@@ -1,67 +1,65 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
-import type { SceneNodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { createCubeSceneNode, createEmptySceneNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
+import type { NodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
+import { createCubeNode, createEmptyNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 import { createDirectionalLightComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
-import { sceneNodeAddedThunk, sceneNodeRemovedThunk, uniqueComponentAddedThunk } from "../../../../global-state/thunks/scene-manager-thunks";
+import { goAddedThunk, goRemovedThunk } from "../../../../global-state/thunks/go-tree-thunks";
+import { componentAddedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
 
 export function SceneNodeContextMenu(
-    props: { contextMenu: SceneNodeContextMenu, x: number, y: number }
+    props: { contextMenu: NodeContextMenu, x: number, y: number }
 ){
     const { contextMenu, x, y } = props;
-    const { sceneNode } = contextMenu;
+    const { node } = contextMenu;
+    const isPrefab = "prefabRef" in node;
     const dispatch = useAppDispatch();
     const createEmptyChild = () => {
-        const [node, components] = createEmptySceneNode(sceneNode.id);
-        dispatch(sceneNodeAddedThunk({
-            nodeId: node.id,
-            parentId: sceneNode.id,
-            nodes: [node],
-            components
+        const newNode = createEmptyNode();
+        newNode.parent = node.id;
+        dispatch(goAddedThunk({
+            node: newNode
         }));
-    }
-    const remmove = () => {
-        dispatch(sceneNodeRemovedThunk({ id: sceneNode.id }));
     }
     const createCubeChild = () => {
-        const [node, components] = createCubeSceneNode(sceneNode.id);
-        dispatch(sceneNodeAddedThunk({
-            nodeId: node.id,
-            parentId: sceneNode.id,
-            nodes: [node],
-            components
-        }));
-    }
-    const addPointLightComponent = () => {
-        dispatch(uniqueComponentAddedThunk({
-            nodeId: sceneNode.id,
-            component: createPointLightComponent()
-        }));
-    }
-    const addDirectionalLightComponent = () => {
-        dispatch(uniqueComponentAddedThunk({
-            nodeId: sceneNode.id,
-            component: createDirectionalLightComponent()
+        const newNode = createCubeNode();
+        newNode.parent = node.id;
+        dispatch(goAddedThunk({
+            node: newNode
         }));
     }
     const addSimpleShadingComponent = () => {
-        dispatch(uniqueComponentAddedThunk({
-            nodeId: sceneNode.id,
-            component: createSimpleShadingComponent()
+        dispatch(componentAddedThunk({
+            component: createSimpleShadingComponent(),
+            unique: true,
         }));
     }
     const addPhongShadingComponent = () => {
-        dispatch(uniqueComponentAddedThunk({
-            nodeId: sceneNode.id,
-            component: createPhongShadingComponent()
+        dispatch(componentAddedThunk({
+            component: createPhongShadingComponent(),
+            unique: true,
         }));
+    }
+    const addPointLightComponent = () => {
+        dispatch(componentAddedThunk({
+            component: createPointLightComponent(),
+            unique: true,
+        }));
+    }
+    const addDirectionalLightComponent = () => {
+        dispatch(componentAddedThunk({
+            component: createDirectionalLightComponent(),
+            unique: true,
+        }));
+    }
+    const remmove = () => {
+        dispatch(goRemovedThunk({ node }));
     }
 
     return (
         <div style={{ left: x, top: y }} className="absolute left-1/2 top-1/2">
-            <ul className='flex flex-col p-1 rounded-sm bg-gradient-to-b bg-gray-700
+            <ul className='flex flex-col p-1 rounded-sm bg-linear-to-b bg-gray-700
                 border border-slate-500'>
                 <span className="select-none text-white text-sm my-1 text-center font-bold">
-                    {sceneNode.name}
+                    {!isPrefab ? node.name : "Prefab"}
                 </span>
                 <li className='text-xs text-white select-none cursor-pointer transition
                     hover:bg-blue-500 px-2 py-1 rounded-sm'

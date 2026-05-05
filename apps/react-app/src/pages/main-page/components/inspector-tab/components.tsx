@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type JSX } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 
@@ -30,21 +30,23 @@ export function Selection<T extends number | string>(
     props: {
         label: string,
         value: T,
-        options: { value: T, label: string }[],
+        options: { label: string, value: T }[],
         onChange: (value: T) => void
     }
 ){
     const { label, value, options, onChange } = props;
+    const safeValue = options.some(e => e.value === value) ? value : "";
     return (
         <div className="flex items-center my-0.5">
             <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
             <div className="flex items-center w-full gap-1">
                 <select className="cursor-pointer outline-none text-sm border"
-                    value={value}
+                    value={safeValue}
                     onChange={(e) => {
                         onChange(e.target.value as T);
                     }}
                 >
+                    <option value="" disabled>Select</option>
                     {
                         options.map(opt => 
                             <option key={opt.value} value={opt.value}>
@@ -151,6 +153,33 @@ export function Image(props: { path: string }){
                 src &&
                 <img className="size-36" src={src}/>
             }
+        </div>
+    );
+}
+export function RawImage(props: { width: number, height: number, data: Uint8Array }){
+    const { width, height, data } = props;
+    const ref = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        const canvas = ref.current;
+        if(!canvas) return;
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if(!ctx) return;
+        const imageData = new ImageData(
+            new Uint8ClampedArray(data),
+            width,
+            height,
+        );
+        ctx.putImageData(imageData, 0, 0);
+
+    }, [width, height, data])
+
+    return (
+        <div className="flex justify-center">
+            <canvas className="w-36" ref={ref}/>
         </div>
     );
 }

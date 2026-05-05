@@ -9,6 +9,7 @@ union SceneNode{
 }
 
 table GameObjectPrefab{
+    id: string;
     prefab_ref: string;
 }
 
