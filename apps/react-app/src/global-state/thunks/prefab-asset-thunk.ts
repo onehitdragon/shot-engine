@@ -106,8 +106,8 @@ export function prefabAssetListener(startListening: AppStartListening){
             try{
                 const prefabAssetInfo = getState().prefabAsset.assetInfo;
                 if(!prefabAssetInfo) return;
-                if(!prefabAssetInfo.allowModify) throw "cant modify";
                 if(getState().goTree.assetInfo?.uuid !== prefabAssetInfo.uuid) return;
+                if(!prefabAssetInfo.allowModify) throw "cant modify";
                 const record = selectNodeRecord(getState());
                 const sceneNodes = getState().goTree.rootIds.map(id => contructGameObject(id, record));
                 if(sceneNodes.length !== 1 || "prefabRef" in sceneNodes[0]){

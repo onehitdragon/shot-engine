@@ -1,26 +1,28 @@
 import { useEffect, useRef, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
+import { useAppSelector } from "../../../../global-state/hooks";
 import { mat4, quat, vec3, mat3 } from "gl-matrix";
 import { sphereCoordinateToCartesian } from "../../helpers/math-helpers/sphere-coordinate-helpers";
 import { clamp } from "@math.gl/core";
-import { addAppListener } from "../../../../global-state/listenerMiddleware";
 import { getSceneCanvas, getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
-import { selectComponentRecord, selectSceneNodeRecord, selectSceneNodes } from "../../../../global-state/slices/scene-manager-slice";
 import { WebglRenderer } from "../../helpers/resource-manager-helper/WebglRenderer";
 import { OrbitCameraHelper } from "../../helpers/resource-manager-helper/OrbitCameraHelper";
-import { selectResourceRecord } from "../../../../global-state/slices/resource-manager-slice";
+import { selectNodeRecord, selectNodes, type NodeState } from "../../../../global-state/slices/go-tree-slice";
+import type { Component, GameObject, PrefabAsset, SceneNode, Transform } from "@shot-engine/types";
+import { AssetCache } from "../../helpers/asset-cache/asset-cache";
+import { WebglMeshCache } from "../../helpers/asset-cache/webgl-mesh-cache";
+import { WebglTextureCache } from "../../helpers/asset-cache/webgl-texture-cache";
+import { LightInfo } from "../../helpers/asset-cache/LightInfo";
 
 export function SceneRenderer(){
-    const scene = useAppSelector(state => state.sceneManager.scene);
-    const sceneNodeRecord = useAppSelector(state => selectSceneNodeRecord(state));
-    const componentRecord = useAppSelector(state => selectComponentRecord(state));
-    const resourceRecord = useAppSelector(state => selectResourceRecord(state));
+    const nodes = useAppSelector(state => selectNodes(state));
+    const rootIds = useAppSelector(state => state.goTree.rootIds);
+    const nodeRecord = useAppSelector(state => selectNodeRecord(state));
+
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [camera, setCamera] = useState<SceneFormat.SceneOrbitCamera | null>(null);
     const [webglRenderer, setWebglRenderer] = useState<WebglRenderer | null>(null);
     const [clickedOn, setClickedOn] = useState(false);
     const [altOn, setAltOn] = useState(false);
-    const dispatch = useAppDispatch();
 
     useEffect(() => {
         const webgl2 = getSceneWebglContext();
@@ -33,7 +35,7 @@ export function SceneRenderer(){
             const dpr = window.devicePixelRatio || 1;
             const { width, height } = entries[0].contentRect;
             canvas.width = Math.round(width * dpr);
-            canvas.height = Math.round(height * dpr);;
+            canvas.height = Math.round(height * dpr);
             webgl2.viewport(0, 0, canvas.width, canvas.height);
             camera.aspect = width / height;
             setCamera({...camera});
@@ -43,39 +45,32 @@ export function SceneRenderer(){
             observer.disconnect();
         }
     }, []);
+
     useEffect(() => {
-        if(!webglRenderer) return;
-        const unsub1 = dispatch(addAppListener({
-            predicate: (_, curState, originState) => {
-                return curState.sceneManager.nodes.entities != originState.sceneManager.nodes.entities ||
-                curState.sceneManager.components.entities != curState.sceneManager.components.entities
-            },
-            effect: (_, { getState }) => {
-                const nodes = selectSceneNodes(getState());
-                const componentRecord = selectComponentRecord(getState());
-                webglRenderer.lightSceneNodeManager.update(nodes, componentRecord); // todo
-            }
-        }));
-        return () => {
-            unsub1();
-        }
-    }, [webglRenderer]);
-    useEffect(() => {
-        if(!webglRenderer) return;
-        webglRenderer.clear();
-        if(!scene) return;
-        if(!camera) return;
-        const handler = () => {
+        let cancelled = false;
+        const handler = async () => {
+            const { componentArrs } = await prepareAsset(nodes);
+            if(!webglRenderer || !camera || cancelled) return;
+
+            prepareLight(componentArrs);
+
+            webglRenderer.clear();
             const renderer = new SceneNodeRenderer(camera, webglRenderer);
-            renderer.renderSceneNodes(scene.nodes, sceneNodeRecord, componentRecord, null);
+            renderer.renderNodes(rootIds, nodeRecord, null);
+            
+            AssetCache.getInstance().resetCacheState();
+            WebglMeshCache.getInstance().resetCacheState();
+            WebglTextureCache.getInstance().resetCacheState();
+            LightInfo.getInstance().reset();
+
+            webglRenderer.renderGrid(OrbitCameraHelper.createVPMatrix(camera));
+            webglRenderer.debug();
         }
         handler();
-        webglRenderer.renderGrid(OrbitCameraHelper.createVPMatrix(camera));
-        webglRenderer.debug();
         return () => {
-            
+            cancelled = true;
         }
-    }, [scene, sceneNodeRecord, componentRecord, resourceRecord, webglRenderer, camera]);
+    }, [nodes, rootIds, nodeRecord, webglRenderer, camera]);
 
     return (
         <div className="flex-1 flex">
@@ -196,31 +191,48 @@ class SceneNodeRenderer{
         this._clipMat4 = this.createClipMatrix(camera);
         this._webglRenderer = webglRenderer;
     }
-    renderSceneNodes(
-        nodes: string[],
-        nodeRecord: Record<string, SceneFormat.SceneNode>,
-        componentRecord: Record<string, Components.Component>,
+    renderNodes(
+        nodeInputs: string[] | SceneNode[],
+        nodeRecord: Record<string, NodeState>,
         parentDataIn: ParentData | null
     ){
-        for(const nodeId of nodes){
-            const node = nodeRecord[nodeId];
-            const components = node.components.map(componentId => componentRecord[componentId]);
-            const parentData = this.renderNode(components, parentDataIn);
-            this.renderSceneNodes(node.childs, nodeRecord, componentRecord, parentData);
+        for(const nodeInput of nodeInputs){
+            let node: NodeState | SceneNode;
+            if(typeof nodeInput === "string"){
+                node = nodeRecord[nodeInput];
+                if(!node) return;
+            }
+            else{
+                node = nodeInput;
+            }
+            if("childs" in node){
+                const parentData = this.renderGo(node, parentDataIn);
+                this.renderNodes(node.childs, nodeRecord, parentData);
+            }
+            else{
+                const assetCache = AssetCache.getInstance().getAssetCache(node.prefabRef);
+                if(!assetCache || !assetCache.asset){
+                    console.warn("cant find prefab asset with id", node.prefabRef);
+                    return;
+                }
+                const prefabAsset = assetCache.asset as PrefabAsset;
+                const parentData = this.renderGo(prefabAsset.root, parentDataIn);
+                this.renderNodes(prefabAsset.root.childs, nodeRecord, parentData);
+            }
         }
     }
-    renderNode(
-        components: Components.Component[],
+    renderGo(
+        go: Omit<GameObject, "childs">,
         parentDataIn: ParentData | null
     ): ParentData | null
     {
-        const transformComponent = this.findComponentByType(components, "Transform");
+        const transformComponent = this.findComponentByType(go.components, "Transform");
         if(!transformComponent) throw "dont find Transform component";
         const modelMat4 = this.createModelMatrix(transformComponent);
         if(parentDataIn) mat4.multiply(modelMat4, parentDataIn.modelMat4, modelMat4);
-        const meshComponent = this.findComponentByType(components, "Mesh");
+        const meshComponent = this.findComponentByType(go.components, "Mesh");
         if(!meshComponent) return { modelMat4 }
-        const shadingComponent = this.findComponentByType(components, "Shading");
+        const shadingComponent = this.findComponentByType(go.components, "Shading");
         if(!shadingComponent) return { modelMat4 }
 
         const mvpMat4 = this.createMVPMatrix(modelMat4);
@@ -236,18 +248,19 @@ class SceneNodeRenderer{
 
         return { modelMat4 };
     }
-    findComponentByType<T extends Components.Component["type"]>(
-        components: Components.Component[],
+    findComponentByType<T extends Component["type"]>(
+        components: Component[],
         type: T
     ){
-        return components.find(c => c.type == type) as Extract<Components.Component, { type: T }> | undefined;
+        return components.find(c => c.type == type) as Extract<Component, { type: T }> | undefined;
     }
-    createModelMatrix(transformComponent: Components.Transform){
-        const { position, rotation, scale } = transformComponent;
+    createModelMatrix(transformComponent: Transform){
+        const { pos, rot, scale } = transformComponent;
         const modelMat4 = mat4.create();
-        const q = quat.create();
-        quat.fromEuler(q, rotation[0], rotation[1], rotation[2], "yxz");
-        mat4.fromRotationTranslationScale(modelMat4, q, position, scale);
+        const q = quat.fromValues(rot.x, rot.y, rot.z, rot.w);
+        mat4.fromRotationTranslationScale(
+            modelMat4, q, [pos.x, pos.y, pos.z], [scale.x, scale.y, scale.z]
+        );
         return modelMat4;
     }
     createViewMatrix(camera: SceneFormat.SceneOrbitCamera){
@@ -275,5 +288,72 @@ class SceneNodeRenderer{
         const normalMat3 = mat3.create();
         mat3.normalFromMat4(normalMat3, modelMat4);
         return normalMat3;
+    }
+}
+async function prepareAsset(nodes: NodeState[]){
+    const componentArrs: Component[][] = [];
+    const gameObjects: GameObject[] = [];
+    async function getPrefabRoot(prefabRef: string) {
+        const assetCache = await AssetCache.getInstance().createAssetCache(prefabRef, "prefab");
+        if(!assetCache || !assetCache.asset){
+            console.warn("cant find prefab asset with id", prefabRef);
+            return;
+        }
+        const prefabAsset = assetCache.asset as PrefabAsset;
+        gameObjects.push(prefabAsset.root);
+    }
+    for(const node of nodes){
+        if("components" in node){
+            componentArrs.push(node.components);
+        }
+        else{
+            await getPrefabRoot(node.prefabRef);
+        }
+    }
+    for(const go of gameObjects){
+        componentArrs.push(go.components);
+        for(const child of go.childs){
+            if("components" in child) gameObjects.push(child);
+            else{
+                await getPrefabRoot(child.prefabRef);
+            }
+        }
+    }
+    for(const componentArr of componentArrs){
+        for(const component of componentArr){
+            if(component.type === "Mesh"){
+                await WebglMeshCache.getInstance().createWebglMeshes(component.meshRef);
+            }
+            if(
+                component.type === "Shading" && 
+                component.shaderType === "phong" &&
+                component.diffuse.type === "image"
+            ){
+                await AssetCache.getInstance().createAssetCache(component.diffuse.imageRef, "image");
+                await WebglTextureCache.getInstance().createWebglTexture(component.diffuse.imageRef);
+            }
+        }
+    }
+
+    return {
+        componentArrs
+    };
+}
+function prepareLight(componentArrs: Component[][]){
+    for(const componentArr of componentArrs){
+        let transform: Transform | undefined;
+        for(const component of componentArr){
+            if(component.type === "Transform"){
+                transform = component;
+            }
+            if(component.type === "Light"){
+                if(!transform){
+                    console.warn("light component but dont have transform component");
+                }
+                else{
+                    LightInfo.getInstance().addLight(component, transform);
+                }
+            }
+        }
     }
 }

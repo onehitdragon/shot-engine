@@ -8,11 +8,11 @@ export type ImageAsset = {
 export type MeshAsset = {
     primitives: {
         attribute: {
-            positions: Float32Array,
-            normals: Float32Array,
-            uvs: Float32Array
+            interleaveArray: Float32Array,
         },
-        indices: Uint32Array
+        indices: Uint8Array | Uint16Array | Uint32Array,
+        indexType: number,
+        drawMode: number,
     }[]
 }
 export type PrefabAsset = {

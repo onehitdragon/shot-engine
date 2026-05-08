@@ -9,14 +9,21 @@ table ImageAsset{
 }
 
 table PrimitiveAttribute{
-    positions: [float];
-    normals: [float];
-    uvs: [float];
+    interleaveArray: [float];
+}
+
+enum IndexType : uint {
+    NONE = 0,
+    UNSIGNED_BYTE = 5121,
+    UNSIGNED_SHORT = 5123,
+    UNSIGNED_INT = 5125
 }
 
 table Primitive{
     attribute: PrimitiveAttribute;
     indices: [uint];
+    index_type: IndexType;
+    drawMode: int;
 }
 
 table MeshAsset{

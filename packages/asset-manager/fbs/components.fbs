@@ -2,11 +2,16 @@ include "common.fbs";
 
 namespace FBSEngine;
 
+table TransformEditor{
+    euler: Vec3;
+}
+
 table Transform{
     id: string;
     pos: Vec3;
     rot: Vec4;
     scale: Vec3;
+    editor: TransformEditor;
 }
 
 table Mesh{

@@ -5,7 +5,8 @@ import {
     ImageAsset, PrimitiveAttribute, Primitive, MeshAsset, PrefabAsset, 
     SceneNode, GameObject, GameObjectPrefab,
     SceneAsset,
-    Scene
+    Scene,
+    IndexType
 } from "../fbs-gen/fbsengine";
 import { buildSceneNode, readGameObject } from "./flatbfUtil";
 
@@ -26,19 +27,23 @@ export function saveMeshAssetBinary(meshAsset: ShotEngineType.MeshAsset, filePat
     const builder = new Builder(1024);
     const primitiveOffsets: Offset[] = [];
     for(const prim of meshAsset.primitives){
-        const positionsOffset = PrimitiveAttribute.createPositionsVector(builder, prim.attribute.positions);
-        const normalsOffset = PrimitiveAttribute.createNormalsVector(builder, prim.attribute.normals);
-        const uvsOffset = PrimitiveAttribute.createNormalsVector(builder, prim.attribute.uvs);
+        const interleaveArrayOffset = PrimitiveAttribute.createInterleaveArrayVector(builder, prim.attribute.interleaveArray);
         PrimitiveAttribute.startPrimitiveAttribute(builder);
-        PrimitiveAttribute.addPositions(builder, positionsOffset);
-        PrimitiveAttribute.addNormals(builder, normalsOffset);
-        PrimitiveAttribute.addUvs(builder, uvsOffset);
+        PrimitiveAttribute.addInterleaveArray(builder, interleaveArrayOffset);
         const attrOffset = PrimitiveAttribute.endPrimitiveAttribute(builder);
 
-        const indicesOffset = Primitive.createIndicesVector(builder, prim.indices);
+        const indicesOffset = builder.createByteVector(
+            new Uint8Array(
+                prim.indices.buffer,
+                prim.indices.byteOffset,
+                prim.indices.byteLength
+            )
+        );
         Primitive.startPrimitive(builder);
         Primitive.addAttribute(builder, attrOffset);
         Primitive.addIndices(builder, indicesOffset);
+        Primitive.addIndexType(builder, prim.indexType);
+        Primitive.addDrawMode(builder, prim.drawMode);
         primitiveOffsets.push(Primitive.endPrimitive(builder));
     }
     const primitivesOffset = MeshAsset.createPrimitivesVector(builder, primitiveOffsets);
@@ -113,13 +118,42 @@ export function readMeshAsset(filePath: string){
         if(!prim) continue;
         const attr = prim.attribute(new PrimitiveAttribute());
         if(!attr) continue;
+        const rawIndices = prim.indicesArray();
+        if(!rawIndices) continue;
+        let indexType = prim.indexType();
+        let indices: Uint8Array | Uint16Array | Uint32Array;
+        if(indexType === IndexType.UNSIGNED_BYTE){
+            indices = new Uint8Array(
+                rawIndices.buffer,
+                rawIndices.byteOffset,
+                rawIndices.byteLength
+            );
+        }
+        else if(indexType === IndexType.UNSIGNED_SHORT){
+            indices = new Uint16Array(
+                rawIndices.buffer,
+                rawIndices.byteOffset,
+                rawIndices.byteLength / 2
+            );
+        }
+        else if(indexType === IndexType.UNSIGNED_INT){
+            indices = new Uint32Array(
+                rawIndices.buffer,
+                rawIndices.byteOffset,
+                rawIndices.byteLength / 4
+            );
+        }
+        else{
+            indices = new Uint32Array();
+            indexType = IndexType.UNSIGNED_INT;
+        }
         asset.primitives.push({
             attribute: {
-                positions: attr.positionsArray() ?? new Float32Array(),
-                normals: attr.normalsArray() ?? new Float32Array(),
-                uvs:  attr.uvsArray() ?? new Float32Array(),
+                interleaveArray: attr.interleaveArrayArray() ?? new Float32Array()
             },
-            indices: prim.indicesArray() ?? new Uint32Array()
+            indices,
+            indexType,
+            drawMode: prim.drawMode(),
         });
     }
     return asset;

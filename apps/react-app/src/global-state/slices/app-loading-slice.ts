@@ -1,6 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { entryDeletedThunk, fileImportedThunk, folderCreatedThunk, projectClosedThunk, projectOpenedThunk, projectRescanThunk } from "../thunks/folder-manager-thunks";
-import { assetUpdatedThunk } from "../thunks/asset-manager-thunk";
 
 type State = {
     loading: boolean,
@@ -84,17 +83,6 @@ const slice = createSlice({
         );
         builder.addAsyncThunk(
             entryDeletedThunk,
-            {
-                pending: (state) => {
-                    state.loading = true;
-                },
-                settled: (state) => {
-                    state.loading = false;
-                }
-            }
-        );
-        builder.addAsyncThunk(
-            assetUpdatedThunk,
             {
                 pending: (state) => {
                     state.loading = true;

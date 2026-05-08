@@ -1,3 +1,4 @@
+import type { AssetProperty, ImageAsset } from "@shot-engine/types";
 import type { Assets } from "../../../../engine-zod";
 
 export class WebglTexture{
@@ -6,16 +7,16 @@ export class WebglTexture{
     get webglTexture(){
         return this._webglTexture;
     }
-    constructor(gl: WebGL2RenderingContext, imageResource: Resource.ImageBin, image: Assets.Image){
+    constructor(gl: WebGL2RenderingContext, imageAsset: ImageAsset, property: AssetProperty.Image){
         this._gl = gl;
-        const { width, height, data } = imageResource;
-        const { imageType, wrapMode, filterMode, generateMipmaps } = image;
+        const { width, height, data } = imageAsset;
+        const { imageType, wrapMode, filterMode, generateMipmaps } = property;
         const webglTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, webglTexture);
         this.setWrapMode(wrapMode);
         this.setFilterMode(generateMipmaps, filterMode);
         if(imageType === "Texture"){
-            const { sRGB } = image;
+            const { sRGB } = property;
             const internalformat = sRGB ? gl.SRGB8_ALPHA8 : gl.RGBA8;
             gl.texImage2D(gl.TEXTURE_2D, 0, internalformat, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
             if(generateMipmaps) gl.generateMipmap(gl.TEXTURE_2D);

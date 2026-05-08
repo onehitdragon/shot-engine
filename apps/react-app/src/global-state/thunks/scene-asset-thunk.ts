@@ -53,8 +53,8 @@ export function sceneAssetListener(startListening: AppStartListening){
                 const assetInfo = getState().sceneAsset.assetInfo;
                 const sceneAsset = getState().sceneAsset.sceneAsset;
                 if(!assetInfo || !sceneAsset) return;
-                if(!assetInfo.allowModify) throw "cant modify";
                 if(getState().goTree.assetInfo?.uuid !== assetInfo.uuid) return;
+                if(!assetInfo.allowModify) throw "cant modify";
                 const record = selectNodeRecord(getState());
                 const sceneNodes = getState().goTree.rootIds.map(id => contructGameObject(id, record));
                 const sceneAssetOut: SceneAsset = {

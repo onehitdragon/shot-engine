@@ -3,14 +3,15 @@ import { WebglMeshVBOs } from "./WebglMeshVBOs";
 import { WebglSimpleShader } from "./WebglSimpleShader";
 import { WebglHelper } from "./WebglHelper";
 import { WebglPhongShader } from "./WebglPhongShader";
+import type { MeshAsset, PhongShading } from "@shot-engine/types";
 
 export class WebglMesh{
     private _gl: WebGL2RenderingContext;
     private _meshVBOs: WebglMeshVBOs;
     private _meshVAOMap: Map<Components.Shading["shaderType"], WebGLVertexArrayObject>;
-    constructor(gl: WebGL2RenderingContext, meshResource: Resource.MeshBin){
+    constructor(gl: WebGL2RenderingContext, primitive: MeshAsset["primitives"][0]){
         this._gl = gl;
-        this._meshVBOs = new WebglMeshVBOs(gl, meshResource);
+        this._meshVBOs = new WebglMeshVBOs(gl, primitive);
         this._meshVAOMap = new Map();
         this._meshVAOMap.set(
             "simple",
@@ -31,7 +32,7 @@ export class WebglMesh{
         modelMat4: mat4,
         normalMat3: mat3,
         camPos: vec3,
-        shadingComponent: Components.PhongShading
+        shadingComponent: PhongShading
     ){
         const gl = this._gl;
         const vao = this._meshVAOMap.get("phong")!;

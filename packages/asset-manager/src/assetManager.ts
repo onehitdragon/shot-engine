@@ -48,7 +48,8 @@ export function query(){
                 uuid: assetRow.uuid,
                 name: assetRow.name,
                 type: assetRow.type,
-                property: JSON.parse(assetRow.property),
+                hash: assetRow.hash,
+                property: assetRow.property,
                 allowModify: assetRow.modifiable > 0
             });
         }
@@ -61,7 +62,8 @@ export function query(){
             uuid: assetRow.uuid,
             name: assetRow.name,
             type: assetRow.type,
-            property: JSON.parse(assetRow.property),
+            hash: assetRow.hash,
+            property: assetRow.property,
             allowModify: assetRow.modifiable > 0
         }
         return assetInfo;
@@ -74,7 +76,8 @@ export function query(){
                 uuid: assetRow.uuid,
                 name: assetRow.name,
                 type: assetRow.type,
-                property: JSON.parse(assetRow.property),
+                hash: assetRow.hash,
+                property: assetRow.property,
                 allowModify: assetRow.modifiable > 0
             });
         }
@@ -282,13 +285,10 @@ async function hashMeshAsset(meshAsset: ShotEngineType.MeshAsset) {
     hash.update(new Uint8Array(Uint32Array.of(meshAsset.primitives.length).buffer));
     for(const prim of meshAsset.primitives){
         const { attribute, indices } = prim;
-        const { positions, normals } = attribute;
+        const { interleaveArray } = attribute;
 
-        hash.update(new Uint8Array(Uint32Array.of(positions.length).buffer));
-        hash.update(new Uint8Array(positions.buffer, positions.byteOffset, positions.byteLength));
-
-        hash.update(new Uint8Array(Uint32Array.of(normals.length).buffer));
-        hash.update(new Uint8Array(normals.buffer, normals.byteOffset, normals.byteLength));
+        hash.update(new Uint8Array(Uint32Array.of(interleaveArray.length).buffer));
+        hash.update(new Uint8Array(interleaveArray.buffer, interleaveArray.byteOffset, interleaveArray.byteLength));
 
         hash.update(new Uint8Array(Uint32Array.of(indices.length).buffer));
         hash.update(new Uint8Array(indices.buffer, indices.byteOffset, indices.byteLength));

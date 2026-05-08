@@ -3,7 +3,8 @@ import {
     Vec3, Vec4,
     SceneNode, GameObject, GameObjectPrefab, Component, Transform, Mesh,
     SimpleShading, PhongShading, ImageDiffuse, ColorDiffuse,
-    Diffuse, PointLight, DirectionalLight
+    Diffuse, PointLight, DirectionalLight,
+    TransformEditor
 } from "../fbs-gen/fbsengine";
 import { Builder, Offset } from "flatbuffers";
 
@@ -52,12 +53,23 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             Vec3.addY(builder, component.scale.y);
             Vec3.addZ(builder, component.scale.z);
             const scaleOffset = Vec3.endVec3(builder);
+
+            Vec3.startVec3(builder);
+            Vec3.addX(builder, component.editor.euler.x);
+            Vec3.addY(builder, component.editor.euler.y);
+            Vec3.addZ(builder, component.editor.euler.z);
+            const eulerOffset = Vec3.endVec3(builder);
+            TransformEditor.startTransformEditor(builder);
+            TransformEditor.addEuler(builder, eulerOffset);
+            const editorOffset = TransformEditor.endTransformEditor(builder);
+
             const idOffset = builder.createString(component.id);
             Transform.startTransform(builder);
             Transform.addId(builder, idOffset);
             Transform.addPos(builder, posOffset);
             Transform.addRot(builder, rotOffset);
             Transform.addScale(builder, scaleOffset);
+            Transform.addEditor(builder, editorOffset);
             componentOffset = Transform.endTransform(builder);
             componentTypeOffsets.push(Component.Transform);
         }
@@ -186,7 +198,10 @@ export function readGameObject(gameObject: GameObject){
                 id: transform.id() ?? "",
                 pos: { x: pos.x(), y: pos.y(), z: pos.z() },
                 rot: { x: rot.x(), y: rot.y(), z: rot.z(), w: rot.w() },
-                scale: { x: scale.x(), y: scale.y(), z: scale.z() }
+                scale: { x: scale.x(), y: scale.y(), z: scale.z() },
+                editor: {
+                    euler: getVec3(transform.editor()?.euler())
+                }
             });
         }
         if(componentType === Component.Mesh){

@@ -118,20 +118,6 @@ const slice = createSlice({
             });
             state.modified = true;
         });
-
-        // builder.addCase(sceneSavedThunk.fulfilled, (state, action) => {
-        //     const { savedPath } = action.payload;
-        //     state.path = savedPath;
-        //     state.modified = false;
-        // });
-        // builder.addCase(sceneClosedThunk.fulfilled, (state) => {
-        //     state.scene = null;
-        //     state.focusedId = null;
-        //     state.path = null;
-        //     state.modified = false;
-        //     nodeAdapter.removeAll(state.nodes);
-        //     componentAdapter.removeAll(state.components);
-        // });
     }
 });
 export const {

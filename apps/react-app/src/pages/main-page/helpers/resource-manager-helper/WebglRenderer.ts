@@ -1,7 +1,8 @@
 import type { mat3, mat4, vec3 } from "gl-matrix";
 import { WebglGridShader } from "./WebglGridShader";
-import { LightSceneNodeManager } from "./LightSceneNodeManager";
-import { WebglResourceManager } from "./WebglResourceManager";
+import type { Mesh, Shading } from "@shot-engine/types";
+import { WebglMeshCache } from "../asset-cache/webgl-mesh-cache";
+import { getSceneWebglContext } from "./CanvasHelper";
 
 export class WebglRenderer{
     private static _instance: WebglRenderer;
@@ -11,19 +12,14 @@ export class WebglRenderer{
     }
     private _gl: WebGL2RenderingContext;
     private _webglGridShader: WebglGridShader;
-    private _lightSceneNodeManager: LightSceneNodeManager;
-    get lightSceneNodeManager(){
-        return this._lightSceneNodeManager;
-    }
     private constructor(gl: WebGL2RenderingContext){
         this._gl = gl;
         gl.enable(gl.DEPTH_TEST);
         this._webglGridShader = WebglGridShader.getInstance(gl);
-        this._lightSceneNodeManager = LightSceneNodeManager.getInstance();
     }
     render(
-        shadingComponent: Components.Shading,
-        meshComponent: Components.Mesh,
+        shadingComponent: Shading,
+        meshComponent: Mesh,
         mvpMat4: mat4,
         modelMat4: mat4,
         normalMat3: mat3,
@@ -31,14 +27,22 @@ export class WebglRenderer{
     ){
         const { shaderType, culling } = shadingComponent;
         this.culling(culling);
-        const webglMesh = WebglResourceManager.getInstance().getWebglMesh(meshComponent);
+        const webglMeshs = WebglMeshCache.getInstance().getWebglMeshes(meshComponent.meshRef);
+        if(!webglMeshs){
+            console.warn("error while get webglmesh cache");
+            return;
+        }
         if(shaderType === "simple"){
-            webglMesh.renderWithSimpleShader(mvpMat4);
+            webglMeshs.forEach(e => e.renderWithSimpleShader(mvpMat4));
         }
         else if(shaderType === "phong"){
-            webglMesh.renderWithPhongShader(mvpMat4, modelMat4, normalMat3, camPos, shadingComponent);
+            webglMeshs.forEach(
+                e => e.renderWithPhongShader(mvpMat4, modelMat4, normalMat3, camPos, shadingComponent)
+            );
         }
-        else throw `dont support shaderType: ${shaderType}`;
+        else{
+            console.warn(`dont support shaderType: ${shaderType}`);
+        }
     }
     renderGrid(vpMat4: mat4){
         // const gl = this._gl;
@@ -48,7 +52,7 @@ export class WebglRenderer{
         // gl.disable(gl.BLEND);
     }
     clear(){
-        const gl = this._gl;
+        const gl = getSceneWebglContext();
         gl.clearColor(0.5, 0.5, 0.5, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }

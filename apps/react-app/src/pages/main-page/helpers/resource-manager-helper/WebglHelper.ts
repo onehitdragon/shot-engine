@@ -46,7 +46,7 @@ export class WebglHelper{
     }
     static createIndexBuffer(
         gl: WebGL2RenderingContext,
-        data: Uint32Array
+        data: Uint8Array | Uint16Array | Uint32Array
     ){
         const buffer = gl.createBuffer();
         this.bindIndexBuffer(gl, buffer);

@@ -45,7 +45,7 @@ export class WebglSimpleShader{
         gl.useProgram(this._program);
         gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4);
         gl.bindVertexArray(vao);
-            gl.drawElements(gl.TRIANGLES, vbos.indexCount, gl.UNSIGNED_INT, 0);
+            gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
         gl.bindVertexArray(null);
     }
 }

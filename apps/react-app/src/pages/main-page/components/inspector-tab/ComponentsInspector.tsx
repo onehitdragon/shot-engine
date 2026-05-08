@@ -7,6 +7,8 @@ import { componentUpdatedThunk } from "../../../../global-state/thunks/inspector
 import { CheckBox, OneValueRow, Selection, TextRow } from "./components";
 import { clamp } from "@math.gl/core";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
+import { quat } from "gl-matrix";
+import { getNormalizeColor, getDenormalizeColor } from "../../helpers/utils/utils";
 
 export function ComponentsInspector(){
     const components = useAppSelector(state => selectComponents(state));
@@ -57,9 +59,12 @@ function TransformSection(props: { transform: Transform }){
                 />
                 <ThreeValueRow
                     label="Rotation"
-                    value={transform.rot}
+                    value={transform.editor.euler}
                     onChange={(value) => {
-                        transformClone.rot = { ...value, w: 1 };
+                        const q = quat.create();
+                        quat.fromEuler(q, value.x, value.y, value.z, "yxz");
+                        transformClone.editor.euler = value;
+                        transformClone.rot = { x: q[0], y: q[1], z: q[2], w: q[3] };
                         update();
                     }}
                 />
@@ -195,9 +200,12 @@ function PhongShadingEditor(props: { phongShading: PhongShading }){
             />
             {
                 diffuse.type === "color" &&
-                <RGBValueRow label="Color" value={diffuse.color} onChange={(value) => {
+                <RGBValueRow
+                    label="Color"
+                    value={getDenormalizeColor(diffuse.color)}
+                    onChange={(value) => {
                     if(shadingClone.diffuse.type === "color"){
-                        shadingClone.diffuse.color = value;
+                        shadingClone.diffuse.color = getNormalizeColor(value);;
                         update();
                     }
                 }}/>
@@ -271,9 +279,9 @@ function PointLightEditor(props: { pointLight: PointLight }){
         <div className="flex flex-col">
             <RGBValueRow
                 label="Color"
-                value={color}
+                value={getDenormalizeColor(color)}
                 onChange={(value) => {
-                    pointLightClone.color = value;
+                    pointLightClone.color = getNormalizeColor(value);
                     update();
                 }}
             />
@@ -385,14 +393,17 @@ function RGBValueRow(
     const onBlurX = () => {
         const valueX = stringToNumber(inputXRef.current?.value ?? "0");
         props.onChange({ x: valueX, y, z });
+        if(inputXRef.current) inputXRef.current.value = valueX + "";
     }
     const onBlurY = () => {
         const valueY = stringToNumber(inputYRef.current?.value ?? "0");
         props.onChange({ x, y: valueY, z });
+        if(inputYRef.current) inputYRef.current.value = valueY + "";
     }
     const onBlurZ = () => {
         const valueZ = stringToNumber(inputZRef.current?.value ?? "0");
         props.onChange({ x, y, z: valueZ });
+        if(inputZRef.current) inputZRef.current.value = valueZ + "";
     }
     const stringToNumber = (s: string) => {
         let num = Number(s);

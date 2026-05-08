@@ -14,7 +14,7 @@ export function ImageAssetInspector(props: { inspector: ImageAssetInspector }){
 }
 function AssetImage(props: { inspector: ImageAssetInspector }){
     const { assetInfo, imageAsset } = props.inspector;
-    const property = assetInfo.property;
+    const property = JSON.parse(assetInfo.property) as AssetProperty.Image;
     const [imageType, setImageType] = useState(property.type === "image" ? property.imageType : null);
     if(property.type !== "image" || !imageType) return null;
     return (

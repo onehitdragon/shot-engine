@@ -11,7 +11,8 @@ export namespace AssetManager{
         uuid: string,
         type: AssetType,
         name: string,
-        property: AssetProperty.AssetProperty,
+        hash: string,
+        property: string,
         allowModify: boolean
     }
 }

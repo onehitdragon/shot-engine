@@ -3,8 +3,9 @@ import phongShadingVShaderSource from "../shaders/phong-shader/vshader.glsl?raw"
 import phongShadingFShaderSource from "../shaders/phong-shader/fshader.glsl?raw";
 import type { mat3, mat4, vec3 } from "gl-matrix";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
-import { LightSceneNodeManager } from "./LightSceneNodeManager";
-import { WebglResourceManager } from "./WebglResourceManager";
+import type { PhongShading } from "@shot-engine/types";
+import { WebglTextureCache } from "../asset-cache/webgl-texture-cache";
+import { LightInfo } from "../asset-cache/LightInfo";
 
 export class WebglPhongShader{
     private static _instance: WebglPhongShader;
@@ -98,38 +99,43 @@ export class WebglPhongShader{
         modelMat4: mat4,
         normalMat3: mat3,
         camPos: vec3,
-        shadingComponent: Components.PhongShading
+        shadingComponent: PhongShading
     ){
         const gl = this._gl;
         const vbos = meshVBOs;
-        const { pointLightInfos, directionalInfos } = LightSceneNodeManager.getInstance();
-        const { diffuseGuid, ambient, shininess } = shadingComponent;
+        const { pointLightInfos, directionalInfos } = LightInfo.getInstance();
+        const { diffuse, ambient, shininess } = shadingComponent;
         gl.useProgram(this._program);
         gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4);
         gl.uniformMatrix4fv(this._u_ModelMatrixLoc, false, modelMat4);
         gl.uniformMatrix3fv(this._u_NormalMatrixLoc, false, normalMat3);
         gl.uniform3fv(this._u_CamWorldPosLoc, camPos);
-        gl.uniform3fv(this._u_ambientLoc, ambient);
+        gl.uniform3fv(this._u_ambientLoc, [ambient.x, ambient.y, ambient.z]);
         gl.uniform1f(this._u_shininessLoc, shininess);
         gl.uniform1i(this._u_PointLightSizeLoc, pointLightInfos.length);
         gl.uniform1i(this._u_DirectionalLightSizeLoc, directionalInfos.length);
         // todo: light local -> world position
         for(let i = 0; i < pointLightInfos.length; i++){
             const lightInfo = pointLightInfos[i];
-            gl.uniform3fv(this._programLoc.u_PointLights[i].position, lightInfo.position);
-            gl.uniform3fv(this._programLoc.u_PointLights[i].color, lightInfo.color);
+            gl.uniform3fv(this._programLoc.u_PointLights[i].position, [lightInfo.position.x, lightInfo.position.y, lightInfo.position.z]);
+            gl.uniform3fv(this._programLoc.u_PointLights[i].color, [lightInfo.color.x, lightInfo.color.y, lightInfo.color.z]);
         }
         for(let i = 0; i < directionalInfos.length; i++){
             const lightInfo = directionalInfos[i];
-            gl.uniform3fv(this._programLoc.u_DirectionalLights[i].dir, lightInfo.dir);
-            gl.uniform3fv(this._programLoc.u_DirectionalLights[i].color, lightInfo.color);
+            gl.uniform3fv(this._programLoc.u_DirectionalLights[i].dir, [lightInfo.dir.x, lightInfo.dir.y, lightInfo.dir.z]);
+            gl.uniform3fv(this._programLoc.u_DirectionalLights[i].color, [lightInfo.color.x, lightInfo.color.y, lightInfo.color.z]);
         }
+        const diffuseWebglTexture = 
+            diffuse.type === "image" ?
+            WebglTextureCache.getInstance().getWebglTexture(diffuse.imageRef) :
+            WebglTextureCache.getInstance().getWebglColorTexture(diffuse.color)
+        ;
+        if(!diffuseWebglTexture) return;
         gl.activeTexture(gl.TEXTURE0);
-        const diffuseWebglTexture = WebglResourceManager.getInstance().getWebglTexture(diffuseGuid);
         gl.bindTexture(gl.TEXTURE_2D, diffuseWebglTexture.webglTexture);
         gl.uniform1i(this._u_DiffuseSampler, 0);
         gl.bindVertexArray(vao);
-            gl.drawElements(gl.TRIANGLES, vbos.indexCount, gl.UNSIGNED_INT, 0);
+            gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
         gl.bindVertexArray(null);
     }
 }

@@ -7,7 +7,10 @@ export function createEmptyNode(){
         id: "",
         pos: { x: 0, y: 0, z: 0 },
         rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 }
+        scale: { x: 1, y: 1, z: 1 },
+        editor: {
+            euler: { x: 0, y: 0, z: 0}
+        }
     }
     const sceneNode: NodeState = {
         name: "EmptyNode",
@@ -24,7 +27,10 @@ export function createCubeNode(){
         id: "",
         pos: { x: 0, y: 0, z: 0 },
         rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 }
+        scale: { x: 1, y: 1, z: 1 },
+        editor: {
+            euler: { x: 0, y: 0, z: 0}
+        }
     }
     const mesh: Mesh = {
         id: "",
@@ -53,7 +59,10 @@ export function createEmptyPrefab(){
         id: "",
         pos: { x: 0, y: 0, z: 0 },
         rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 }
+        scale: { x: 1, y: 1, z: 1 },
+        editor: {
+            euler: { x: 0, y: 0, z: 0}
+        }
     }
     const sceneNode: SceneNode = {
         name: "EmptyNode",

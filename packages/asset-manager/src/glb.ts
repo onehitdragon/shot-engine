@@ -1,7 +1,6 @@
-import { Document, NodeIO, Node, Texture, Mesh } from '@gltf-transform/core';
+import { NodeIO, Node, Texture, Mesh, Accessor } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import path from "node:path";
-import { v4 as uuidv4 } from "uuid";
 import * as ShotEngineType from "@shot-engine/types";
 import { imageToRaw } from './imageToRaw';
 
@@ -19,7 +18,7 @@ type GLBMesh = {
     meshAsset: ShotEngineType.MeshAsset
 }
 
-// readGLBFile(path.join(process.cwd(), "test", "ark-rm", "Untitled.glb"));
+readGLBFile(path.join(process.cwd(), "test", "ark-rm", "Untitled2.glb"));
 export async function readGLBFile(filePath: string){
     const io = new NodeIO()
     .registerExtensions(ALL_EXTENSIONS)
@@ -47,22 +46,23 @@ export async function readGLBFile(filePath: string){
     }
     for(const mesh of root.listMeshes()){
         const primitives = mesh.listPrimitives().map((e => {
-            const positionAttr = e.getAttribute("POSITION");
-            const positions = positionAttr ? positionAttr.getArray() as Float32Array : new Float32Array();
-            const normalAttr = e.getAttribute("NORMAL");
-            const normals = normalAttr ? normalAttr.getArray() as Float32Array : new Float32Array();
-            const uvAttr = e.getAttribute("TEXCOORD_0");
-            const uvs = uvAttr ? uvAttr.getArray() as Float32Array : new Float32Array();
-            const indiceAttr = e.getIndices();
-            const indices = indiceAttr ? new Uint32Array(indiceAttr.getArray() as ArrayLike<number>) : new Uint32Array();
-            return {
+            const positions = getAttr(e.getAttribute("POSITION"));
+            const normals = getAttr(e.getAttribute("NORMAL"));
+            const uvs = getAttr(e.getAttribute("TEXCOORD_0"));
+            const indices = getIndices(e.getIndices());
+            let indexType = 0;
+            if(indices instanceof Uint8Array) indexType = 5121;
+            if(indices instanceof Uint16Array) indexType = 5123;
+            if(indices instanceof Uint32Array) indexType = 5125;
+            const primitive: ShotEngineType.MeshAsset["primitives"][0] = {
                 attribute: {
-                    positions,
-                    normals,
-                    uvs
+                    interleaveArray: createInterleaveArr(positions, normals, uvs)
                 },
-                indices
+                indices,
+                indexType,
+                drawMode: e.getMode()
             }
+            return primitive;
         }));
         glb.meshes.push({
             name: mesh.getName(),
@@ -83,8 +83,68 @@ export async function readGLBFile(filePath: string){
 
     return glb;
 }
+function getAttr(attr?: Accessor | null){
+    const array = attr?.getArray();
+    let result: Float32Array;
+    if(!array){
+        result = new Float32Array();
+    }
+    else{
+        if(array instanceof Float32Array){
+            result = array;
+        }
+        else{
+            result = new Float32Array();
+        }
+    }
+    return result;
+}
+function getIndices(attr?: Accessor | null){
+    const array = attr?.getArray();
+    let result: Uint8Array | Uint16Array | Uint32Array;
+    if(!array){
+        result = new Uint32Array();
+    }
+    else{
+        if(
+            array instanceof Uint8Array ||
+            array instanceof Uint16Array ||
+            array instanceof Uint32Array
+        ){
+            result = array;
+        }
+        else{
+            result = new Uint32Array();
+        }
+    }
+    return result;
+}
+function createInterleaveArr(
+    positions: Float32Array, normals: Float32Array, uvs: Float32Array
+){
+    const vertexCount = positions.length / 3;
+    if(normals.length !== positions.length) throw "Positions and Normals mismatch";
+    if(uvs.length !== vertexCount * 2) throw "UV count mismatch";
 
+    const interleaveBuffer = new Float32Array(vertexCount * (3 + 3 + 2));
+    for(let i = 0; i < vertexCount; i++){
+        const i3 = i * 3;
+        const i2 = i * 2;
+        const i8 = i * 8;
+        interleaveBuffer[i8 + 0] = positions[i3 + 0];
+        interleaveBuffer[i8 + 1] = positions[i3 + 1];
+        interleaveBuffer[i8 + 2] = positions[i3 + 2];
+        interleaveBuffer[i8 + 3] = normals[i3 + 0];
+        interleaveBuffer[i8 + 4] = normals[i3 + 1];
+        interleaveBuffer[i8 + 5] = normals[i3 + 2];
+        interleaveBuffer[i8 + 6] = uvs[i2 + 0];
+        interleaveBuffer[i8 + 7] = uvs[i2 + 1];
+    }
+
+    return interleaveBuffer;
+}
 function createGameObject(node: Node, meshMap: Map<Mesh, number>){
+    node.getRotation()
     let gameObject: ShotEngineType.GameObject = {
         id: "",
         name: node.getName(),
@@ -111,6 +171,9 @@ function createGameObject(node: Node, meshMap: Map<Mesh, number>){
                 y: node.getScale()[1],
                 z: node.getScale()[2]
             },
+            editor: {
+                euler: quatToEulerYXZ(node.getRotation())
+            }
         }
     );
     const mesh = node.getMesh();
@@ -132,6 +195,48 @@ function createGameObject(node: Node, meshMap: Map<Mesh, number>){
     }
 
     return gameObject;
+}
+
+function quatToEulerYXZ(q: [number, number, number, number]) {
+  const [x, y, z, w] = q;
+
+  // X (pitch)
+  const t = 2 * (w * x - y * z);
+  const clamped = Math.max(-1, Math.min(1, t));
+  const pitchX = Math.asin(clamped);
+
+  // Check gimbal lock
+  if (Math.abs(clamped) > 0.999999) {
+    // Gimbal lock
+    const yawY = Math.atan2(
+      -2 * (w * z - x * y),
+      1 - 2 * (x * x + z * z)
+    );
+    const rollZ = 0;
+    return {
+        x: pitchX * (180 / Math.PI),
+        y: yawY * (180 / Math.PI), 
+        z: rollZ * (180 / Math.PI)
+    };
+  }
+
+  // Y (yaw)
+  const yawY = Math.atan2(
+    2 * (w * y + x * z),
+    1 - 2 * (x * x + y * y)
+  );
+
+  // Z (roll)
+  const rollZ = Math.atan2(
+    2 * (w * z + x * y),
+    1 - 2 * (x * x + z * z)
+  );
+
+  return {
+    x: pitchX * (180 / Math.PI),
+    y: yawY * (180 / Math.PI), 
+    z: rollZ * (180 / Math.PI)
+  }; // radians
 }
 
 function printNode(node: Node, space = 0){

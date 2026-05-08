@@ -9,12 +9,16 @@ export type Vec4 = {
     z: number,
     w: number
 }
+export type TransformEditor = {
+    euler: Vec3
+}
 export type Transform = {
     type: "Transform",
     id: string,
     pos: Vec3,
     rot: Vec4,
-    scale: Vec3
+    scale: Vec3,
+    editor: TransformEditor
 }
 export type Mesh = {
     type: "Mesh",
