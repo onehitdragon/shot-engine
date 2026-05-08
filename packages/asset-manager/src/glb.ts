@@ -18,7 +18,7 @@ type GLBMesh = {
     meshAsset: ShotEngineType.MeshAsset
 }
 
-readGLBFile(path.join(process.cwd(), "test", "ark-rm", "Untitled2.glb"));
+// readGLBFile(path.join(process.cwd(), "test", "ark-rm", "Untitled2.glb"));
 export async function readGLBFile(filePath: string){
     const io = new NodeIO()
     .registerExtensions(ALL_EXTENSIONS)
@@ -185,6 +185,13 @@ function createGameObject(node: Node, meshMap: Map<Mesh, number>){
                 type: "Mesh",
                 id: "",
                 meshRef: meshIndex as any
+            },
+            {
+                type: "Shading",
+                shaderType: "simple",
+                id: "",
+                culling: "none",
+                transparent: false
             }
         );
     }
