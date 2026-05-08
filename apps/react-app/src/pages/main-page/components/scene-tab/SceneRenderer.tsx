@@ -12,6 +12,7 @@ import { AssetCache } from "../../helpers/asset-cache/asset-cache";
 import { WebglMeshCache } from "../../helpers/asset-cache/webgl-mesh-cache";
 import { WebglTextureCache } from "../../helpers/asset-cache/webgl-texture-cache";
 import { LightInfo } from "../../helpers/asset-cache/LightInfo";
+import { cloneDeep } from "lodash";
 
 export function SceneRenderer(){
     const nodes = useAppSelector(state => selectNodes(state));
@@ -76,6 +77,14 @@ export function SceneRenderer(){
         <div className="flex-1 flex">
             <canvas ref={canvasRef} id="scene-canvas" className="w-full h-full"
                 onMouseDown={() => { setClickedOn(true); }}
+                onWheel={(e) => {
+                    if(!camera) return;
+                    const dir = Math.sign(e.deltaY);
+                    const cameraClone = cloneDeep(camera);
+                    cameraClone.sphereCoordinate.r += dir * 0.5;
+                    cameraClone.sphereCoordinate.r = Math.max(cameraClone.sphereCoordinate.r, 1);
+                    setCamera(cameraClone);
+                }}
             >
                 Dont supports "canvas"
             </canvas>
@@ -100,6 +109,7 @@ function WindowEvents(props: {
 }){
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
+            if(e.altKey) e.preventDefault();
             props.onKeyDown?.(e);
         }
         const onKeyUp = (e: KeyboardEvent) => {
