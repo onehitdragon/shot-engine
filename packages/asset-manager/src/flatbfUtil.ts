@@ -4,7 +4,8 @@ import {
     SceneNode, GameObject, GameObjectPrefab, Component, Transform, Mesh,
     SimpleShading, PhongShading, ImageDiffuse, ColorDiffuse,
     Diffuse, PointLight, DirectionalLight,
-    TransformEditor
+    TransformEditor,
+    PbrShading
 } from "../fbs-gen/fbsengine";
 import { Builder, Offset } from "flatbuffers";
 
@@ -131,6 +132,40 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             componentOffset = PhongShading.endPhongShading(builder);
             componentTypeOffsets.push(Component.PhongShading);
         }
+        else if(component.type === "Shading" && component.shaderType === "pbr"){
+            const idOffset = builder.createString(component.id);
+            const cullingOffset = builder.createString(component.culling);
+            let diffuseOffset: number;
+            let diffuseType: Diffuse;
+            if(component.diffuse.type === "image"){
+                const imageRefOffset = builder.createString(component.diffuse.imageRef);
+                ImageDiffuse.startImageDiffuse(builder);
+                ImageDiffuse.addImageRef(builder, imageRefOffset);
+                diffuseOffset = ImageDiffuse.endImageDiffuse(builder);
+                diffuseType = Diffuse.ImageDiffuse;
+            }
+            else{
+                Vec3.startVec3(builder);
+                Vec3.addX(builder, component.diffuse.color.x);
+                Vec3.addY(builder, component.diffuse.color.y);
+                Vec3.addZ(builder, component.diffuse.color.z);
+                const colorOffset = Vec3.endVec3(builder);
+                ColorDiffuse.startColorDiffuse(builder);
+                ColorDiffuse.addColor(builder, colorOffset);
+                diffuseOffset = ColorDiffuse.endColorDiffuse(builder);
+                diffuseType = Diffuse.ColorDiffuse;
+            }
+            PbrShading.startPbrShading(builder);
+            PbrShading.addId(builder, idOffset);
+            PbrShading.addCulling(builder, cullingOffset);
+            PbrShading.addTransparent(builder, component.transparent);
+            PbrShading.addDiffuse(builder, diffuseOffset);
+            PbrShading.addDiffuseType(builder, diffuseType);
+            PbrShading.addMetallic(builder, component.metallic);
+            PbrShading.addRoughness(builder, component.roughness);
+            componentOffset = PbrShading.endPbrShading(builder);
+            componentTypeOffsets.push(Component.PbrShading);
+        }
         else if(component.type === "Light" && component.lightType === "PointLight"){
             const idOffset = builder.createString(component.id);
             Vec3.startVec3(builder);
@@ -141,6 +176,8 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             PointLight.startPointLight(builder);
             PointLight.addId(builder, idOffset);
             PointLight.addColor(builder, colorOffset);
+            PointLight.addIntensity(builder, component.intensity);
+            PointLight.addRadius(builder, component.radius);
             componentOffset = PointLight.endPointLight(builder);
             componentTypeOffsets.push(Component.PointLight);
         }
@@ -154,6 +191,8 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             DirectionalLight.startDirectionalLight(builder);
             DirectionalLight.addId(builder, idOffset);
             DirectionalLight.addDir(builder, dirOffset);
+            DirectionalLight.addIntensity(builder, component.intensity);
+            DirectionalLight.addRadius(builder, component.radius);
             componentOffset = DirectionalLight.endDirectionalLight(builder);
             componentTypeOffsets.push(Component.DirectionalLight);
         }
@@ -252,13 +291,45 @@ export function readGameObject(gameObject: GameObject){
                 shininess: phongShading.shininess(),
             });
         }
+        if(componentType === Component.PbrShading){
+            const pbrShading = gameObject.components(i, new PbrShading()) as PbrShading;
+            const diffuseType = pbrShading.diffuseType();
+            let diffuse: ImageDiffuse | ColorDiffuse;
+            let diffuseOut: ShotEngineType.PhongShading["diffuse"];
+            if(diffuseType === Diffuse.ImageDiffuse){
+                diffuse = pbrShading.diffuse(new ImageDiffuse()) as ImageDiffuse;
+                diffuseOut = {
+                    type: "image",
+                    imageRef: diffuse.imageRef() ?? ""
+                }
+            }
+            else{
+                diffuse = pbrShading.diffuse(new ColorDiffuse()) as ColorDiffuse;
+                diffuseOut = {
+                    type: "color",
+                    color: getVec3(diffuse.color())
+                }
+            }
+            gameObjectResult.components.push({
+                type: "Shading",
+                shaderType: "pbr",
+                id: pbrShading.id() ?? "",
+                culling: getCulling(pbrShading.culling()),
+                transparent: pbrShading.transparent(),
+                diffuse: diffuseOut,
+                metallic: pbrShading.metallic(),
+                roughness: pbrShading.roughness(),
+            });
+        }
         if(componentType === Component.PointLight){
             const pointLight = gameObject.components(i, new PointLight()) as PointLight;
             gameObjectResult.components.push({
                 type: "Light",
                 lightType: "PointLight",
                 id: pointLight.id() ?? "",
-                color: getVec3(pointLight.color())
+                color: getVec3(pointLight.color()),
+                intensity: pointLight.intensity(),
+                radius: pointLight.radius()
             });
         }
         if(componentType === Component.DirectionalLight){
@@ -267,7 +338,9 @@ export function readGameObject(gameObject: GameObject){
                 type: "Light",
                 lightType: "DirectionalLight",
                 id: directionalLight.id() ?? "",
-                dir: getVec3(directionalLight.dir())
+                dir: getVec3(directionalLight.dir()),
+                intensity: directionalLight.intensity(),
+                radius: directionalLight.radius()
             });
         }
     }

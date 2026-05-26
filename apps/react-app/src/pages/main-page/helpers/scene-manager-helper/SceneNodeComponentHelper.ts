@@ -1,4 +1,4 @@
-import type { Light, PhongShading, SimpleShading } from '@shot-engine/types';
+import type { Light, PbrShading, PhongShading, SimpleShading } from '@shot-engine/types';
 
 export function createSimpleShadingComponent(){
     const component: SimpleShading = {
@@ -26,12 +26,30 @@ export function createPhongShadingComponent(){
     }
     return component;
 }
+export function createPbrShadingComponent(){
+    const component: PbrShading = {
+        id: "",
+        type: "Shading",
+        culling: "none",
+        transparent: false,
+        shaderType: "pbr",
+        diffuse: {
+            type: "color",
+            color: { x: 1, y: 1, z: 1 }
+        },
+        metallic: 0,
+        roughness: 0.01
+    }
+    return component;
+}
 export function createPointLightComponent(){
     const light: Light = {
         id: "",
         type: "Light",
         lightType: "PointLight",
-        color: { x: 1, y: 1, z: 1 }
+        color: { x: 1, y: 1, z: 1 },
+        intensity: 1000,
+        radius: 1000,
     }
     return light;
 }
@@ -40,7 +58,9 @@ export function createDirectionalLightComponent(){
         id: "",
         type: "Light",
         lightType: "DirectionalLight",
-        dir: { x: 0, y: -1, z: 0 }
+        dir: { x: 0, y: -1, z: 0 },
+        intensity: 1000,
+        radius: 1000,
     }
     return light;
 }

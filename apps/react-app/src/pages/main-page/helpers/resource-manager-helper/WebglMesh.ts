@@ -3,7 +3,8 @@ import { WebglMeshVBOs } from "./WebglMeshVBOs";
 import { WebglSimpleShader } from "./WebglSimpleShader";
 import { WebglHelper } from "./WebglHelper";
 import { WebglPhongShader } from "./WebglPhongShader";
-import type { MeshAsset, PhongShading } from "@shot-engine/types";
+import type { MeshAsset, PbrShading, PhongShading } from "@shot-engine/types";
+import { WebglPbrShader } from "./WebglPbrShader";
 
 export class WebglMesh{
     private _gl: WebGL2RenderingContext;
@@ -37,6 +38,25 @@ export class WebglMesh{
         const gl = this._gl;
         const vao = this._meshVAOMap.get("phong")!;
         WebglPhongShader.getInstance(gl).renderMesh(
+            this._meshVBOs,
+            vao,
+            mvpMat4,
+            modelMat4,
+            normalMat3,
+            camPos,
+            shadingComponent
+        );
+    }
+    renderWithPbrShader(
+        mvpMat4: mat4,
+        modelMat4: mat4,
+        normalMat3: mat3,
+        camPos: vec3,
+        shadingComponent: PbrShading
+    ){
+        const gl = this._gl;
+        const vao = this._meshVAOMap.get("phong")!;
+        WebglPbrShader.getInstance(gl).renderMesh(
             this._meshVBOs,
             vao,
             mvpMat4,

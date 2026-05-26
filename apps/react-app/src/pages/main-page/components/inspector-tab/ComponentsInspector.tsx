@@ -1,4 +1,4 @@
-import type { AssetManager, Component, DirectionalLight, Light, Mesh, PhongShading, PointLight, Shading, Transform } from "@shot-engine/types";
+import type { AssetManager, Component, DirectionalLight, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, Transform } from "@shot-engine/types";
 import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { selectComponents } from "../../../../global-state/slices/inspector-components-slice";
@@ -150,6 +150,10 @@ function ShadingSection(props: { shading: Shading }){
                 shading.shaderType === "phong" &&
                 <PhongShadingEditor phongShading={shading}/>
             }
+            {
+                shading.shaderType === "pbr" &&
+                <PbrShadingEditor pbrShading={shading}/>
+            }
         </div>
     );
 }
@@ -251,6 +255,106 @@ function PhongShadingEditor(props: { phongShading: PhongShading }){
         </div>
     );
 }
+function PbrShadingEditor(props: { pbrShading: PbrShading }){
+    const { pbrShading } = props;
+    const { diffuse, metallic, roughness } = pbrShading;
+    const dispatch = useAppDispatch();
+    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+    const shadingClone = cloneDeep(pbrShading);
+    const update = () => {
+        dispatch(componentUpdatedThunk({ component: shadingClone }));
+    }
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            if(diffuse.type === "color") setAssetInfos([]);
+            else{
+                const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
+                if(cancelled) return;
+                setAssetInfos(assetInfos);
+            }
+        }
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, [diffuse.type]);
+
+    return (
+        <div className="flex flex-col">
+            <Selection
+                label="Diffuse"
+                options={[
+                    { label: "image", value: "image" },
+                    { label: "color", value: "color" },
+                ]}
+                value={diffuse.type}
+                onChange={(value) => {
+                    shadingClone.diffuse.type = value;
+                    if(shadingClone.diffuse.type === "color"){
+                        shadingClone.diffuse.color = { x: 1, y: 1, z: 1 };
+                    }
+                    if(shadingClone.diffuse.type === "image"){
+                        shadingClone.diffuse.imageRef = "";
+                    }
+                    update();
+                }}
+            />
+            {
+                diffuse.type === "color" &&
+                <RGBValueRow
+                    label="Color"
+                    value={getDenormalizeColor(diffuse.color)}
+                    onChange={(value) => {
+                    if(shadingClone.diffuse.type === "color"){
+                        shadingClone.diffuse.color = getNormalizeColor(value);;
+                        update();
+                    }
+                }}/>
+            }
+            {
+                diffuse.type === "image" &&
+                <Selection
+                    label="imageRef"
+                    options={
+                        assetInfos.map(e => {
+                            return {
+                                label: e.name,
+                                value: e.uuid
+                            }
+                        })
+                    }
+                    value={diffuse.imageRef}
+                    onChange={(value) => {
+                        if(shadingClone.diffuse.type === "image"){
+                            console.log("change", shadingClone.diffuse.imageRef, "->",  value);
+                            shadingClone.diffuse.imageRef = value;
+                            update();
+                        }
+                    }}
+                />
+            }
+            <OneValueRow
+                label="Metallic"
+                value={metallic}
+                range={[0, 1]}
+                onChange={(value) => {
+                    shadingClone.metallic = value;
+                    update();
+                }}
+            />
+            <OneValueRow
+                label="Roughness"
+                value={roughness}
+                range={[0.01, 1]}
+                onChange={(value) => {
+                    shadingClone.roughness = value;
+                    update();
+                }}
+            />
+        </div>
+    );
+}
 function LightSection(props: { light: Light }){
     const { light } = props;
 
@@ -268,7 +372,7 @@ function LightSection(props: { light: Light }){
 }
 function PointLightEditor(props: { pointLight: PointLight }){
     const { pointLight } = props;
-    const { color } = pointLight;
+    const { color, intensity, radius } = pointLight;
     const dispatch = useAppDispatch();
     const pointLightClone = cloneDeep(pointLight);
     const update = () => {
@@ -282,6 +386,24 @@ function PointLightEditor(props: { pointLight: PointLight }){
                 value={getDenormalizeColor(color)}
                 onChange={(value) => {
                     pointLightClone.color = getNormalizeColor(value);
+                    update();
+                }}
+            />
+            <OneValueRow
+                label="Intensity"
+                value={intensity}
+                range={[0, Number.MAX_VALUE]}
+                onChange={(value) => {
+                    pointLightClone.intensity = value;
+                    update();
+                }}
+            />
+            <OneValueRow
+                label="Radius"
+                value={radius}
+                range={[0, Number.MAX_VALUE]}
+                onChange={(value) => {
+                    pointLightClone.radius = value;
                     update();
                 }}
             />

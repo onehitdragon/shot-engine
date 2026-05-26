@@ -40,6 +40,11 @@ export class WebglRenderer{
                 e => e.renderWithPhongShader(mvpMat4, modelMat4, normalMat3, camPos, shadingComponent)
             );
         }
+        else if(shaderType === "pbr"){
+            webglMeshs.forEach(
+                e => e.renderWithPbrShader(mvpMat4, modelMat4, normalMat3, camPos, shadingComponent)
+            );
+        }
         else{
             console.warn(`dont support shaderType: ${shaderType}`);
         }

@@ -10,7 +10,7 @@ import { AssetManager } from "@shot-engine/types";
 import { readGLBFile } from './glb';
 import { readImageAsset, readMeshAsset, readPrefabAsset, readSceneAsset, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
 import { imageToRaw } from './imageToRaw';
-import { createDefaultCubeAssetMesh } from './createDefaultAssetMesh';
+import { createDefaultCubeAssetMesh, createDefaultSphereAssetMesh } from './createDefaultAssetMesh';
 
 let configed = false;
 let ASSET_DIR = "";
@@ -251,8 +251,16 @@ function ensureDefaultFiles(){
         const cubeAssetMesh = createDefaultCubeAssetMesh();
         saveMeshAssetBinary(cubeAssetMesh, cubeAssetMeshPath);
     }
+    const sphereAssetMeshPath = path.join(ASSET_DEFAULT_DIR, "sphere-engine.mesh");
+    if(!fs.existsSync(sphereAssetMeshPath)){
+        const sphereAssetMesh = createDefaultSphereAssetMesh();
+        saveMeshAssetBinary(sphereAssetMesh, sphereAssetMeshPath);
+    }
 
-    const set = new Set<string>([cubeAssetMeshPath]);
+    const set = new Set<string>([
+        cubeAssetMeshPath,
+        sphereAssetMeshPath
+    ]);
     const entries = fsWalk.walkSync(ASSET_DEFAULT_DIR);
     for(const entry of entries){
         if(!set.has(entry.path)) fs.removeSync(entry.path);

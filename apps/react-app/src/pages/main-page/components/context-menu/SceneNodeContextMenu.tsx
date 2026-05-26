@@ -1,7 +1,7 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
 import type { NodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { createCubeNode, createEmptyNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
-import { createDirectionalLightComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
+import { createCubeNode, createEmptyNode, createSphereNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
+import { createDirectionalLightComponent, createPbrShadingComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
 import { goAddedThunk, goRemovedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 import { componentAddedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
 
@@ -26,6 +26,13 @@ export function SceneNodeContextMenu(
             node: newNode
         }));
     }
+    const createSphereChild = () => {
+        const newNode = createSphereNode();
+        newNode.parent = node.id;
+        dispatch(goAddedThunk({
+            node: newNode
+        }));
+    }
     const addSimpleShadingComponent = () => {
         dispatch(componentAddedThunk({
             component: createSimpleShadingComponent(),
@@ -35,6 +42,12 @@ export function SceneNodeContextMenu(
     const addPhongShadingComponent = () => {
         dispatch(componentAddedThunk({
             component: createPhongShadingComponent(),
+            unique: true,
+        }));
+    }
+    const addPbrShadingComponent = () => {
+        dispatch(componentAddedThunk({
+            component: createPbrShadingComponent(),
             unique: true,
         }));
     }
@@ -75,6 +88,12 @@ export function SceneNodeContextMenu(
                 </li>
                 <li className='text-xs text-white select-none cursor-pointer transition
                     hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={createSphereChild}
+                >
+                    Create Sphere Child
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
                     onMouseDown={remmove}
                 >
                     Remove
@@ -102,6 +121,12 @@ export function SceneNodeContextMenu(
                     onMouseDown={addPhongShadingComponent}
                 >
                     Add Phong Shading
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={addPbrShadingComponent}
+                >
+                    Add PBR Shading
                 </li>
             </ul>
         </div>

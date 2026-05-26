@@ -6,8 +6,8 @@ export class LightInfo{
         if(!this._instance) this._instance = new LightInfo();
         return this._instance;
     }
-    private _pointLightInfos: { position: Vec3, color: Vec3 }[] = [];
-    private _directionalInfos: { dir: Vec3, color: Vec3 }[] = [];
+    private _pointLightInfos: { position: Vec3, color: Vec3, intensity: number, radius: number }[] = [];
+    private _directionalInfos: { dir: Vec3, color: Vec3, intensity: number, radius: number }[] = [];
     get pointLightInfos(){
         return this._pointLightInfos;
     }
@@ -20,13 +20,17 @@ export class LightInfo{
         if(light.lightType === "PointLight"){
             this._pointLightInfos.push({
                 position: transform.pos,
-                color: light.color
+                color: light.color,
+                intensity: light.intensity,
+                radius: light.radius
             });
         }
         if(light.lightType === "DirectionalLight"){
             this._directionalInfos.push({
                 dir: light.dir,
-                color: { x: 1, y: 1, z: 1 }
+                color: { x: 1, y: 1, z: 1 },
+                intensity: light.intensity,
+                radius: light.radius
             });
         }
     }

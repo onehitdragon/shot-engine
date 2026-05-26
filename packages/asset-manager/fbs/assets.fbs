@@ -21,7 +21,7 @@ enum IndexType : uint {
 
 table Primitive{
     attribute: PrimitiveAttribute;
-    indices: [uint];
+    indices: [ubyte];
     index_type: IndexType;
     drawMode: int;
 }

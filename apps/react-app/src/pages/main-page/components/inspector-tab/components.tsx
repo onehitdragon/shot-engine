@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { type JSX } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { clamp } from "lodash";
 
 export function TextRow(props: {
     label: string,
@@ -82,14 +83,19 @@ export function OneValueRow(
     props: {
         label: string,
         value: number,
+        range?: [number, number]
         onChange: (value: number) => void
     }
 ){
-    const { label, value, onChange } = props;
+    const { label, value, range, onChange } = props;
     const [valueState, setValue] = useState(value.toString());
     const onBlurValue = () => {
-        setValue(stringToNumber(valueState).toString());
-        onChange(stringToNumber(valueState));
+        let num = stringToNumber(valueState);
+        if(range){
+            num = clamp(num, range[0], range[1]);
+        }
+        setValue(num.toString());
+        onChange(num);
     }
     const stringToNumber = (s: string) => {
         return Number(s);

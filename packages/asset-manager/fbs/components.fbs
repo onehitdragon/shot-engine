@@ -47,14 +47,27 @@ table PhongShading{
     shininess: double;
 }
 
+table PbrShading{
+    id: string;
+    culling: string;
+    transparent: bool;
+    diffuse: Diffuse;
+    metallic: double;
+    roughness: double;
+}
+
 table PointLight{
     id: string;
     color: Vec3;
+    intensity: double;
+    radius: double;
 }
 
 table DirectionalLight{
     id: string;
     dir: Vec3;
+    intensity: double;
+    radius: double;
 }
 
 union Component{
@@ -62,6 +75,7 @@ union Component{
     Mesh,
     SimpleShading,
     PhongShading,
+    PbrShading,
     PointLight,
     DirectionalLight
 }

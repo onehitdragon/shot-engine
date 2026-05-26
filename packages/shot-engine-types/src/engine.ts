@@ -46,18 +46,34 @@ export type PhongShading = ShadingBase & {
     ambient: Vec3,
     shininess: number
 }
-export type Shading = SimpleShading | PhongShading;
+export type PbrShading = ShadingBase & {
+    shaderType: "pbr",
+    diffuse: {
+        type: "image",
+        imageRef: string
+    } | {
+        type: "color",
+        color: Vec3
+    },
+    metallic: number,
+    roughness: number,
+}
+export type Shading = SimpleShading | PhongShading | PbrShading;
 export type LightBase = {
     type: "Light",
     id: string,
 };
 export type PointLight = LightBase & {
     lightType: "PointLight",
-    color: Vec3
+    color: Vec3,
+    intensity: number,
+    radius: number,
 }
 export type DirectionalLight = LightBase & {
     lightType: "DirectionalLight",
-    dir: Vec3
+    dir: Vec3,
+    intensity: number,
+    radius: number,
 }
 export type Light = PointLight | DirectionalLight;
 export type Component = Transform | Mesh | Shading | Light;

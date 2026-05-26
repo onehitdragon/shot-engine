@@ -48,3 +48,80 @@ export function createDefaultCubeAssetMesh(){
 
     return cubeAssetMesh;
 }
+export function createDefaultSphereAssetMesh(){
+    const radius = 1;
+
+    const widthSegments = 24;
+    const heightSegments = 16;
+
+    const vertices: number[] = [];
+    const indices: number[] = [];
+
+    // position(3) + normal(3) + uv(2)
+    // stride = 8
+
+    for (let y = 0; y <= heightSegments; y++) {
+
+        const v = y / heightSegments;
+        const theta = v * Math.PI;
+
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+
+        for (let x = 0; x <= widthSegments; x++) {
+
+            const u = x / widthSegments;
+            const phi = u * Math.PI * 2;
+
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            const nx = cosPhi * sinTheta;
+            const ny = cosTheta;
+            const nz = sinPhi * sinTheta;
+
+            const px = radius * nx;
+            const py = radius * ny;
+            const pz = radius * nz;
+
+            vertices.push(
+                px, py, pz, // position
+                nx, ny, nz, // normal
+                u, 1 - v    // uv
+            );
+        }
+    }
+
+    for (let y = 0; y < heightSegments; y++) {
+
+        for (let x = 0; x < widthSegments; x++) {
+
+            const a = y * (widthSegments + 1) + x;
+            const b = a + widthSegments + 1;
+
+            indices.push(
+                a, b, a + 1,
+                b, b + 1, a + 1
+            );
+        }
+    }
+
+    const sphereAssetMesh: ShotEngineType.MeshAsset = {
+        primitives: [{
+            attribute: {
+                interleaveArray: new Float32Array(vertices),
+            },
+
+            // ~2400 indices => Uint16
+            indices: new Uint16Array(indices),
+
+            // gl.UNSIGNED_SHORT
+            indexType: 5123,
+
+            // gl.TRIANGLES
+            drawMode: 4
+        }]
+    };
+
+    return sphereAssetMesh;
+}
