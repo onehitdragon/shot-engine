@@ -1,4 +1,4 @@
-import type { Light, PbrShading, PhongShading, SimpleShading } from '@shot-engine/types';
+import type { Light, PbrShading, PhongShading, SimpleShading, SkyBox } from '@shot-engine/types';
 
 export function createSimpleShadingComponent(){
     const component: SimpleShading = {
@@ -63,4 +63,12 @@ export function createDirectionalLightComponent(){
         radius: 1000,
     }
     return light;
+}
+export function createSkyBoxComponent(){
+    const skyBox: SkyBox = {
+        id: "",
+        type: "SkyBox",
+        hdrRef: ""
+    }
+    return skyBox;
 }

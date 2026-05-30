@@ -8,7 +8,7 @@ import { createDBIfNotExist, FileRow, AssetRow, closeDB } from "./db";
 import * as ShotEngineType from "@shot-engine/types";
 import { AssetManager } from "@shot-engine/types";
 import { readGLBFile } from './glb';
-import { readImageAsset, readMeshAsset, readPrefabAsset, readSceneAsset, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
+import { readHdrAsset, readImageAsset, readMeshAsset, readPrefabAsset, readSceneAsset, saveHdrAssetBinary, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
 import { imageToRaw } from './imageToRaw';
 import { createDefaultCubeAssetMesh, createDefaultSphereAssetMesh } from './createDefaultAssetMesh';
 
@@ -100,6 +100,9 @@ export function query(){
         if(type === "scene"){
             return readSceneAsset(filePath);
         }
+        if(type === "hdr"){
+            return readHdrAsset(filePath);
+        }
     }
     function updateAssetPropertyByUuid(uuid: string, property: string){
         assetsQuery.updateProperty.run(property, uuid);
@@ -113,13 +116,19 @@ export function query(){
         const fullPath = path.join(ASSET_DIR, fileRow.path);
         return fullPath;
     }
+    function addBakedHdrAsset(uuid: string, hdrAsset: ShotEngineType.HdrAsset){
+        const assetRow = assetsQuery.getById.get(uuid);
+        if(!assetRow || assetRow.type !== "hdr") return;
+        genHdrAsset(assetRow, hdrAsset);
+    }
     return {
         getAssetInfosFromPath,
         getAssetInfoFromUuid,
         getAssetInfosFromType,
         getAssetFromUuid,
         updateAssetPropertyByUuid,
-        getFilePathFromAssetId
+        getFilePathFromAssetId,
+        addBakedHdrAsset
     }
 }
 
@@ -233,6 +242,9 @@ export async function rescan(){
             }
             else if(isSceneFile(fileRow.path)){
                 await syncNotContainer(fileRow, assetRows, "scene");
+            }
+            else if(isHdrFile(fileRow.path)){
+                await syncNotContainer(fileRow, assetRows, "hdr");
             }
             else{
                 await syncNotContainer(fileRow, assetRows, "other");
@@ -491,6 +503,9 @@ function createAssetDefaultProterpty(type: AssetRow["type"]): string{
     else if(type === "scene"){
         return schema.defaultSceneAssetJSON;
     }
+    else if(type === "hdr"){
+        return schema.defaultHdrAssetJSON;
+    }
     else{
         return schema.defaultOtherAssetJSON;
     }
@@ -517,6 +532,10 @@ function isSceneFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return ext === ".scene";
 }
+function isHdrFile(filePath: string){
+    const ext = path.extname(filePath).toLowerCase();
+    return ext === ".hdr";
+}
 
 async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: AssetRow["type"]) {
     if(!fileRow.path) return;
@@ -538,6 +557,9 @@ async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: Asse
     }
     else if(type === "scene"){
         genAssetFromFile(fileRow, assetRow);
+    }
+    else if(type === "hdr"){
+        // ignore
     }
     else genDefaultAsset(fileRow, assetRow);
 }
@@ -572,6 +594,11 @@ function genPrefabAsset(assetRow: AssetRow, prefabAsset: ShotEngineType.PrefabAs
     fs.ensureDirSync(ASSET_GENERATED_DIR);
     const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
     savePrefabAssetBinary(prefabAsset, genAssetPath);
+}
+function genHdrAsset(assetRow: AssetRow, hdrAsset: ShotEngineType.HdrAsset){
+    fs.ensureDirSync(ASSET_GENERATED_DIR);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    saveHdrAssetBinary(hdrAsset, genAssetPath);
 }
 function deleteGenAsset(uuid: string){
     const genAssetPath = path.join(ASSET_GENERATED_DIR, uuid);

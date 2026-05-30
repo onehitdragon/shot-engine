@@ -9,7 +9,8 @@ import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
 import { saveMeshToBuffer, readMeshBinary, saveImageToBuffer, readImageBinary } from "./importer/binary/resourceBinary";
 import * as asssetManager from "@shot-engine/asset-manager";
-import { AssetManager, AssetType, PrefabAsset, SceneAsset } from "@shot-engine/types";
+import { AssetManager, AssetType, HdrAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
+import { readHdr } from "hdrify";
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -290,7 +291,25 @@ app.whenReady()
             return asssetManager.query().getFilePathFromAssetId(uuid);
         }
     );
-
+    ipcMain.handle(
+        "assetManager:addBakedHdrAsset",
+        (e, uuid: string, hdrAsset: HdrAsset) => {
+            return asssetManager.query().addBakedHdrAsset(uuid, hdrAsset);
+        }
+    );
+    ipcMain.handle(
+        "hdr:read",
+        (e, filePath: string) => {
+            const buffer = fs.readFileSync(filePath);
+            const image = readHdr(new Uint8Array(buffer));
+            return {
+                width: image.width,
+                height: image.height,
+                data: image.data
+            }
+        }
+    );
+    
     ipcMain.handle(
         "resource:saveMesh",
         async (e, destPath: string, mesh: Resource.Mesh) => {

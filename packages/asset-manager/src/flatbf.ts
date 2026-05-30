@@ -6,7 +6,10 @@ import {
     SceneNode, GameObject, GameObjectPrefab,
     SceneAsset,
     Scene,
-    IndexType
+    IndexType,
+    HdrImage,
+    EnviromentMap,
+    HdrAsset
 } from "../fbs-gen/fbsengine";
 import { buildSceneNode, readGameObject } from "./flatbfUtil";
 
@@ -90,6 +93,39 @@ export function saveSceneAssetBinary(sceneAsset: ShotEngineType.SceneAsset, file
     SceneAsset.addScene(builder, sceneOffset);
     const sceneAssetOffset = SceneAsset.endSceneAsset(builder);
     builder.finish(sceneAssetOffset);
+
+    const bytes = builder.asUint8Array();
+    fs.writeFileSync(filePath, bytes);
+}
+export function saveHdrAssetBinary(hdrAsset: ShotEngineType.HdrAsset, filePath: string){
+    const { enviromentMap } = hdrAsset;
+    const builder = new Builder(1024);
+    function createHdrImage(hdrImage: ShotEngineType.HdrImage){
+        const dataOffset = HdrImage.createDataVector(builder, hdrImage.data);
+        HdrImage.startHdrImage(builder);
+        HdrImage.addWidth(builder, hdrImage.width);
+        HdrImage.addHeight(builder, hdrImage.height);
+        HdrImage.addData(builder, dataOffset);
+        return HdrImage.endHdrImage(builder);
+    }
+    const rightHdrImageOffset = createHdrImage(enviromentMap.right);
+    const leftHdrImageOffset = createHdrImage(enviromentMap.left);
+    const topHdrImageOffset = createHdrImage(enviromentMap.top);
+    const bottomHdrImageOffset = createHdrImage(enviromentMap.bottom);
+    const fontHdrImageOffset = createHdrImage(enviromentMap.font);
+    const backHdrImageOffset = createHdrImage(enviromentMap.back);
+    EnviromentMap.startEnviromentMap(builder);
+    EnviromentMap.addRight(builder, rightHdrImageOffset);
+    EnviromentMap.addLeft(builder, leftHdrImageOffset);
+    EnviromentMap.addTop(builder, topHdrImageOffset);
+    EnviromentMap.addBottom(builder, bottomHdrImageOffset);
+    EnviromentMap.addFont(builder, fontHdrImageOffset);
+    EnviromentMap.addBack(builder, backHdrImageOffset);
+    const envMapOffset = EnviromentMap.endEnviromentMap(builder);
+    HdrAsset.startHdrAsset(builder);
+    HdrAsset.addEnviromentMap(builder, envMapOffset);
+    const hdrAssetOffset = HdrAsset.endHdrAsset(builder);
+    builder.finish(hdrAssetOffset);
 
     const bytes = builder.asUint8Array();
     fs.writeFileSync(filePath, bytes);
@@ -198,6 +234,47 @@ export function readSceneAsset(filePath: string){
             id: scene.id() ?? "",
             name: scene.name() ?? "",
             roots
+        }
+    }
+    return asset;
+}
+export function readHdrAsset(filePath: string){
+    if(!fs.existsSync(filePath)) return;
+    const bytes = new Uint8Array(fs.readFileSync(filePath));
+    const byteBuffer = new ByteBuffer(bytes);
+    const hdrAsset = HdrAsset.getRootAsHdrAsset(byteBuffer);
+    const envMap = hdrAsset.enviromentMap();
+    if(!envMap) return;
+
+    function readHdrImage(hdrImage: HdrImage | null){
+        if(!hdrImage) return hdrImage;
+        return {
+            width: hdrImage.width(),
+            height: hdrImage.height(),
+            data: hdrImage.dataArray() ?? new Float32Array()
+        }
+    }
+    const rightHdrImage = readHdrImage(envMap.right());
+    if(!rightHdrImage) return;
+    const leftHdrImage = readHdrImage(envMap.left());
+    if(!leftHdrImage) return;
+    const topHdrImage = readHdrImage(envMap.top());
+    if(!topHdrImage) return;
+    const bottomHdrImage = readHdrImage(envMap.bottom());
+    if(!bottomHdrImage) return;
+    const fontHdrImage = readHdrImage(envMap.font());
+    if(!fontHdrImage) return;
+    const backHdrImage = readHdrImage(envMap.back());
+    if(!backHdrImage) return;
+    
+    const asset: ShotEngineType.HdrAsset = {
+        enviromentMap: {
+            right: rightHdrImage,
+            left: leftHdrImage,
+            top: topHdrImage,
+            bottom: bottomHdrImage,
+            font: fontHdrImage,
+            back: backHdrImage,
         }
     }
     return asset;

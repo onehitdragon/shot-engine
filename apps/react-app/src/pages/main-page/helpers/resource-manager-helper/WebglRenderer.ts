@@ -1,8 +1,9 @@
 import type { mat3, mat4, vec3 } from "gl-matrix";
 import { WebglGridShader } from "./WebglGridShader";
 import type { Mesh, Shading } from "@shot-engine/types";
-import { WebglMeshCache } from "../asset-cache/webgl-mesh-cache";
 import { getSceneWebglContext } from "./CanvasHelper";
+import { AssetCache } from "../asset-cache/asset-cache";
+import { WebglSkyBoxShader } from "./WebglSkyBoxShader";
 
 export class WebglRenderer{
     private static _instance: WebglRenderer;
@@ -11,11 +12,14 @@ export class WebglRenderer{
         return this._instance;
     }
     private _gl: WebGL2RenderingContext;
+    private _webglSkyBoxShader: WebglSkyBoxShader;
     private _webglGridShader: WebglGridShader;
     private constructor(gl: WebGL2RenderingContext){
         this._gl = gl;
         gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LESS);
         this._webglGridShader = WebglGridShader.getInstance(gl);
+        this._webglSkyBoxShader = WebglSkyBoxShader.getInstance(gl);
     }
     render(
         shadingComponent: Shading,
@@ -27,7 +31,7 @@ export class WebglRenderer{
     ){
         const { shaderType, culling } = shadingComponent;
         this.culling(culling);
-        const webglMeshs = WebglMeshCache.getInstance().getWebglMeshes(meshComponent.meshRef);
+        const webglMeshs = AssetCache.getInstance().getWebglMeshes(meshComponent.meshRef);
         if(!webglMeshs){
             console.warn("error while get webglmesh cache");
             return;
@@ -48,6 +52,9 @@ export class WebglRenderer{
         else{
             console.warn(`dont support shaderType: ${shaderType}`);
         }
+    }
+    renderSkyBox(viewMat4: mat4, clipMat4: mat4){
+        this._webglSkyBoxShader.render(viewMat4, clipMat4);
     }
     renderGrid(vpMat4: mat4){
         // const gl = this._gl;

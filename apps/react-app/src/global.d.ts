@@ -1,4 +1,4 @@
-import type { AssetManager, AssetType, Asset, PrefabAsset, SceneAsset } from "@shot-engine/types";
+import type { AssetManager, AssetType, Asset, PrefabAsset, SceneAsset, HdrAsset } from "@shot-engine/types";
 
 export type ApiType = {
     close: () => void,
@@ -42,6 +42,10 @@ export type ApiType = {
         savePrefabAssetBinary: (prefabAsset: PrefabAsset, filePath: string) => Promise<void>,
         saveSceneAssetBinary: (sceneAsset: SceneAsset, filePath: string) => Promise<void>,
         getFilePathFromAssetId: (uuid: string) => Promise<string | undefined>,
+        addBakedHdrAsset: (uuid: string, hdrAsset: HdrAsset) => Promise<void>,
+    },
+    hdr: {
+        read: (filePath: string) => Promise<{ width: number, height: number, data: Float32Array }>
     },
     resource: {
         saveMesh: (path: string, mesh: Resource.Mesh) => Promise<void>,

@@ -37,3 +37,22 @@ table PrefabAsset{
 table SceneAsset{
     scene: Scene;
 }
+
+table HdrImage{
+    width: uint;
+    height: uint;
+    data: [float];
+}
+
+table EnviromentMap{
+    right: HdrImage;
+    left: HdrImage;
+    top: HdrImage;
+    bottom: HdrImage;
+    font: HdrImage;
+    back: HdrImage;
+}
+
+table HdrAsset{
+    enviromentMap: EnviromentMap;
+}

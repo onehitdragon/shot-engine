@@ -1,4 +1,5 @@
 import { AssetCache } from "../../helpers/asset-cache/asset-cache";
+import { ColorCache } from "../../helpers/asset-cache/color-cache";
 
 export function ResourceManager(){
     const countRecord = AssetCache.getInstance().getCountRecord();
@@ -7,7 +8,7 @@ export function ResourceManager(){
         <div className="flex flex-col flex-1 overflow-auto scrollbar-thin p-1">
             <p className="select-none text-white text-xl font-bold">Resource</p>
             {
-                countRecord.map(([type, assetInfos], index) => {
+                countRecord.map(([type, assetInfos]) => {
                     return <div key={type}>
                         <p className="select-none text-white">{type}: {assetInfos.length}</p>
                         {
@@ -25,17 +26,16 @@ export function ResourceManager(){
                     </div>
                 })
             }
-            <h2 className="select-none text-white text-xl font-bold">Webgl Resourcee</h2>
-            {/* <ul className="flex-1 flex flex-col gap-3">
-                <li className="flex flex-col">
-                    <p className="select-none text-white">
-                        meshCount: {WebglResourceManager.getInstance().info().meshCount}
-                    </p>
-                    <p className="select-none text-white">
-                        textureCount: {WebglResourceManager.getInstance().info().textureCount}
-                    </p>
-                </li>
-            </ul> */}
+            <h2 className="select-none text-white text-xl font-bold">Color Textures</h2>
+            <ul className="flex-1 flex flex-col">
+                {
+                    ColorCache.getInstance().getKeys().map(colorKey => {
+                        return <li key={colorKey} className="flex flex-col">
+                            <p className="select-none text-white">{colorKey}</p>
+                        </li>
+                    })
+                }
+            </ul>
         </div>
     </div>;
 }

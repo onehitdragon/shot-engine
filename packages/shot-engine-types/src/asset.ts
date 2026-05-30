@@ -21,9 +21,20 @@ export type PrefabAsset = {
 export type SceneAsset = {
     scene: Scene
 }
-export type Asset = ImageAsset | MeshAsset | PrefabAsset | SceneAsset;
+export type HdrImage = { width: number, height: number, data: Float32Array };
+export type HdrAsset = {
+    enviromentMap: {
+        right: HdrImage,
+        left: HdrImage,
+        top: HdrImage,
+        bottom: HdrImage,
+        font: HdrImage,
+        back: HdrImage,
+    }
+}
+export type Asset = ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset;
 
-export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene";
+export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene" | "hdr";
 export namespace AssetProperty{
     export type Other = {
         type: "other"
@@ -60,5 +71,9 @@ export namespace AssetProperty{
         type: "scene"
     }
 
-    export type AssetProperty = Other | Image | Mesh | Prefab | Scene;
+    export type Hdr = {
+        type: "hdr"
+    }
+
+    export type AssetProperty = Other | Image | Mesh | Prefab | Scene | Hdr;
 }

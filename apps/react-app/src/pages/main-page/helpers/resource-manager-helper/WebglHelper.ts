@@ -66,6 +66,30 @@ export class WebglHelper{
     ){
         gl.deleteVertexArray(vao);
     }
+    static deleteTexture(
+        gl: WebGL2RenderingContext,
+        texture: WebGLTexture
+    ){
+        gl.deleteTexture(texture);
+    }
+    static deleteFramebuffer(
+        gl: WebGL2RenderingContext,
+        frameBuffer: WebGLFramebuffer
+    ){
+        gl.deleteFramebuffer(frameBuffer);
+    }
+    static deleteRenderbuffer(
+        gl: WebGL2RenderingContext,
+        renderBuffer: WebGLRenderbuffer
+    ){
+        gl.deleteRenderbuffer(renderBuffer);
+    }
+    static deleteProgram(
+        gl: WebGL2RenderingContext,
+        program: WebGLProgram
+    ){
+        gl.deleteProgram(program);
+    }
     static bindVertexBuffer(gl: WebGL2RenderingContext, buffer: WebGLBuffer){
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     }

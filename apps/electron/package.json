@@ -27,6 +27,7 @@
     "@nodelib/fs.walk": "^3.0.1",
     "better-sqlite3": "^12.9.0",
     "fs-extra": "^11.3.3",
+    "hdrify": "^0.12.1",
     "ktx-parse": "^1.1.0",
     "lodash": "^4.17.23",
     "sharp": "^0.34.5",

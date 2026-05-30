@@ -1,7 +1,7 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
 import type { NodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { createCubeNode, createEmptyNode, createSphereNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
-import { createDirectionalLightComponent, createPbrShadingComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
+import { createDirectionalLightComponent, createPbrShadingComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent, createSkyBoxComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
 import { goAddedThunk, goRemovedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 import { componentAddedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
 
@@ -60,6 +60,12 @@ export function SceneNodeContextMenu(
     const addDirectionalLightComponent = () => {
         dispatch(componentAddedThunk({
             component: createDirectionalLightComponent(),
+            unique: true,
+        }));
+    }
+    const addSkyBox = () => {
+        dispatch(componentAddedThunk({
+            component: createSkyBoxComponent(),
             unique: true,
         }));
     }
@@ -127,6 +133,12 @@ export function SceneNodeContextMenu(
                     onMouseDown={addPbrShadingComponent}
                 >
                     Add PBR Shading
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={addSkyBox}
+                >
+                    Add Sky Box
                 </li>
             </ul>
         </div>

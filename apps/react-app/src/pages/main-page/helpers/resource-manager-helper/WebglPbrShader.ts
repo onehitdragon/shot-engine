@@ -4,8 +4,9 @@ import pbrShadingFShaderSource from "../shaders/pbr-shader/fshader.glsl?raw";
 import type { mat3, mat4, vec3 } from "gl-matrix";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
 import type { PbrShading } from "@shot-engine/types";
-import { WebglTextureCache } from "../asset-cache/webgl-texture-cache";
 import { LightInfo } from "../asset-cache/LightInfo";
+import { AssetCache } from "../asset-cache/asset-cache";
+import { ColorCache } from "../asset-cache/color-cache";
 
 export class WebglPbrShader{
     private static _instance: WebglPbrShader;
@@ -139,10 +140,13 @@ export class WebglPbrShader{
         }
         const diffuseWebglTexture = 
             diffuse.type === "image" ?
-            WebglTextureCache.getInstance().getWebglTexture(diffuse.imageRef) :
-            WebglTextureCache.getInstance().getWebglColorTexture(diffuse.color)
+            AssetCache.getInstance().getWebglTexture(diffuse.imageRef) :
+            ColorCache.getInstance().getWebglColorTexture(diffuse.color)
         ;
-        if(!diffuseWebglTexture) return;
+        if(!diffuseWebglTexture){
+            console.warn("cant find diffuse texture");
+            return;
+        }
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, diffuseWebglTexture.webglTexture);
         gl.uniform1i(this._u_albedoSamplerLoc, 0);

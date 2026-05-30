@@ -9,10 +9,10 @@ import { OrbitCameraHelper } from "../../helpers/resource-manager-helper/OrbitCa
 import { selectNodeRecord, selectNodes, type NodeState } from "../../../../global-state/slices/go-tree-slice";
 import type { Component, GameObject, PrefabAsset, SceneNode, Transform } from "@shot-engine/types";
 import { AssetCache } from "../../helpers/asset-cache/asset-cache";
-import { WebglMeshCache } from "../../helpers/asset-cache/webgl-mesh-cache";
-import { WebglTextureCache } from "../../helpers/asset-cache/webgl-texture-cache";
 import { LightInfo } from "../../helpers/asset-cache/LightInfo";
 import { cloneDeep } from "lodash";
+import { SkyBoxInfo } from "../../helpers/asset-cache/SkyBoxInfo";
+import { ColorCache } from "../../helpers/asset-cache/color-cache";
 
 export function SceneRenderer(){
     const nodes = useAppSelector(state => selectNodes(state));
@@ -24,6 +24,7 @@ export function SceneRenderer(){
     const [webglRenderer, setWebglRenderer] = useState<WebglRenderer | null>(null);
     const [clickedOn, setClickedOn] = useState(false);
     const [altOn, setAltOn] = useState(false);
+    const [prepareAssetCount, setPrepareAssetCount] = useState(0);
 
     useEffect(() => {
         const webgl2 = getSceneWebglContext();
@@ -48,30 +49,40 @@ export function SceneRenderer(){
     }, []);
 
     useEffect(() => {
-        let cancelled = false;
+        const controller = new AbortController();
         const handler = async () => {
-            const { componentArrs } = await prepareAsset(nodes);
-            if(!webglRenderer || !camera || cancelled) return;
+            const signal = controller.signal;
 
+            const { componentArrs } = await prepareAsset(nodes, signal);
+            if(signal.aborted) return;
+            AssetCache.getInstance().deleteUnused();
+
+            prepareColorTexture(componentArrs);
             prepareLight(componentArrs);
-
-            webglRenderer.clear();
-            const renderer = new SceneNodeRenderer(camera, webglRenderer);
-            renderer.renderNodes(rootIds, nodeRecord, null);
-            
-            AssetCache.getInstance().resetCacheState();
-            WebglMeshCache.getInstance().resetCacheState();
-            WebglTextureCache.getInstance().resetCacheState();
-            LightInfo.getInstance().reset();
-
-            webglRenderer.renderGrid(OrbitCameraHelper.createVPMatrix(camera));
-            webglRenderer.debug();
+            prepareSkyBox(componentArrs);
+            setPrepareAssetCount(state => state + 1);
         }
         handler();
         return () => {
-            cancelled = true;
+            controller.abort();
         }
-    }, [nodes, rootIds, nodeRecord, webglRenderer, camera]);
+    }, [nodes]);
+
+    useEffect(() => {
+        if(!webglRenderer || !camera || rootIds.length === 0) return;
+
+        webglRenderer.clear();
+        const renderer = new SceneNodeRenderer(camera, webglRenderer);
+        renderer.renderNodes(rootIds, nodeRecord, null);
+
+        webglRenderer.renderSkyBox(
+            OrbitCameraHelper.createViewMatrix(camera),
+            OrbitCameraHelper.createClipMatrix(camera),
+        );
+        webglRenderer.renderGrid(OrbitCameraHelper.createVPMatrix(camera));
+        webglRenderer.debug();
+
+    }, [camera, rootIds, nodeRecord, webglRenderer, prepareAssetCount]);
 
     return (
         <div className="flex-1 flex">
@@ -97,7 +108,9 @@ export function SceneRenderer(){
                 <CameraMovement
                     onMouseUp={() => { setClickedOn(false) }} alt={altOn}
                     camera={camera}
-                    onCameraChange={() => setCamera({...camera})}
+                    onCameraChange={() => {
+                        setCamera({...camera});
+                    }}
                 />
             }
         </div>
@@ -147,8 +160,8 @@ function CameraMovement(props: {
             lastY = e.clientY;
             if(alt){
                 let { theta, phi } = camera.sphereCoordinate;
-                theta -= deltaX;
-                phi += deltaY;
+                theta -= deltaX * 0.15;
+                phi += deltaY * 0.15;
                 phi = clamp(phi, -89, 89);
                 camera.sphereCoordinate.theta = theta;
                 camera.sphereCoordinate.phi = phi;
@@ -300,10 +313,10 @@ class SceneNodeRenderer{
         return normalMat3;
     }
 }
-async function prepareAsset(nodes: NodeState[]){
+async function prepareAsset(nodes: NodeState[], signal: AbortSignal){
     const componentArrs: Component[][] = [];
     const gameObjects: GameObject[] = [];
-    async function getPrefabRoot(prefabRef: string) {
+    async function getPrefabRoot(prefabRef: string){
         const assetCache = await AssetCache.getInstance().createAssetCache(prefabRef, "prefab");
         if(!assetCache || !assetCache.asset){
             console.warn("cant find prefab asset with id", prefabRef);
@@ -313,6 +326,7 @@ async function prepareAsset(nodes: NodeState[]){
         gameObjects.push(prefabAsset.root);
     }
     for(const node of nodes){
+        if(signal.aborted) break;
         if("components" in node){
             componentArrs.push(node.components);
         }
@@ -321,6 +335,7 @@ async function prepareAsset(nodes: NodeState[]){
         }
     }
     for(const go of gameObjects){
+        if(signal.aborted) break;
         componentArrs.push(go.components);
         for(const child of go.childs){
             if("components" in child) gameObjects.push(child);
@@ -331,8 +346,9 @@ async function prepareAsset(nodes: NodeState[]){
     }
     for(const componentArr of componentArrs){
         for(const component of componentArr){
+            if(signal.aborted) break;
             if(component.type === "Mesh"){
-                await WebglMeshCache.getInstance().createWebglMeshes(component.meshRef);
+                await AssetCache.getInstance().createAssetCache(component.meshRef, "mesh");
             }
             if(
                 component.type === "Shading" && 
@@ -340,7 +356,11 @@ async function prepareAsset(nodes: NodeState[]){
                 component.diffuse.type === "image"
             ){
                 await AssetCache.getInstance().createAssetCache(component.diffuse.imageRef, "image");
-                await WebglTextureCache.getInstance().createWebglTexture(component.diffuse.imageRef);
+            }
+            if(
+                component.type === "SkyBox"
+            ){
+                await AssetCache.getInstance().createAssetCache(component.hdrRef, "hdr");
             }
         }
     }
@@ -349,7 +369,22 @@ async function prepareAsset(nodes: NodeState[]){
         componentArrs
     };
 }
+function prepareColorTexture(componentArrs: Component[][]){
+    for(const componentArr of componentArrs){
+        for(const component of componentArr){
+            if(component.type === "Shading"){
+                if(component.shaderType === "phong" || component.shaderType === "pbr"){
+                    if(component.diffuse.type === "color"){
+                        ColorCache.getInstance().createColorTexture(component.diffuse.color);
+                    }
+                }
+            }
+        }
+    }
+    ColorCache.getInstance().deleteUnused();
+}
 function prepareLight(componentArrs: Component[][]){
+    LightInfo.getInstance().reset();
     for(const componentArr of componentArrs){
         let transform: Transform | undefined;
         for(const component of componentArr){
@@ -363,6 +398,19 @@ function prepareLight(componentArrs: Component[][]){
                 else{
                     LightInfo.getInstance().addLight(component, transform);
                 }
+            }
+        }
+    }
+}
+function prepareSkyBox(componentArrs: Component[][]){
+    SkyBoxInfo.getInstance().reset();
+    for(const componentArr of componentArrs){
+        for(const component of componentArr){
+            if(component.type === "SkyBox"){
+                if(SkyBoxInfo.getInstance().uniqueSkyBox){
+                    console.warn("scene contains more than 1 skybox");
+                }
+                SkyBoxInfo.getInstance().setSkyBox(component);
             }
         }
     }

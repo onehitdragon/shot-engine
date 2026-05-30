@@ -63,6 +63,11 @@ contextBridge.exposeInMainWorld("api", {
             ipcRenderer.invoke("assetManager:saveSceneAssetBinary", sceneAsset, filePath),
         getFilePathFromAssetId: (uuid: string) => 
             ipcRenderer.invoke("assetManager:getFilePathFromAssetId", uuid),
+        addBakedHdrAsset: (uuid: string, hdrAsset: any) => 
+            ipcRenderer.invoke("assetManager:addBakedHdrAsset", uuid, hdrAsset),
+    },
+    hdr: {
+        read: (filePath: string) => ipcRenderer.invoke("hdr:read", filePath),
     },
     resource: {
         saveMesh: (path: string, mesh: Resource.Mesh) => ipcRenderer.invoke("resource:saveMesh", path, mesh),

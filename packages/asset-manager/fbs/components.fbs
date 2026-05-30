@@ -70,6 +70,11 @@ table DirectionalLight{
     radius: double;
 }
 
+table SkyBox{
+    id: string;
+    hdrRef: string;
+}
+
 union Component{
     Transform,
     Mesh,
@@ -77,5 +82,6 @@ union Component{
     PhongShading,
     PbrShading,
     PointLight,
-    DirectionalLight
+    DirectionalLight,
+    SkyBox
 }

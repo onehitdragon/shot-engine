@@ -5,7 +5,8 @@ import {
     SimpleShading, PhongShading, ImageDiffuse, ColorDiffuse,
     Diffuse, PointLight, DirectionalLight,
     TransformEditor,
-    PbrShading
+    PbrShading,
+    SkyBox
 } from "../fbs-gen/fbsengine";
 import { Builder, Offset } from "flatbuffers";
 
@@ -196,6 +197,15 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             componentOffset = DirectionalLight.endDirectionalLight(builder);
             componentTypeOffsets.push(Component.DirectionalLight);
         }
+        else if(component.type === "SkyBox"){
+            const idOffset = builder.createString(component.id);
+            const hdrRefOffset = builder.createString(component.hdrRef);
+            SkyBox.startSkyBox(builder);
+            SkyBox.addId(builder, idOffset);
+            SkyBox.addHdrRef(builder, hdrRefOffset);
+            componentOffset = SkyBox.endSkyBox(builder);
+            componentTypeOffsets.push(Component.SkyBox);
+        }
         if(componentOffset !== undefined){
             componentOffsets.push(componentOffset);
         }
@@ -341,6 +351,14 @@ export function readGameObject(gameObject: GameObject){
                 dir: getVec3(directionalLight.dir()),
                 intensity: directionalLight.intensity(),
                 radius: directionalLight.radius()
+            });
+        }
+        if(componentType === Component.SkyBox){
+            const skyBox = gameObject.components(i, new SkyBox()) as SkyBox;
+            gameObjectResult.components.push({
+                type: "SkyBox",
+                id: skyBox.id() ?? "",
+                hdrRef: skyBox.hdrRef() ?? ""
             });
         }
     }

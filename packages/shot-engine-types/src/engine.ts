@@ -76,7 +76,12 @@ export type DirectionalLight = LightBase & {
     radius: number,
 }
 export type Light = PointLight | DirectionalLight;
-export type Component = Transform | Mesh | Shading | Light;
+export type SkyBox = {
+    type: "SkyBox",
+    id: string,
+    hdrRef: string,
+}
+export type Component = Transform | Mesh | Shading | Light | SkyBox;
 
 export type GameObjectPrefab = {
     id: string,

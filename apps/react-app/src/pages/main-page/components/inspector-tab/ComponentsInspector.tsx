@@ -1,4 +1,4 @@
-import type { AssetManager, Component, DirectionalLight, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, Transform } from "@shot-engine/types";
+import type { AssetManager, Component, DirectionalLight, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, SkyBox, Transform } from "@shot-engine/types";
 import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { selectComponents } from "../../../../global-state/slices/inspector-components-slice";
@@ -31,6 +31,9 @@ export function ComponentsInspector(){
                     }
                     else if(component.type === "Light"){
                         return <LightSection key={component.id} light={component}/>
+                    }
+                    else if(component.type === "SkyBox"){
+                        return <SkyBoxSection key={component.id} skyBox={component}/>
                     }
                 })
             }
@@ -426,6 +429,50 @@ function DirectionalLightEditor(props: { dirLight: DirectionalLight }){
                 value={dir}
                 onChange={(value) => {
                     pointLightClone.dir = value;
+                    update();
+                }}
+            />
+        </div>
+    );
+}
+function SkyBoxSection(props: { skyBox: SkyBox }){
+    const { skyBox } = props;
+    const dispatch = useAppDispatch();
+    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+    const skyBoxClone = cloneDeep(skyBox);
+    const update = () => {
+        dispatch(componentUpdatedThunk({ component: skyBoxClone }));
+    }
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            const assetInfos = await window.api.assetManager.getAssetInfosFromType("hdr");
+            if(cancelled) return;
+            setAssetInfos(assetInfos);
+        }
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, []);
+
+    return (
+        <div className="flex flex-col">
+            <Header label="SkyBox" component={skyBox}/>
+            <Selection
+                label="hdrRef"
+                options={
+                    assetInfos.map(e => {
+                        return {
+                            label: e.name,
+                            value: e.uuid
+                        }
+                    })
+                }
+                value={skyBox.hdrRef}
+                onChange={(value) => {
+                    skyBoxClone.hdrRef = value;
                     update();
                 }}
             />
