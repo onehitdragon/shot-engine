@@ -22,14 +22,21 @@ export type SceneAsset = {
     scene: Scene
 }
 export type HdrImage = { width: number, height: number, data: Float32Array };
+export type HdrCube = {
+    right: HdrImage,
+    left: HdrImage,
+    top: HdrImage,
+    bottom: HdrImage,
+    font: HdrImage,
+    back: HdrImage,
+}
 export type HdrAsset = {
-    enviromentMap: {
-        right: HdrImage,
-        left: HdrImage,
-        top: HdrImage,
-        bottom: HdrImage,
-        font: HdrImage,
-        back: HdrImage,
+    enviromentMap: HdrCube,
+    irradianceMap: HdrCube,
+    prefilterMap: {
+        maxShininess: number,
+        mipMapCount: number,
+        mipMaps: HdrCube[]
     }
 }
 export type Asset = ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset;

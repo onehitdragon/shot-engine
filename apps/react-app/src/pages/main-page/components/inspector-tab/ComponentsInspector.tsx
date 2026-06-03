@@ -162,7 +162,7 @@ function ShadingSection(props: { shading: Shading }){
 }
 function PhongShadingEditor(props: { phongShading: PhongShading }){
     const { phongShading } = props;
-    const { diffuse, ambient, shininess } = phongShading;
+    const { diffuse, specular, shininess } = phongShading;
     const dispatch = useAppDispatch();
     const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
     const shadingClone = cloneDeep(phongShading);
@@ -239,17 +239,18 @@ function PhongShadingEditor(props: { phongShading: PhongShading }){
                     }}
                 />
             }
-            <ThreeValueRow
-                label="Ambient"
-                value={ambient}
+            <RGBValueRow
+                label="Specular color"
+                value={getDenormalizeColor(specular)}
                 onChange={(value) => {
-                    shadingClone.ambient = value;
+                    shadingClone.specular = getNormalizeColor(value);;
                     update();
-                }}
-            />
+                }
+            }/>
             <OneValueRow
                 label="Shininess"
                 value={shininess}
+                range={[1, Number.MAX_VALUE]}
                 onChange={(value) => {
                     shadingClone.shininess = value;
                     update();

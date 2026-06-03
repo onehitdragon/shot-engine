@@ -10,7 +10,11 @@ type AssetCacheItem = {
     webglResource?: {
         webglMeshes?: WebglMesh[],
         webglTexture?: WebglTexture,
-        webglTextureCube?: WebglTextureCube
+        hdr?: {
+            enviromentMap?: WebglTextureCube,
+            irradianceMap?: WebglTextureCube,
+            prefilterMap?: WebglTextureCube
+        }
     }
 }
 type AssetCacheState = {
@@ -111,7 +115,7 @@ export class AssetCache{
         }
         if(type === "hdr"){
             assetCacheItem.webglResource = {
-                webglTextureCube: this._createWebglTextureCube(assetCacheItem)
+                hdr: this._createHdr(assetCacheItem)
             }
         }
     }
@@ -133,26 +137,73 @@ export class AssetCache{
         );
         return webglTexture;
     }
-    private _createWebglTextureCube(assetCacheItem: AssetCacheItem){
+    private _createHdr(assetCacheItem: AssetCacheItem){
         const hdrAsset = assetCacheItem.asset as HdrAsset | undefined;
         if(!hdrAsset) return;
-        const webglTextureCube = new WebglTextureCube(
+        const enviromentMap = new WebglTextureCube(
             this._gl,
             [
-                hdrAsset.enviromentMap.right,
-                hdrAsset.enviromentMap.left,
-                hdrAsset.enviromentMap.top,
-                hdrAsset.enviromentMap.bottom,
-                hdrAsset.enviromentMap.font,
-                hdrAsset.enviromentMap.back,
+                {
+                    level: 0,
+                    faces: [
+                        hdrAsset.enviromentMap.right,
+                        hdrAsset.enviromentMap.left,
+                        hdrAsset.enviromentMap.top,
+                        hdrAsset.enviromentMap.bottom,
+                        hdrAsset.enviromentMap.font,
+                        hdrAsset.enviromentMap.back,
+                    ]
+                }
             ]
         );
-        return webglTextureCube;
+        const irradianceMap = new WebglTextureCube(
+            this._gl,
+            [
+                {
+                    level: 0,
+                    faces: [
+                        hdrAsset.irradianceMap.right,
+                        hdrAsset.irradianceMap.left,
+                        hdrAsset.irradianceMap.top,
+                        hdrAsset.irradianceMap.bottom,
+                        hdrAsset.irradianceMap.font,
+                        hdrAsset.irradianceMap.back,
+                    ]
+                }
+            ]
+        );
+        const prefilterMap = new WebglTextureCube(
+            this._gl,
+            hdrAsset.prefilterMap.mipMaps.map((mipMap, i) => {
+                return {
+                    level: i,
+                    faces: [
+                        mipMap.right,
+                        mipMap.left,
+                        mipMap.top,
+                        mipMap.bottom,
+                        mipMap.font,
+                        mipMap.back,
+                    ]
+                }
+            }),
+            {
+                MIN: this._gl.LINEAR_MIPMAP_LINEAR
+            }
+        );
+
+        return {
+            enviromentMap,
+            irradianceMap,
+            prefilterMap
+        };
     }
     private _disposeWebglResoure(assetCacheItem?: AssetCacheItem){
         assetCacheItem?.webglResource?.webglMeshes?.forEach(e => e.dispose());
         assetCacheItem?.webglResource?.webglTexture?.dispose();
-        assetCacheItem?.webglResource?.webglTextureCube?.dispose();
+        assetCacheItem?.webglResource?.hdr?.enviromentMap?.dispose();
+        assetCacheItem?.webglResource?.hdr?.irradianceMap?.dispose();
+        assetCacheItem?.webglResource?.hdr?.prefilterMap?.dispose();
     }
     public getAssetCache(uuid: string){
         return this.map.get(uuid);
@@ -163,8 +214,8 @@ export class AssetCache{
     public getWebglTexture(uuid: string){
         return this.map.get(uuid)?.webglResource?.webglTexture;
     }
-    public getWebglTextureCube(uuid: string){
-        return this.map.get(uuid)?.webglResource?.webglTextureCube;
+    public getHdr(uuid: string){
+        return this.map.get(uuid)?.webglResource?.hdr;
     }
     public deleteUnused(){
         const deleteKeys: string[] = [];

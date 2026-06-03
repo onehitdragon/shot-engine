@@ -21,7 +21,7 @@ export function createPhongShadingComponent(){
             type: "color",
             color: { x: 1, y: 1, z: 1 }
         },
-        ambient: {x: 0.1, y: 0.1, z: 0.1},
+        specular: {x: 0, y: 0, z: 0},
         shininess: 1
     }
     return component;

@@ -52,7 +52,7 @@ export class WebglSkyBoxShader{
     render(viewMat4: mat4, clipMat4: mat4){
         const uniqueSkyBox = SkyBoxInfo.getInstance().uniqueSkyBox;
         if(!uniqueSkyBox || !uniqueSkyBox.hdrRef) return;
-        const webglTextureCube = AssetCache.getInstance().getWebglTextureCube(uniqueSkyBox.hdrRef);
+        const webglTextureCube = AssetCache.getInstance().getHdr(uniqueSkyBox.hdrRef)?.enviromentMap;
         if(!webglTextureCube) return;
 
         const upperLeftMat3 = mat3.create();

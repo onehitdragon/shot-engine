@@ -118,17 +118,17 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
                 diffuseType = Diffuse.ColorDiffuse;
             }
             Vec3.startVec3(builder);
-            Vec3.addX(builder, component.ambient.x);
-            Vec3.addY(builder, component.ambient.y);
-            Vec3.addZ(builder, component.ambient.z);
-            const ambientOffset = Vec3.endVec3(builder);
+            Vec3.addX(builder, component.specular.x);
+            Vec3.addY(builder, component.specular.y);
+            Vec3.addZ(builder, component.specular.z);
+            const specularOffset = Vec3.endVec3(builder);
             PhongShading.startPhongShading(builder);
             PhongShading.addId(builder, idOffset);
             PhongShading.addCulling(builder, cullingOffset);
             PhongShading.addTransparent(builder, component.transparent);
             PhongShading.addDiffuse(builder, diffuseOffset);
             PhongShading.addDiffuseType(builder, diffuseType);
-            PhongShading.addAmbient(builder, ambientOffset);
+            PhongShading.addSpecular(builder, specularOffset);
             PhongShading.addShininess(builder, component.shininess);
             componentOffset = PhongShading.endPhongShading(builder);
             componentTypeOffsets.push(Component.PhongShading);
@@ -297,7 +297,7 @@ export function readGameObject(gameObject: GameObject){
                 culling: getCulling(phongShading.culling()),
                 transparent: phongShading.transparent(),
                 diffuse: diffuseOut,
-                ambient: getVec3(phongShading.ambient()),
+                specular: getVec3(phongShading.specular()),
                 shininess: phongShading.shininess(),
             });
         }
@@ -396,4 +396,12 @@ export function getVec3(vec3?: Vec3 | null): ShotEngineType.Vec3{
         y: vec3.y(),
         z: vec3.z()
     }
+}
+export function getUint8Array(arrayIn?: Uint8Array | null){
+    // create new Uint8Array by copy arrayIn
+    return arrayIn ? new Uint8Array(arrayIn) : new Uint8Array();
+}
+export function getFloat32Array(arrayIn?: Float32Array | null){
+    // create new Float32Array by copy arrayIn
+    return arrayIn ? new Float32Array(arrayIn) : new Float32Array();
 }

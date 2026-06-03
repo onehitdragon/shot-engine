@@ -43,7 +43,7 @@ export type PhongShading = ShadingBase & {
         type: "color",
         color: Vec3
     },
-    ambient: Vec3,
+    specular: Vec3,
     shininess: number
 }
 export type PbrShading = ShadingBase & {

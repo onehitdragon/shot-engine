@@ -43,7 +43,7 @@ table PhongShading{
     culling: string;
     transparent: bool;
     diffuse: Diffuse;
-    ambient: Vec3;
+    specular: Vec3;
     shininess: double;
 }
 

@@ -44,7 +44,7 @@ table HdrImage{
     data: [float];
 }
 
-table EnviromentMap{
+table HdrCube{
     right: HdrImage;
     left: HdrImage;
     top: HdrImage;
@@ -53,6 +53,14 @@ table EnviromentMap{
     back: HdrImage;
 }
 
+table PrefilterMap{
+    maxShininess: double;
+    mipMapCount: uint;
+    mipMaps: [HdrCube];
+}
+
 table HdrAsset{
-    enviromentMap: EnviromentMap;
+    enviromentMap: HdrCube;
+    irradianceMap: HdrCube;
+    prefilterMap: PrefilterMap;
 }

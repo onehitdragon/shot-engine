@@ -2,6 +2,7 @@ import type { Vec3 } from "@shot-engine/types";
 import { getSceneWebglContext } from "../resource-manager-helper/CanvasHelper";
 import { WebglTexture } from "../resource-manager-helper/WebglTexture";
 import { getDenormalizeColor } from "../utils/utils";
+import { WebglTextureCube } from "../resource-manager-helper/WebglTextureCube";
 
 export class ColorCache{
     private static _instance: ColorCache;
@@ -12,10 +13,12 @@ export class ColorCache{
     private _gl: WebGL2RenderingContext;
     private _map: Map<string, WebglTexture>;
     private _usedKeys: Set<string>;
+    private _emptyWebglTextureCube: WebglTextureCube | null;
     private constructor(gl: WebGL2RenderingContext){
         this._gl = gl;
         this._map = new Map();
         this._usedKeys = new Set<string>();
+        this._emptyWebglTextureCube = null;
     }
     public createColorTexture(color: Vec3){
         const key = this.colorToKey(color);
@@ -64,5 +67,24 @@ export class ColorCache{
     }
     public getKeys(){
         return Array.from(this._map.keys());
+    }
+    public getEmptyWebglTextureCube(){
+        if(!this._emptyWebglTextureCube){
+            const face = {
+                width: 1,
+                height: 1,
+                data: new Float32Array([0, 0, 0, 0])
+            };
+            this._emptyWebglTextureCube = new WebglTextureCube(
+                this._gl,
+                [
+                    {
+                        level: 0,
+                        faces: [face, face, face, face, face, face]
+                    }
+                ]
+            );
+        }
+        return this._emptyWebglTextureCube;
     }
 }
