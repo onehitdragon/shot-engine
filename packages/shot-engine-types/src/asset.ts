@@ -34,10 +34,10 @@ export type HdrAsset = {
     enviromentMap: HdrCube,
     irradianceMap: HdrCube,
     prefilterMap: {
-        maxShininess: number,
         mipMapCount: number,
         mipMaps: HdrCube[]
-    }
+    },
+    brdfLUT: HdrImage
 }
 export type Asset = ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset;
 

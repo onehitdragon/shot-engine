@@ -9,6 +9,8 @@ import cubemapVS from "../../pages/main-page/helpers/shaders/hdr-shader/cubemap-
 import equirectangularFS from "../../pages/main-page/helpers/shaders/hdr-shader/equirectangular-fs.glsl?raw";
 import irradianceMapFS from "../../pages/main-page/helpers/shaders/hdr-shader/irradianceMap-fs.glsl?raw";
 import prefilterMapFS from "../../pages/main-page/helpers/shaders/hdr-shader/prefilterMap-fs.glsl?raw";
+import brdfVS from "../../pages/main-page/helpers/shaders/hdr-shader/brdf-vs.glsl?raw";
+import brdfFS from "../../pages/main-page/helpers/shaders/hdr-shader/brdf-fs.glsl?raw";
 
 export const inspectAssetThunk = createAsyncThunk
 <
@@ -301,14 +303,15 @@ async function bake(
     [vao, freeProgram] = setupCubeVertextProgram(gl, prefilterProgram);
     u_ViewMatrixLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_ViewMatrix");
     u_enviromentMapLoc  = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_enviromentMap");
-    const u_shininessLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_shininess");
+    const u_roughnessLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_roughness");
+    const u_resolutionLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_resolution");
+    gl.uniform1f(u_resolutionLoc, 512);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, envCubeMap);
     gl.uniform1i(u_enviromentMapLoc, 0);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, captureFBO);
     const maxMipLevels = 5;
-    const maxShininess = 20000;
     const mipMapsOut: HdrCube[] = [];
     for(let mipLevel = 0; mipLevel < maxMipLevels; mipLevel++){
         const mipWidth = parseInt(128 * Math.pow(0.5, mipLevel) + "");
@@ -316,8 +319,8 @@ async function bake(
         gl.bindRenderbuffer(gl.RENDERBUFFER, captureRBO);
         gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, mipWidth, mipHeight);
         gl.viewport(0, 0, mipWidth, mipHeight);
-        const shininess = maxShininess * (1 / (mipLevel + 1));
-        gl.uniform1f(u_shininessLoc, shininess);
+        const roughness = mipLevel / (maxMipLevels - 1);
+        gl.uniform1f(u_roughnessLoc, roughness);
         const prefilterImageDatas: Float32Array[] = [];
         for(let i = 0; i < 6; i++){
             gl.uniformMatrix4fv(u_ViewMatrixLoc, false, captureViewMat4s[i]);
@@ -346,12 +349,43 @@ async function bake(
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     freeProgram();
 
+    // create brdfLUT Texture
+    const brdfLUTTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, brdfLUTTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, 512, 512, 0, gl.RG, gl.FLOAT, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    // brdfLUTProgram
+    const brdfLUTProgram = WebglHelper.createProgram(
+        gl,
+        [
+            { type: gl.VERTEX_SHADER, source: brdfVS },
+            { type: gl.FRAGMENT_SHADER, source: brdfFS },
+        ]
+    );
+    [vao, freeProgram] = setupQuadVertextProgram(gl, brdfLUTProgram);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, captureFBO);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, captureRBO);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, 512, 512);
+    gl.viewport(0, 0, 512, 512);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, brdfLUTTexture, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.bindVertexArray(vao);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindVertexArray(null);
+    const brdfLUTDatas = new Float32Array(512 * 512 * 2);
+    gl.readPixels(0, 0, 512, 512, gl.RG, gl.FLOAT, brdfLUTDatas);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    freeProgram();
+
     WebglHelper.deleteFramebuffer(gl, captureFBO);
     WebglHelper.deleteRenderbuffer(gl, captureRBO);
     WebglHelper.deleteTexture(gl, hdrWebglTexture);
     WebglHelper.deleteTexture(gl, envCubeMap);
     WebglHelper.deleteTexture(gl, irradianceCubeMap);
     WebglHelper.deleteTexture(gl, prefilterCubeMap);
+    WebglHelper.deleteTexture(gl, brdfLUTTexture);
 
     const hdrAsset: HdrAsset = {
         enviromentMap: {
@@ -371,12 +405,14 @@ async function bake(
             back: { width: 32, height: 32, data: irradianceImageDatas[5] },
         },
         prefilterMap: {
-            maxShininess,
             mipMapCount: maxMipLevels,
             mipMaps: mipMapsOut
-        }
+        },
+        brdfLUT: { width: 512, height: 512, data: brdfLUTDatas }
     }
-    // navigator.clipboard.writeText(JSON.stringify(hdrAsset));
+    // navigator.clipboard.writeText(JSON.stringify({
+    //     prefilterMap: hdrAsset.prefilterMap
+    // }));
     console.log("ok");
 
     await window.api.assetManager.addBakedHdrAsset(assetInfo.uuid, hdrAsset);
@@ -424,4 +460,34 @@ function flipHdr(
         start += rowSize;
     }
     return flipedData;
+}
+function setupQuadVertextProgram(gl: WebGL2RenderingContext, program: WebGLProgram){
+    const quadVertices = [
+        // positions  // texture Coords
+        -1.0,  1.0, 0.0, 0.0, 1.0,
+        -1.0, -1.0, 0.0, 0.0, 0.0,
+        1.0,  1.0, 0.0, 1.0, 1.0,
+        1.0, -1.0, 0.0, 1.0, 0.0,
+    ];
+
+    const a_PositionLoc  = WebglHelper.getAttrLocation(gl, program, "a_Position");
+    const a_TextCoordLoc  = WebglHelper.getAttrLocation(gl, program, "a_TextCoord");
+    const vao = gl.createVertexArray();
+    const vertexVBO = WebglHelper.createVertexBuffer(gl, new Float32Array(quadVertices));
+    gl.bindVertexArray(vao);
+        WebglHelper.bindVertexBuffer(gl, vertexVBO);
+        gl.vertexAttribPointer(a_PositionLoc, 3, gl.FLOAT, false,
+            5 * Float32Array.BYTES_PER_ELEMENT, 0);
+        gl.enableVertexAttribArray(a_PositionLoc);
+        gl.vertexAttribPointer(a_TextCoordLoc, 2, gl.FLOAT, false,
+            5 * Float32Array.BYTES_PER_ELEMENT, 3 * Float32Array.BYTES_PER_ELEMENT);
+        gl.enableVertexAttribArray(a_TextCoordLoc);
+    gl.bindVertexArray(null);
+
+    gl.useProgram(program);
+    return [vao, () => {
+        WebglHelper.deleteProgram(gl, program);
+        WebglHelper.deleteVertexArray(gl, vao);
+        WebglHelper.deleteVertexBuffer(gl, vertexVBO);
+    }] as const;
 }

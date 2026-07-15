@@ -1,6 +1,6 @@
 import { CubeIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, ChevronRightIcon, Square3Stack3DIcon, NoSymbolIcon } from "@heroicons/react/24/solid";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { renameGameObject, selectNodeById } from "../../../../global-state/slices/go-tree-slice";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
@@ -97,8 +97,8 @@ function GameObjectItem(props: { id: string }){
                     }
                 </div>
                 {
-                    (!focusedId || focusedId != gameObject.id) ?
-                    <NonSelected gameObject={gameObject}/> :
+                    (!focusedId || focusedId !== gameObject.id) ?
+                    <NonSelectedMemo gameObject={gameObject}/> :
                     <Selected gameObject={gameObject}/>
                 }
             </div>
@@ -115,6 +115,7 @@ function GameObjectItem(props: { id: string }){
         </div>
     );
 }
+const NonSelectedMemo = React.memo(NonSelected);
 function NonSelected(props: { gameObject: NodeState }){
     const { gameObject } = props;
     const isPrefab = "prefabRef" in gameObject;
@@ -132,7 +133,8 @@ function NonSelected(props: { gameObject: NodeState }){
     }
 
     return (
-        <div className="flex flex-1 items-center cursor-pointer transition hover:opacity-80"
+        <div id="go-non-selected"
+            className="flex flex-1 items-center cursor-pointer transition hover:opacity-80"
             onClick={click} onContextMenu={rightClick}>
             <CubeIcon className="text-white size-4 mx-1"/>
             <span className={`text-sm ${!isPrefab ? "text-white" : "text-cyan-500"} select-none`}>
@@ -155,6 +157,7 @@ function Selected(props: { gameObject: NodeState }){
             if(target.closest("#scene-node-selected")) return;
             if(target.closest("#inspector")) return;
             if(target.closest("#context-menu")) return;
+            if(target.closest("#go-non-selected")) return;
             dispatch(nodeUnfocusedThunk());
         }
         window.addEventListener("mousedown", handler);

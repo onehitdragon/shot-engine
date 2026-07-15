@@ -1,6 +1,6 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
 import type { NodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { createCubeNode, createEmptyNode, createSphereNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
+import { createCubeNode, createEmptyNode, createPbrTest, createSphereNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 import { createDirectionalLightComponent, createPbrShadingComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent, createSkyBoxComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
 import { goAddedThunk, goRemovedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 import { componentAddedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
@@ -68,6 +68,15 @@ export function SceneNodeContextMenu(
             component: createSkyBoxComponent(),
             unique: true,
         }));
+    }
+    const createPbrTestChild = () => {
+        const newNodes = createPbrTest();
+        for(const newNode of newNodes){
+            newNode.parent = node.id;
+            dispatch(goAddedThunk({
+                node: newNode
+            }));
+        }
     }
     const remmove = () => {
         dispatch(goRemovedThunk({ node }));
@@ -139,6 +148,12 @@ export function SceneNodeContextMenu(
                     onMouseDown={addSkyBox}
                 >
                     Add Sky Box
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={createPbrTestChild}
+                >
+                    createPbrTestChild
                 </li>
             </ul>
         </div>

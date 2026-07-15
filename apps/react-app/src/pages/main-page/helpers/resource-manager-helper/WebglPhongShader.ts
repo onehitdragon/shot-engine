@@ -159,33 +159,33 @@ export class WebglPhongShader{
         gl.bindTexture(gl.TEXTURE_2D, diffuseWebglTexture.webglTexture);
         gl.uniform1i(this._u_DiffuseSampler, 0);
 
-        let irradianceMap = ColorCache.getInstance().getEmptyWebglTextureCube();
-        let prefilterMap = ColorCache.getInstance().getEmptyWebglTextureCube();
-        let maxShininess = 0;
-        const uniqueSkyBox = SkyBoxInfo.getInstance().uniqueSkyBox;
-        if(uniqueSkyBox && uniqueSkyBox.hdrRef){
-            const hdr = AssetCache.getInstance().getHdr(uniqueSkyBox.hdrRef);
-            if(hdr && hdr.irradianceMap){
-                irradianceMap = hdr.irradianceMap;
-            }
-            if(hdr && hdr.prefilterMap){
-                prefilterMap = hdr.prefilterMap;
-            }
-            const hdrAsset = AssetCache.getInstance().getAssetCache(uniqueSkyBox.hdrRef)?.asset as HdrAsset;
-            if(hdrAsset){
-                maxShininess = hdrAsset.prefilterMap.maxShininess;
-            }
-        }
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_CUBE_MAP, irradianceMap.webglTexture);
-        gl.uniform1i(this._u_irradianceMapLoc, 1);
-        gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_CUBE_MAP, prefilterMap.webglTexture);
-        gl.uniform1i(this._u_prefilterMapLoc, 2);
-        gl.uniform1f(this._u_maxShininessLoc, maxShininess);
+        // let irradianceMap = ColorCache.getInstance().getEmptyWebglTextureCube();
+        // let prefilterMap = ColorCache.getInstance().getEmptyWebglTextureCube();
+        // // let maxShininess = 0;
+        // const uniqueSkyBox = SkyBoxInfo.getInstance().uniqueSkyBox;
+        // if(uniqueSkyBox && uniqueSkyBox.hdrRef){
+        //     const hdr = AssetCache.getInstance().getHdr(uniqueSkyBox.hdrRef);
+        //     if(hdr && hdr.irradianceMap){
+        //         irradianceMap = hdr.irradianceMap;
+        //     }
+        //     if(hdr && hdr.prefilterMap){
+        //         prefilterMap = hdr.prefilterMap;
+        //     }
+        //     // const hdrAsset = AssetCache.getInstance().getAssetCache(uniqueSkyBox.hdrRef)?.asset as HdrAsset;
+        //     // if(hdrAsset){
+        //     //     maxShininess = hdrAsset.prefilterMap.maxShininess;
+        //     // }
+        // }
+        // gl.activeTexture(gl.TEXTURE1);
+        // gl.bindTexture(gl.TEXTURE_CUBE_MAP, irradianceMap.webglTexture);
+        // gl.uniform1i(this._u_irradianceMapLoc, 1);
+        // gl.activeTexture(gl.TEXTURE2);
+        // gl.bindTexture(gl.TEXTURE_CUBE_MAP, prefilterMap.webglTexture);
+        // gl.uniform1i(this._u_prefilterMapLoc, 2);
+        // // gl.uniform1f(this._u_maxShininessLoc, maxShininess);
 
-        gl.bindVertexArray(vao);
-            gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
-        gl.bindVertexArray(null);
+        // gl.bindVertexArray(vao);
+        //     gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
+        // gl.bindVertexArray(null);
     }
 }

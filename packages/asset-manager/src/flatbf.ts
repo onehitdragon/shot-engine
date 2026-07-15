@@ -99,7 +99,7 @@ export function saveSceneAssetBinary(sceneAsset: ShotEngineType.SceneAsset, file
     fs.writeFileSync(filePath, bytes);
 }
 export function saveHdrAssetBinary(hdrAsset: ShotEngineType.HdrAsset, filePath: string){
-    const { enviromentMap, irradianceMap, prefilterMap } = hdrAsset;
+    const { enviromentMap, irradianceMap, prefilterMap, brdfLUT } = hdrAsset;
     const builder = new Builder(1024);
     function createHdrImage(hdrImage: ShotEngineType.HdrImage){
         const dataOffset = HdrImage.createDataVector(builder, hdrImage.data);
@@ -135,15 +135,17 @@ export function saveHdrAssetBinary(hdrAsset: ShotEngineType.HdrAsset, filePath: 
     }
     const mipMapsOffset = PrefilterMap.createMipMapsVector(builder, mipMapOffsets);
     PrefilterMap.startPrefilterMap(builder);
-    PrefilterMap.addMaxShininess(builder, prefilterMap.maxShininess);
     PrefilterMap.addMipMapCount(builder, prefilterMap.mipMapCount);
     PrefilterMap.addMipMaps(builder, mipMapsOffset);
     const prefilterMapOffset = PrefilterMap.endPrefilterMap(builder);
+
+    const brdfLUTOffset = createHdrImage(brdfLUT);
 
     HdrAsset.startHdrAsset(builder);
     HdrAsset.addEnviromentMap(builder, envMapOffset);
     HdrAsset.addIrradianceMap(builder, irradianceMapOffset);
     HdrAsset.addPrefilterMap(builder, prefilterMapOffset);
+    HdrAsset.addBrdfLut(builder, brdfLUTOffset);
     const hdrAssetOffset = HdrAsset.endHdrAsset(builder);
     builder.finish(hdrAssetOffset);
 
@@ -320,15 +322,18 @@ export function readHdrAsset(filePath: string){
         mipMapOuts.push(mipMapOut);
     }
     const prefilterMapOut: ShotEngineType.HdrAsset["prefilterMap"] = {
-        maxShininess: prefilterMap.maxShininess(),
         mipMapCount: prefilterMap.mipMapCount(),
         mipMaps: mipMapOuts
     }
+
+    const brdfLUTOut = readHdrImage(hdrAsset.brdfLut());
+    if(!brdfLUTOut) return;
     
     const asset: ShotEngineType.HdrAsset = {
         enviromentMap: envMapOut,
         irradianceMap: irradianceMapOut,
-        prefilterMap: prefilterMapOut
+        prefilterMap: prefilterMapOut,
+        brdfLUT: brdfLUTOut
     }
 
     return asset;

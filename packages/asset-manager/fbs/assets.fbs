@@ -54,7 +54,6 @@ table HdrCube{
 }
 
 table PrefilterMap{
-    maxShininess: double;
     mipMapCount: uint;
     mipMaps: [HdrCube];
 }
@@ -63,4 +62,5 @@ table HdrAsset{
     enviromentMap: HdrCube;
     irradianceMap: HdrCube;
     prefilterMap: PrefilterMap;
+    brdfLUT: HdrImage;
 }

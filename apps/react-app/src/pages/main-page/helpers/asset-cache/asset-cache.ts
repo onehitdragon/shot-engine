@@ -3,6 +3,7 @@ import { WebglMesh } from "../resource-manager-helper/WebglMesh";
 import { WebglTexture } from "../resource-manager-helper/WebglTexture";
 import { getSceneWebglContext } from "../resource-manager-helper/CanvasHelper";
 import { WebglTextureCube } from "../resource-manager-helper/WebglTextureCube";
+import { WebglTextureLUT } from "../resource-manager-helper/WebglTextureLUT";
 
 type AssetCacheItem = {
     assetInfo: AssetManager.AssetInfo,
@@ -13,7 +14,8 @@ type AssetCacheItem = {
         hdr?: {
             enviromentMap?: WebglTextureCube,
             irradianceMap?: WebglTextureCube,
-            prefilterMap?: WebglTextureCube
+            prefilterMap?: WebglTextureCube,
+            brdfLUT?: WebglTextureLUT
         }
     }
 }
@@ -191,11 +193,13 @@ export class AssetCache{
                 MIN: this._gl.LINEAR_MIPMAP_LINEAR
             }
         );
+        const brdfLUT = new WebglTextureLUT(this._gl, hdrAsset.brdfLUT);
 
         return {
             enviromentMap,
             irradianceMap,
-            prefilterMap
+            prefilterMap,
+            brdfLUT
         };
     }
     private _disposeWebglResoure(assetCacheItem?: AssetCacheItem){
@@ -204,6 +208,7 @@ export class AssetCache{
         assetCacheItem?.webglResource?.hdr?.enviromentMap?.dispose();
         assetCacheItem?.webglResource?.hdr?.irradianceMap?.dispose();
         assetCacheItem?.webglResource?.hdr?.prefilterMap?.dispose();
+        assetCacheItem?.webglResource?.hdr?.brdfLUT?.dispose();
     }
     public getAssetCache(uuid: string){
         return this.map.get(uuid);

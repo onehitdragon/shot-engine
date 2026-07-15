@@ -350,6 +350,20 @@ app.whenReady()
         session.defaultSession.extensions.loadExtension(reduxDevToolsPath)
         .then(() => { console.log("added reduxDevTool extension!") })
         .catch((err) => { console.log("error while adding reduxDevTool: ", err) });
+        
+        const reactDevToolsPath = path.join(
+            process.env.LOCALAPPDATA!,
+            "Google",
+            "Chrome",
+            "User Data",
+            "Default",
+            "Extensions",
+            "fmkadmapgofadopljbjfkapdkoienihi",
+            "7.0.1_0"
+        );
+        session.defaultSession.extensions.loadExtension(reactDevToolsPath)
+        .then(() => { console.log("added reactDevTool extension!") })
+        .catch((err) => { console.log("error while adding reactDevTool: ", err) });
     }
 
     //

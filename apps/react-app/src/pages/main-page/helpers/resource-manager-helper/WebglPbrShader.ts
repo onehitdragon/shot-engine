@@ -7,6 +7,7 @@ import type { PbrShading } from "@shot-engine/types";
 import { LightInfo } from "../asset-cache/LightInfo";
 import { AssetCache } from "../asset-cache/asset-cache";
 import { ColorCache } from "../asset-cache/color-cache";
+import { SkyBoxInfo } from "../asset-cache/SkyBoxInfo";
 
 export class WebglPbrShader{
     private static _instance: WebglPbrShader;
@@ -23,11 +24,18 @@ export class WebglPbrShader{
     private _a_NormalLoc: number;
     private _a_TextCoordLoc: number;
     private _u_CamWorldPosLoc: WebGLUniformLocation;
+
+    private _u_baseColorSamplerLoc: WebGLUniformLocation;
     private _u_metallicLoc: WebGLUniformLocation;
-    private _u_roughnessLoc: WebGLUniformLocation;
+    private _u_perceptualRoughnessLoc: WebGLUniformLocation;
+    private _u_reflectanceLoc: WebGLUniformLocation;
+
+    private _u_irradianceMapLoc: WebGLUniformLocation;
+    private _u_prefilterMapLoc: WebGLUniformLocation;
+    private _u_brdfLUTLoc: WebGLUniformLocation;
+
     private _u_PointLightSizeLoc: WebGLUniformLocation;
     private _u_DirectionalLightSizeLoc: WebGLUniformLocation;
-    private _u_albedoSamplerLoc: WebGLUniformLocation;
     private readonly NUM_LIGHTS = 32;
     private _programLoc: {
         u_PointLights: {
@@ -60,11 +68,18 @@ export class WebglPbrShader{
         this._a_NormalLoc = WebglHelper.getAttrLocation(gl, program, "a_Normal");
         this._a_TextCoordLoc = WebglHelper.getAttrLocation(gl, program, "a_TextCoord");
         this._u_CamWorldPosLoc = WebglHelper.getUniformLocation(gl, program, "u_CamWorldPos");
+
+        this._u_baseColorSamplerLoc = WebglHelper.getUniformLocation(gl, program, "u_baseColorSampler");
         this._u_metallicLoc = WebglHelper.getUniformLocation(gl, program, "u_metallic");
-        this._u_roughnessLoc = WebglHelper.getUniformLocation(gl, program, "u_roughness");
+        this._u_perceptualRoughnessLoc = WebglHelper.getUniformLocation(gl, program, "u_perceptualRoughness");
+        this._u_reflectanceLoc = WebglHelper.getUniformLocation(gl, program, "u_reflectance");
+
+        this._u_irradianceMapLoc = WebglHelper.getUniformLocation(gl, program, "u_irradianceMap");
+        this._u_prefilterMapLoc = WebglHelper.getUniformLocation(gl, program, "u_prefilterMap");
+        this._u_brdfLUTLoc = WebglHelper.getUniformLocation(gl, program, "u_brdfLUT");
+
         this._u_PointLightSizeLoc = WebglHelper.getUniformLocation(gl, program, "u_PointLightSize");
         this._u_DirectionalLightSizeLoc = WebglHelper.getUniformLocation(gl, program, "u_DirectionalLightSize");
-        this._u_albedoSamplerLoc = WebglHelper.getUniformLocation(gl, program, "u_albedoSampler");
         this._programLoc = {
             u_PointLights: [],
             u_DirectionalLights: []
@@ -120,7 +135,8 @@ export class WebglPbrShader{
         gl.uniformMatrix3fv(this._u_NormalMatrixLoc, false, normalMat3);
         gl.uniform3fv(this._u_CamWorldPosLoc, camPos);
         gl.uniform1f(this._u_metallicLoc, metallic);
-        gl.uniform1f(this._u_roughnessLoc, roughness);
+        gl.uniform1f(this._u_perceptualRoughnessLoc, roughness);
+        gl.uniform1f(this._u_reflectanceLoc, 0.5); // to-do
         gl.uniform1i(this._u_PointLightSizeLoc, pointLightInfos.length);
         gl.uniform1i(this._u_DirectionalLightSizeLoc, directionalInfos.length);
         // todo: light local -> world position
@@ -135,7 +151,7 @@ export class WebglPbrShader{
             const lightInfo = directionalInfos[i];
             gl.uniform3fv(this._programLoc.u_DirectionalLights[i].dir, [lightInfo.dir.x, lightInfo.dir.y, lightInfo.dir.z]);
             gl.uniform3fv(this._programLoc.u_DirectionalLights[i].color, [lightInfo.color.x, lightInfo.color.y, lightInfo.color.z]);
-            gl.uniform1f(this._programLoc.u_DirectionalLights[i].intensity, lightInfo.intensity);
+            gl.uniform1f(this._programLoc.u_DirectionalLights[i].intensity, 8.0); //to-do exposure
             gl.uniform1f(this._programLoc.u_DirectionalLights[i].radius, lightInfo.radius);
         }
         const diffuseWebglTexture = 
@@ -149,7 +165,34 @@ export class WebglPbrShader{
         }
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, diffuseWebglTexture.webglTexture);
-        gl.uniform1i(this._u_albedoSamplerLoc, 0);
+        gl.uniform1i(this._u_baseColorSamplerLoc, 0);
+
+        let irradianceMap = ColorCache.getInstance().getEmptyWebGLTexture().webglTexture;
+        let prefilterMap = ColorCache.getInstance().getEmptyWebGLTexture().webglTexture;
+        let brdfLUT = ColorCache.getInstance().getEmptyWebGLTexture().webglTexture;
+        const uniqueSkyBox = SkyBoxInfo.getInstance().uniqueSkyBox;
+        if(uniqueSkyBox && uniqueSkyBox.hdrRef){
+            const hdr = AssetCache.getInstance().getHdr(uniqueSkyBox.hdrRef);
+            if(hdr && hdr.irradianceMap){
+                irradianceMap = hdr.irradianceMap.webglTexture;
+            }
+            if(hdr && hdr.prefilterMap){
+                prefilterMap = hdr.prefilterMap.webglTexture;
+            }
+            if(hdr && hdr.brdfLUT){
+                brdfLUT = hdr.brdfLUT.webglTexture;
+            }
+        }
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, irradianceMap);
+        gl.uniform1i(this._u_irradianceMapLoc, 1);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, prefilterMap);
+        gl.uniform1i(this._u_prefilterMapLoc, 2);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, brdfLUT);
+        gl.uniform1i(this._u_brdfLUTLoc, 3);
+
         gl.bindVertexArray(vao);
             gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
         gl.bindVertexArray(null);
