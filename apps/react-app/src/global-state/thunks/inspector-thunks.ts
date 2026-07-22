@@ -11,6 +11,9 @@ import irradianceMapFS from "../../pages/main-page/helpers/shaders/hdr-shader/ir
 import prefilterMapFS from "../../pages/main-page/helpers/shaders/hdr-shader/prefilterMap-fs.glsl?raw";
 import brdfVS from "../../pages/main-page/helpers/shaders/hdr-shader/brdf-vs.glsl?raw";
 import brdfFS from "../../pages/main-page/helpers/shaders/hdr-shader/brdf-fs.glsl?raw";
+import irradianceMapFSV2 from "../../pages/main-page/helpers/shaders/hdr-shader/irradianceMap-fs-v2.glsl?raw";
+import prefilterMapFSV2 from "../../pages/main-page/helpers/shaders/hdr-shader/prefilterMap-fs-v2.glsl?raw";
+import brdfFSV2 from "../../pages/main-page/helpers/shaders/hdr-shader/brdf-fs-v2.glsl?raw";
 
 export const inspectAssetThunk = createAsyncThunk
 <
@@ -243,7 +246,7 @@ async function bake(
         gl,
         [
             { type: gl.VERTEX_SHADER, source: cubemapVS },
-            { type: gl.FRAGMENT_SHADER, source: irradianceMapFS },
+            { type: gl.FRAGMENT_SHADER, source: irradianceMapFSV2 },
         ]
     );
     [vao, freeProgram] = setupCubeVertextProgram(gl, irradianceProgram);
@@ -292,20 +295,75 @@ async function bake(
     gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 
-    // prefilterProgram
+    // // prefilterProgram
+    // const prefilterProgram = WebglHelper.createProgram(
+    //     gl,
+    //     [
+    //         { type: gl.VERTEX_SHADER, source: cubemapVS },
+    //         { type: gl.FRAGMENT_SHADER, source: prefilterMapFS },
+    //     ]
+    // );
+    // [vao, freeProgram] = setupCubeVertextProgram(gl, prefilterProgram);
+    // u_ViewMatrixLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_ViewMatrix");
+    // u_enviromentMapLoc  = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_enviromentMap");
+    // const u_roughnessLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_roughness");
+    // const u_resolutionLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_resolution");
+    // gl.uniform1f(u_resolutionLoc, 512);
+    // gl.activeTexture(gl.TEXTURE0);
+    // gl.bindTexture(gl.TEXTURE_CUBE_MAP, envCubeMap);
+    // gl.uniform1i(u_enviromentMapLoc, 0);
+
+    // gl.bindFramebuffer(gl.FRAMEBUFFER, captureFBO);
+    // const maxMipLevels = 5;
+    // const mipMapsOut: HdrCube[] = [];
+    // for(let mipLevel = 0; mipLevel < maxMipLevels; mipLevel++){
+    //     const mipWidth = parseInt(128 * Math.pow(0.5, mipLevel) + "");
+    //     const mipHeight = parseInt(128 * Math.pow(0.5, mipLevel) + "");
+    //     gl.bindRenderbuffer(gl.RENDERBUFFER, captureRBO);
+    //     gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, mipWidth, mipHeight);
+    //     gl.viewport(0, 0, mipWidth, mipHeight);
+    //     const roughness = mipLevel / (maxMipLevels - 1);
+    //     gl.uniform1f(u_roughnessLoc, roughness);
+    //     const prefilterImageDatas: Float32Array[] = [];
+    //     for(let i = 0; i < 6; i++){
+    //         gl.uniformMatrix4fv(u_ViewMatrixLoc, false, captureViewMat4s[i]);
+    //         gl.framebufferTexture2D(
+    //             gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterCubeMap,
+    //             mipLevel
+    //         );
+    //         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    //         gl.bindVertexArray(vao);
+    //             gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, 0);
+    //         gl.bindVertexArray(null);
+
+    //         const pixels = new Float32Array(mipWidth * mipHeight * 4);
+    //         gl.readPixels(0, 0, mipWidth, mipHeight, gl.RGBA, gl.FLOAT, pixels);
+    //         prefilterImageDatas.push(pixels);
+    //     }
+    //     mipMapsOut.push({
+    //         right: { width: mipWidth, height: mipHeight, data: prefilterImageDatas[0] },
+    //         left: { width: mipWidth, height: mipHeight, data: prefilterImageDatas[1] },
+    //         top: { width: mipWidth, height: mipHeight, data: prefilterImageDatas[2] },
+    //         bottom: { width: mipWidth, height: mipHeight, data: prefilterImageDatas[3] },
+    //         font: { width: mipWidth, height: mipHeight, data: prefilterImageDatas[4] },
+    //         back: { width: mipWidth, height: mipHeight, data: prefilterImageDatas[5] },
+    //     });
+    // }
+    // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    // freeProgram();
+
+    // prefilterProgram v2
     const prefilterProgram = WebglHelper.createProgram(
         gl,
         [
             { type: gl.VERTEX_SHADER, source: cubemapVS },
-            { type: gl.FRAGMENT_SHADER, source: prefilterMapFS },
+            { type: gl.FRAGMENT_SHADER, source: prefilterMapFSV2 },
         ]
     );
     [vao, freeProgram] = setupCubeVertextProgram(gl, prefilterProgram);
     u_ViewMatrixLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_ViewMatrix");
     u_enviromentMapLoc  = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_enviromentMap");
     const u_roughnessLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_roughness");
-    const u_resolutionLoc = WebglHelper.getUniformLocation(gl, prefilterProgram, "u_resolution");
-    gl.uniform1f(u_resolutionLoc, 512);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, envCubeMap);
     gl.uniform1i(u_enviromentMapLoc, 0);
@@ -360,7 +418,7 @@ async function bake(
         gl,
         [
             { type: gl.VERTEX_SHADER, source: brdfVS },
-            { type: gl.FRAGMENT_SHADER, source: brdfFS },
+            { type: gl.FRAGMENT_SHADER, source: brdfFSV2 },
         ]
     );
     [vao, freeProgram] = setupQuadVertextProgram(gl, brdfLUTProgram);
@@ -410,6 +468,11 @@ async function bake(
         },
         brdfLUT: { width: 512, height: 512, data: brdfLUTDatas }
     }
+    // navigator.clipboard.writeText(JSON.stringify({
+    //     hdrAsset: {
+    //         prefilterMap: hdrAsset.prefilterMap
+    //     }
+    // }));
     // navigator.clipboard.writeText(JSON.stringify({
     //     prefilterMap: hdrAsset.prefilterMap
     // }));

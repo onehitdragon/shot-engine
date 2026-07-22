@@ -350,7 +350,7 @@ function PbrShadingEditor(props: { pbrShading: PbrShading }){
             <OneValueRow
                 label="Roughness"
                 value={roughness}
-                range={[0.01, 1]}
+                range={[0, 1]}
                 onChange={(value) => {
                     shadingClone.roughness = value;
                     update();

@@ -102,16 +102,12 @@ vec3 BRDF(
     float NoL = max(dot(N, L), 0.0);
     return (Fr + Fd) * NoL;
 }
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
-{
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-}
 vec3 ambient(
     vec3 diffuseColor, vec3 F0, float roughness,
     vec3 N, vec3 V
 ){
     float NoV = max(dot(N, V), 0.0);
-    vec3 F = fresnelSchlickRoughness(NoV, F0, roughness);
+    vec3 F = fresnelSchlick(NoV, F0);
     vec3 irradiance = texture(u_irradianceMap, N).rgb;
     vec3 Fd = (1.0 - F) * diffuseColor * irradiance;
 
@@ -119,7 +115,7 @@ vec3 ambient(
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(u_prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;    
     vec2 brdf = texture(u_brdfLUT, vec2(NoV, roughness)).rg;
-    vec3 Fr = prefilteredColor * (F * brdf.x + brdf.y);
+    vec3 Fr = prefilteredColor * (F0 * brdf.x + brdf.y);
 
     return Fd + Fr;
 }
@@ -131,13 +127,12 @@ void main(){
 
     vec3 diffuseColor = (1.0 - u_metallic) * baseColor.rgb;
     vec3 F0 = 0.16 * u_reflectance * u_reflectance * (1.0 - u_metallic) + baseColor.rgb * u_metallic;
-    float roughness = u_perceptualRoughness * u_perceptualRoughness;
 
     vec3 totalReflection = vec3(0.0);
     for(int i = 0; i < u_DirectionalLightSize; i++){
         DirectionalLight light = u_DirectionalLights[i];
         vec3 L = normalize(-light.dir);
-        totalReflection += BRDF(diffuseColor, F0, roughness, N, V, L) * light.intensity * light.color;
+        totalReflection += BRDF(diffuseColor, F0, u_perceptualRoughness, N, V, L) * light.intensity * light.color;
     }
     for(int i = 0; i < u_PointLightSize; i++){
         PointLight light = u_PointLights[i];
@@ -146,7 +141,7 @@ void main(){
     }
 
     // ambient
-    totalReflection += ambient(diffuseColor, F0, roughness, N, V);
+    totalReflection += ambient(diffuseColor, F0, u_perceptualRoughness, N, V);
 
     // emissive
     // totalReflection += u_emissive;
