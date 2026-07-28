@@ -1,4 +1,4 @@
-import { GameObject, Scene } from "./engine"
+import { GameObject, Scene, AABB } from "./engine.js"
 
 export type ImageAsset = {
     width: number,
@@ -13,6 +13,7 @@ export type MeshAsset = {
         indices: Uint8Array | Uint16Array | Uint32Array,
         indexType: number,
         drawMode: number,
+        aabb: AABB
     }[]
 }
 export type PrefabAsset = {
@@ -40,6 +41,10 @@ export type HdrAsset = {
     brdfLUT: HdrImage
 }
 export type Asset = ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset;
+export function isPrefabAsset(asset?: Asset | null): asset is PrefabAsset{
+    if(!asset) return false;
+    return "root" in asset;
+}
 
 export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene" | "hdr";
 export namespace AssetProperty{

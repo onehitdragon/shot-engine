@@ -87,10 +87,16 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
         else if(component.type === "Shading" && component.shaderType === "simple"){
             const idOffset = builder.createString(component.id);
             const cullingOffset = builder.createString(component.culling);
+            Vec3.startVec3(builder);
+            Vec3.addX(builder, component.color.x);
+            Vec3.addY(builder, component.color.y);
+            Vec3.addZ(builder, component.color.z);
+            const colorOffset = Vec3.endVec3(builder);
             SimpleShading.startSimpleShading(builder);
             SimpleShading.addId(builder, idOffset);
             SimpleShading.addCulling(builder, cullingOffset);
             SimpleShading.addTransparent(builder, component.transparent);
+            SimpleShading.addColor(builder, colorOffset);
             componentOffset = SimpleShading.endSimpleShading(builder);
             componentTypeOffsets.push(Component.SimpleShading);
         }
@@ -227,6 +233,14 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
     return goOffset;
 }
 
+export function buildVec3(builder: Builder, vec3: ShotEngineType.Vec3){
+    Vec3.startVec3(builder);
+    Vec3.addX(builder, vec3.x);
+    Vec3.addY(builder, vec3.y);
+    Vec3.addZ(builder, vec3.z);
+   return Vec3.endVec3(builder);
+}
+
 export function readGameObject(gameObject: GameObject){
     const gameObjectResult: ShotEngineType.GameObject = {
         id: gameObject.id() ?? "",
@@ -268,7 +282,8 @@ export function readGameObject(gameObject: GameObject){
                 shaderType: "simple",
                 id: simpleShading.id() ?? "",
                 culling: getCulling(simpleShading.culling()),
-                transparent: simpleShading.transparent()
+                transparent: simpleShading.transparent(),
+                color: getVec3(simpleShading.color())
             });
         }
         if(componentType === Component.PhongShading){

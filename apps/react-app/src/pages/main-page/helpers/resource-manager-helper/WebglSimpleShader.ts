@@ -1,8 +1,8 @@
 import { WebglHelper } from "./WebglHelper";
 import simpleShadingVShaderSource from "../shaders/simple-shader/vshader.glsl?raw";
 import simpleShadingFShaderSource from "../shaders/simple-shader/fshader.glsl?raw";
-import type { mat4 } from "gl-matrix";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
+import type { Mat4, Vec3 } from "@shot-engine/types";
 
 export class WebglSimpleShader{
     private static _instance: WebglSimpleShader;
@@ -14,6 +14,7 @@ export class WebglSimpleShader{
     private _program: WebGLProgram;
     private _u_MvpMatrixLoc: WebGLUniformLocation;
     private _a_PositionLoc: number;
+    private _u_color: WebGLUniformLocation;
     private constructor(gl: WebGL2RenderingContext){
         this._gl = gl;
         this._program = WebglHelper.createProgram(
@@ -25,6 +26,7 @@ export class WebglSimpleShader{
         );
         this._u_MvpMatrixLoc = WebglHelper.getUniformLocation(gl, this._program, "u_MvpMatrix");
         this._a_PositionLoc  = WebglHelper.getAttrLocation(gl, this._program, "a_Position");
+        this._u_color = WebglHelper.getUniformLocation(gl, this._program, "u_color");
     }
     createMeshVAOs(meshVBOs: WebglMeshVBOs){
         const gl = this._gl;
@@ -39,11 +41,14 @@ export class WebglSimpleShader{
         gl.bindVertexArray(null);
         return vao;
     }
-    renderMesh(meshVBOs: WebglMeshVBOs, vao: WebGLVertexArrayObject, mvpMat4: mat4){
+    renderMesh(meshVBOs: WebglMeshVBOs, vao: WebGLVertexArrayObject, mvpMat4: Mat4, color?: Vec3){
         const gl = this._gl;
         const vbos = meshVBOs;
         gl.useProgram(this._program);
-        gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4);
+        gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4.values);
+        if(!color) color = { x: 1, y: 1, z: 1 };
+        gl.uniform3fv(this._u_color, [color.x, color.y, color.z]);
+
         gl.bindVertexArray(vao);
             gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
         gl.bindVertexArray(null);

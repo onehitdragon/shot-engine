@@ -60,7 +60,8 @@ export async function readGLBFile(filePath: string){
                 },
                 indices,
                 indexType,
-                drawMode: e.getMode()
+                drawMode: e.getMode(),
+                aabb: ShotEngineType.AABB.FromVertices([...positions])
             }
             return primitive;
         }));
@@ -191,7 +192,8 @@ function createGameObject(node: Node, meshMap: Map<Mesh, number>){
                 shaderType: "simple",
                 id: "",
                 culling: "none",
-                transparent: false
+                transparent: false,
+                color: { x: 1, y: 1, z: 1 }
             }
         );
     }

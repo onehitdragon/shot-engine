@@ -2,15 +2,15 @@ import { CubeIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, ChevronRightIcon, Square3Stack3DIcon, NoSymbolIcon } from "@heroicons/react/24/solid";
 import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
-import { renameGameObject, selectNodeById } from "../../../../global-state/slices/go-tree-slice";
+import { renameGameObject, toggleCollapse } from "../../../../global-state/slices/go-tree-slice";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { createEmptyNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 import type { NodeState } from "../../../../global-state/slices/go-tree-slice";
-import { goAddedThunk, goTreeClosedThunk, goTreeSavedThunk, nodeFocusedThunk, nodeUnfocusedThunk } from "../../../../global-state/thunks/go-tree-thunks";
+import { goAddedThunk, goTreeClosedThunk, goTreeSavedThunk, nodeFocusedThunk } from "../../../../global-state/thunks/go-tree-thunks";
+import { Virtuoso } from "react-virtuoso";
 
 export function GameObjectTree(){
     const rootIds = useAppSelector(state => state.goTree.rootIds);
-    const allowModify = useAppSelector(state => state.goTree.allowModify);
     const modified = useAppSelector(state => state.goTree.modified);
     const opened = useAppSelector(state => state.goTree.opened);
     const dispatch = useAppDispatch();
@@ -34,8 +34,7 @@ export function GameObjectTree(){
     return (
         !opened ?
         <div></div>:
-        <div className={`flex flex-1 flex-col h-full p-1 overflow-auto scrollbar-thin
-            ${allowModify ? "opacity-100" : "opacity-70"}`}>
+        <div className={`flex flex-1 flex-col h-full p-1 overflow-auto scrollbar-thin}`}>
             <div className="flex items-center">
                 <Square3Stack3DIcon className="text-white size-4 mr-1"/>
                 <span className="text-sm text-white font-medium select-none">
@@ -55,79 +54,87 @@ export function GameObjectTree(){
                     </button>
                 </div>
             </div>
-            {
-                rootIds.map(rootId => <GameObjectItem key={rootId} id={rootId}/>)
-            }
+            <GameObjectListMemo />
         </div>
     );
 }
-function GameObjectItem(props: { id: string }){
-    const gameObject = useAppSelector(state => selectNodeById(state, props.id));
-    const isPrefab = "prefabRef" in gameObject;
-    const [collapsed, setCollapsed] = useState(true);
+const GameObjectListMemo = React.memo(GameObjectList);
+function GameObjectList(){
+    const rootIds = useAppSelector(state => state.goTree.rootIds);
+    const nodes = useAppSelector(state => state.goTree.nodes);
+    const flatNodes = flat(rootIds);
+    function flat(rootIds: string[]){
+        const list: GameObjectItemProps[] = [];
+        recur(rootIds);
+        function recur(nodeIds: string[], depth = 0){
+            for(const nodeId of nodeIds){
+                const node = nodes.entities[nodeId];
+                if(!node) continue;
+                list.push({
+                    node,
+                    depth
+                });
+                if(node.collapsed) continue;
+                recur(node.childs, depth + 1);
+            }
+        }
+        return list;
+    }
+    return (
+        <Virtuoso
+            data={flatNodes}
+            itemContent={(_, flatNode) => <GameObjectItem {...flatNode}/>}
+        />
+    );
+}
+type GameObjectItemProps = {
+    node: NodeState,
+    depth: number
+}
+function GameObjectItem(props: GameObjectItemProps){
+    const { node, depth } = props;
+    const dispatch = useAppDispatch();
     const focusedId = useAppSelector(state => state.goTree.focusedId);
 
     return (
-        isPrefab ? 
-         <div className="flex flex-col">
-            <div className="flex">
+        <div className="flex" style={{ paddingLeft: `${depth * 16 + 8}px` }}>
+            <div className="flex items-center">
                 {
-                    (!focusedId || focusedId != gameObject.id) ?
-                    <NonSelected gameObject={gameObject}/> :
-                    <Selected gameObject={gameObject}/>
-                }
-            </div>
-        </div>
-        :
-        <div className="flex flex-col">
-            <div className="flex">
-                <div className="flex items-center">
-                    {
-                        gameObject.childs.length > 0 ?
-                        <button className="cursor-pointer w-4 h-4" onClick={() => setCollapsed(!collapsed)}>
-                            {
-                                collapsed ?
-                                <ChevronRightIcon className="text-white size-4 transition hover:opacity-80"/>
-                                :
-                                <ChevronDownIcon className="text-white size-4 transition hover:opacity-80"/>
-                            }
-                        </button>
-                        :
-                        <div className="w-4 h-4"></div>
-                    }
-                </div>
-                {
-                    (!focusedId || focusedId !== gameObject.id) ?
-                    <NonSelectedMemo gameObject={gameObject}/> :
-                    <Selected gameObject={gameObject}/>
+                    node.childs.length > 0 ?
+                    <button className="cursor-pointer w-4 h-4"
+                        onClick={() => { dispatch(toggleCollapse({ id: node.id })) }}>
+                        {
+                            node.collapsed ?
+                            <ChevronRightIcon className="text-white size-4 transition hover:opacity-80"/>
+                            :
+                            <ChevronDownIcon className="text-white size-4 transition hover:opacity-80"/>
+                        }
+                    </button>
+                    :
+                    <div className="w-4 h-4"></div>
                 }
             </div>
             {
-                !collapsed &&
-                <div className="flex flex-col ml-2.5">
-                    {
-                        gameObject.childs.map((child) => {
-                            return <GameObjectItem key={child} id={child}/>
-                        })
-                    }
-                </div>
+                (!focusedId || focusedId !== node.id) ?
+                <NonSelectedMemo nodeState={node}/> :
+                <Selected nodeState={node}/>
             }
         </div>
     );
 }
 const NonSelectedMemo = React.memo(NonSelected);
-function NonSelected(props: { gameObject: NodeState }){
-    const { gameObject } = props;
-    const isPrefab = "prefabRef" in gameObject;
+function NonSelected(props: { nodeState: NodeState }){
+    const { nodeState } = props;
+    const isPrefab = nodeState.isPrefab;
     const dispatch = useAppDispatch();
     const click = () => {
-        dispatch(nodeFocusedThunk({ node: gameObject }));
+        dispatch(nodeFocusedThunk({ node: nodeState }));
     }
     const rightClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        dispatch(nodeFocusedThunk({ node: gameObject }));
+        dispatch(nodeFocusedThunk({ node: nodeState }));
         dispatch(openContextMenu({
-            contextMenu: { type: "node", node: gameObject },
+            contextMenu: { type: "node", node: nodeState },
             mousePos: { x: e.clientX, y: e.clientY }
         }));
     }
@@ -138,37 +145,20 @@ function NonSelected(props: { gameObject: NodeState }){
             onClick={click} onContextMenu={rightClick}>
             <CubeIcon className="text-white size-4 mx-1"/>
             <span className={`text-sm ${!isPrefab ? "text-white" : "text-cyan-500"} select-none`}>
-                {!isPrefab ? gameObject.name : "Prefab"}
+                {nodeState.name}
             </span>
         </div>
     );
 }
-function Selected(props: { gameObject: NodeState }){
-    const { gameObject } = props;
-    const isPrefab = "prefabRef" in gameObject;
+function Selected(props: { nodeState: NodeState }){
+    const { nodeState } = props;
     const dispatch = useAppDispatch();
-    const allowModify = useAppSelector(state => state.goTree.allowModify);
+    const allowModify = nodeState.isPrefab ? false : true;
     const [editing, setEditing] = useState(false);
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if(editing) return;
-            const target = e.target as HTMLElement | null;
-            if(!target) return;
-            if(target.closest("#scene-node-selected")) return;
-            if(target.closest("#inspector")) return;
-            if(target.closest("#context-menu")) return;
-            if(target.closest("#go-non-selected")) return;
-            dispatch(nodeUnfocusedThunk());
-        }
-        window.addEventListener("mousedown", handler);
-        return () => {
-            window.removeEventListener("mousedown", handler);
-        }
-    }, [editing]);
     const rightClick = (e: React.MouseEvent) => {
         e.preventDefault();
         dispatch(openContextMenu({
-            contextMenu: { type: "node", node: gameObject },
+            contextMenu: { type: "node", node: nodeState },
             mousePos: { x: e.clientX, y: e.clientY }
         }));
     }
@@ -184,13 +174,12 @@ function Selected(props: { gameObject: NodeState }){
         >
             <CubeIcon className="text-white size-4 mx-1"/>
             {
-                !editing || isPrefab?
-                <span className={`text-sm ${!isPrefab ? "text-white" : "text-cyan-500"} select-none`}>{
-                    !isPrefab ? gameObject.name : "Prefab"
-                }</span> :
-                <Editing gameObject={gameObject} onBlur={() => {
+                !editing || nodeState.isPrefab?
+                <span className={`text-sm ${!nodeState.isPrefab ? "text-white" : "text-cyan-500"} select-none`}>
+                    {nodeState.name}
+                </span> :
+                <Editing gameObject={nodeState} onBlur={() => {
                     setEditing(false);
-                    dispatch(nodeUnfocusedThunk());
                 }}/>
             }
         </div>
@@ -206,7 +195,7 @@ function Editing(props: { gameObject: Extract<NodeState, { childs: string[] }>, 
     }
 
     return (
-        <input className="outline-none border text-sm px-0.5 w-full text-white" autoFocus spellCheck={false}
+        <input id="node-name-editing-input" className="outline-none border text-sm px-0.5 w-full text-white" autoFocus spellCheck={false}
             value={nameState}
             onBlur={onBlur}
             onChange={(e) => {

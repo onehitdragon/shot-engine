@@ -10,7 +10,7 @@ import { AssetManager } from "@shot-engine/types";
 import { readGLBFile } from './glb';
 import { readHdrAsset, readImageAsset, readMeshAsset, readPrefabAsset, readSceneAsset, saveHdrAssetBinary, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
 import { imageToRaw } from './imageToRaw';
-import { createDefaultCubeAssetMesh, createDefaultSphereAssetMesh } from './createDefaultAssetMesh';
+import { createDefaultConeAssetMesh, createDefaultCubeAssetMesh, createDefaultCylinderAssetMesh, createDefaultSphereAssetMesh } from './createDefaultAssetMesh';
 
 let configed = false;
 let ASSET_DIR = "";
@@ -268,10 +268,22 @@ function ensureDefaultFiles(){
         const sphereAssetMesh = createDefaultSphereAssetMesh();
         saveMeshAssetBinary(sphereAssetMesh, sphereAssetMeshPath);
     }
+    const cylinderAssetMeshPath = path.join(ASSET_DEFAULT_DIR, "cylinder-engine.mesh");
+    if(!fs.existsSync(cylinderAssetMeshPath)){
+        const cylinderAssetMesh = createDefaultCylinderAssetMesh();
+        saveMeshAssetBinary(cylinderAssetMesh, cylinderAssetMeshPath);
+    }
+    const coneAssetMeshPath = path.join(ASSET_DEFAULT_DIR, "cone-engine.mesh");
+    if(!fs.existsSync(coneAssetMeshPath)){
+        const assetMesh = createDefaultConeAssetMesh();
+        saveMeshAssetBinary(assetMesh, coneAssetMeshPath);
+    }
 
     const set = new Set<string>([
         cubeAssetMeshPath,
-        sphereAssetMeshPath
+        sphereAssetMeshPath,
+        cylinderAssetMeshPath,
+        coneAssetMeshPath
     ]);
     const entries = fsWalk.walkSync(ASSET_DEFAULT_DIR);
     for(const entry of entries){

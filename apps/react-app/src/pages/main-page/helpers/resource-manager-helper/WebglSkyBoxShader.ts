@@ -2,9 +2,9 @@ import { WebglHelper } from "./WebglHelper";
 import skyboxVShaderSource from "../shaders/skybox-shader/vshader.glsl?raw";
 import skyboxFShaderSource from "../shaders/skybox-shader/fshader.glsl?raw";
 import { getCubeMeshData } from "../scene-manager-helper/mesh-datas";
-import { mat3, mat4 } from "gl-matrix";
 import { SkyBoxInfo } from "../asset-cache/SkyBoxInfo";
 import { AssetCache } from "../asset-cache/asset-cache";
+import { Mat3, Mat4 } from "@shot-engine/types";
 
 export class WebglSkyBoxShader{
     private static _instance: WebglSkyBoxShader;
@@ -49,26 +49,25 @@ export class WebglSkyBoxShader{
         gl.bindVertexArray(null);
         return vao;
     }
-    render(viewMat4: mat4, clipMat4: mat4){
+    render(viewMat4: Mat4, clipMat4: Mat4){
         const uniqueSkyBox = SkyBoxInfo.getInstance().uniqueSkyBox;
         if(!uniqueSkyBox || !uniqueSkyBox.hdrRef) return;
         const webglTextureCube = AssetCache.getInstance().getHdr(uniqueSkyBox.hdrRef)?.enviromentMap;
         if(!webglTextureCube) return;
 
-        const upperLeftMat3 = mat3.create();
-        mat3.fromMat4(upperLeftMat3, viewMat4);
-        viewMat4 = mat4.fromValues(
-            upperLeftMat3[0], upperLeftMat3[1], upperLeftMat3[2], 0,
-            upperLeftMat3[3], upperLeftMat3[4], upperLeftMat3[5], 0,
-            upperLeftMat3[6], upperLeftMat3[7], upperLeftMat3[8], 0,
+        const upperLeftMat3 = Mat3.FromMat4(viewMat4);
+        viewMat4 = Mat4.FromArray([
+            upperLeftMat3.values[0], upperLeftMat3.values[1], upperLeftMat3.values[2], 0,
+            upperLeftMat3.values[3], upperLeftMat3.values[4], upperLeftMat3.values[5], 0,
+            upperLeftMat3.values[6], upperLeftMat3.values[7], upperLeftMat3.values[8], 0,
             0, 0, 0, 1,
-        );
+        ]);
 
         const gl = this._gl;
         gl.depthFunc(gl.LEQUAL);
         gl.useProgram(this._program);
-        gl.uniformMatrix4fv(this._u_ViewMatrixLoc, false, viewMat4);
-        gl.uniformMatrix4fv(this._u_ClipMatrixLoc, false, clipMat4);
+        gl.uniformMatrix4fv(this._u_ViewMatrixLoc, false, viewMat4.values);
+        gl.uniformMatrix4fv(this._u_ClipMatrixLoc, false, clipMat4.values);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, webglTextureCube.webglTexture);
         gl.uniform1i(this._u_skyboxSamplerLoc, 0);

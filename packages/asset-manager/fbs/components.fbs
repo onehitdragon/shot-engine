@@ -23,6 +23,7 @@ table SimpleShading{
     id: string;
     culling: string;
     transparent: bool;
+    color: Vec3;
 }
 
 table ImageDiffuse{

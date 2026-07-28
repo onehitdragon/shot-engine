@@ -1,4 +1,4 @@
-import type { AssetManager, GameObject, GameObjectPrefab, PrefabAsset, SceneNode } from "@shot-engine/types";
+import { isGameObjectPrefab, isPrefabAsset, type AssetManager, type GameObject, type GameObjectPrefab, type PrefabAsset, type SceneNode } from "@shot-engine/types";
 import { createAsyncThunk, isAnyOf } from "@reduxjs/toolkit";
 import type { AppDispatch, RootState } from "../store";
 import { v4 as uuidv4 } from "uuid";
@@ -6,48 +6,56 @@ import { goTreeOpenedThunk, goTreeSavedThunk } from "./go-tree-thunks";
 import type { AppStartListening } from "../listenerMiddleware";
 import { selectNodeRecord, type NodeState } from "../slices/go-tree-slice";
 
-export function flatGameObject(sceneNodeIn: SceneNode){
+export async function flatGameObject(sceneNodeIn: SceneNode){
     const nodeStates: NodeState[] = [];
 
-    function recur(sceneNode: SceneNode, parentId?: string){
-        if("prefabRef" in sceneNode){
-            const goPrefab: NodeState = {
-                ...sceneNode,
-                id: uuidv4(),
-                parent: parentId
-            }
-            nodeStates.push(goPrefab);
-            return goPrefab;
+    async function recur(sceneNode: SceneNode, parentId?: string, isPrefab?: boolean){
+        let gameObject: GameObject;
+        let prefabRef: string | undefined = undefined;
+        if(isGameObjectPrefab(sceneNode)){
+            const prefabAsset = await window.api.assetManager.getAssetFromUuid(sceneNode.prefabRef, "prefab");
+            if(!isPrefabAsset(prefabAsset)) return;
+            gameObject = prefabAsset.root;
+            prefabRef = sceneNode.prefabRef;
+            isPrefab = true;
         }
+        else{
+            gameObject = sceneNode;
+        }
+        
         const id = uuidv4();
         const childs: string[] = [];
-        for(let child of sceneNode.childs){
-            const c = recur(child, id);
+        for(let child of gameObject.childs){
+            const c = await recur(child, id, isPrefab);
+            if(!c) continue;
             childs.push(c.id);
         }
-        const go: NodeState = {
-            ...sceneNode,
+        const nodeState: NodeState = {
+            id,
+            name: gameObject.name,
+            components: gameObject.components,
             childs,
             parent: parentId,
-            id
+            prefabRef,
+            isPrefab
         };
-        nodeStates.push(go);
-        return go;
+        nodeStates.push(nodeState);
+        return nodeState;
     }
-    const root = recur(sceneNodeIn);
+    const root = await recur(sceneNodeIn);
     
     return {
         root,
         nodeStates
     }
 }
-export function contructGameObject(rootIdIn: string, record: Record<string, NodeState>){
+export function nodeStateToSceneNode(rootIdIn: string, record: Record<string, NodeState>){
     function recur(rootId: string){
         const root = record[rootId];
-        if("prefabRef" in root){
+        if(root.prefabRef){
             const goPrefab: GameObjectPrefab = {
-                ...root,
                 id: "",
+                prefabRef: root.prefabRef
             }
             return goPrefab;
         }
@@ -56,10 +64,10 @@ export function contructGameObject(rootIdIn: string, record: Record<string, Node
             childs.push(recur(childId));
         }
         const go: GameObject = {
-            ...root,
-            childs,
+            id: "",
+            name: root.name,
             components: root.components.map(c => { return { ...c, id: "" }; }),
-            id: ""
+            childs
         }
         return go;
     }
@@ -68,7 +76,7 @@ export function contructGameObject(rootIdIn: string, record: Record<string, Node
 }
 export const prefabAssetOpenedThunk = createAsyncThunk
 <
-    {},
+    void,
     {
         assetInfo: AssetManager.AssetInfo,
         prefabAsset: PrefabAsset
@@ -82,16 +90,15 @@ export const prefabAssetOpenedThunk = createAsyncThunk
     "prefabAsset/prefabAssetOpened",
     async ({ assetInfo, prefabAsset }, { dispatch, rejectWithValue }) => {
         try{
-            const flat = flatGameObject(prefabAsset.root);
+            const flat = await flatGameObject(prefabAsset.root);
+            if(!flat.root) throw "prefab dont contain root";
             dispatch(goTreeOpenedThunk({
                 assetInfo,
                 rootIds: [flat.root.id],
                 nodes: flat.nodeStates,
-                allowModify: assetInfo.allowModify,
                 allowAddRoot: false,
                 allowRemoveRoot: false
             }));
-            return {}
         }
         catch(err){
             await window.api.showError(String(err));
@@ -109,9 +116,9 @@ export function prefabAssetListener(startListening: AppStartListening){
                 if(getState().goTree.assetInfo?.uuid !== prefabAssetInfo.uuid) return;
                 if(!prefabAssetInfo.allowModify) throw "cant modify";
                 const record = selectNodeRecord(getState());
-                const sceneNodes = getState().goTree.rootIds.map(id => contructGameObject(id, record));
-                if(sceneNodes.length !== 1 || "prefabRef" in sceneNodes[0]){
-                    throw "cant save prefab, go tree is wrong";
+                const sceneNodes = getState().goTree.rootIds.map(id => nodeStateToSceneNode(id, record));
+                if(sceneNodes.length !== 1 || isGameObjectPrefab(sceneNodes[0])){
+                    throw "cant save prefab, prefab only have one root, go tree is wrong";
                 }
                 const prefabAsset: PrefabAsset = {
                     root: sceneNodes[0] as GameObject

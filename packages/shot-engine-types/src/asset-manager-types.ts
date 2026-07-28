@@ -1,4 +1,4 @@
-import { AssetProperty, AssetType } from "./asset"
+import { AssetProperty, AssetType } from "./asset.js"
 
 export namespace AssetManager{
     export type Config = {

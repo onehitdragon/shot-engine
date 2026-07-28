@@ -1,15 +1,15 @@
-import type { mat3, mat4, vec3 } from "gl-matrix";
 import { WebglMeshVBOs } from "./WebglMeshVBOs";
 import { WebglSimpleShader } from "./WebglSimpleShader";
 import { WebglHelper } from "./WebglHelper";
 import { WebglPhongShader } from "./WebglPhongShader";
-import type { MeshAsset, PbrShading, PhongShading } from "@shot-engine/types";
+import type { GizmoShading, Mat3, Mat4, MeshAsset, PbrShading, PhongShading, Shading, Vec3 } from "@shot-engine/types";
 import { WebglPbrShader } from "./WebglPbrShader";
+import { WebglGizmoShader } from "./WebglGizmoShader";
 
 export class WebglMesh{
     private _gl: WebGL2RenderingContext;
     private _meshVBOs: WebglMeshVBOs;
-    private _meshVAOMap: Map<Components.Shading["shaderType"], WebGLVertexArrayObject>;
+    private _meshVAOMap: Map<Shading["shaderType"], WebGLVertexArrayObject>;
     constructor(gl: WebGL2RenderingContext, primitive: MeshAsset["primitives"][0]){
         this._gl = gl;
         this._meshVBOs = new WebglMeshVBOs(gl, primitive);
@@ -22,17 +22,25 @@ export class WebglMesh{
             "phong",
             WebglPhongShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
         );
+        this._meshVAOMap.set(
+            "pbr",
+            WebglPhongShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
+        );
+        this._meshVAOMap.set(
+            "gizmo",
+            WebglGizmoShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
+        );
     }
-    renderWithSimpleShader(mvpMat4: mat4){
+    renderWithSimpleShader(mvpMat4: Mat4, color?: Vec3){
         const gl = this._gl;
         const vao = this._meshVAOMap.get("simple")!;
-        WebglSimpleShader.getInstance(gl).renderMesh(this._meshVBOs, vao, mvpMat4);
+        WebglSimpleShader.getInstance(gl).renderMesh(this._meshVBOs, vao, mvpMat4, color);
     }
     renderWithPhongShader(
-        mvpMat4: mat4,
-        modelMat4: mat4,
-        normalMat3: mat3,
-        camPos: vec3,
+        mvpMat4: Mat4,
+        modelMat4: Mat4,
+        normalMat3: Mat3,
+        camPos: Vec3,
         shadingComponent: PhongShading
     ){
         const gl = this._gl;
@@ -48,14 +56,14 @@ export class WebglMesh{
         );
     }
     renderWithPbrShader(
-        mvpMat4: mat4,
-        modelMat4: mat4,
-        normalMat3: mat3,
-        camPos: vec3,
+        mvpMat4: Mat4,
+        modelMat4: Mat4,
+        normalMat3: Mat3,
+        camPos: Vec3,
         shadingComponent: PbrShading
     ){
         const gl = this._gl;
-        const vao = this._meshVAOMap.get("phong")!;
+        const vao = this._meshVAOMap.get("pbr")!;
         WebglPbrShader.getInstance(gl).renderMesh(
             this._meshVBOs,
             vao,
@@ -63,6 +71,19 @@ export class WebglMesh{
             modelMat4,
             normalMat3,
             camPos,
+            shadingComponent
+        );
+    }
+    renderWithGizmoShader(
+        mvpMat4: Mat4,
+        shadingComponent: GizmoShading
+    ){
+        const gl = this._gl;
+        const vao = this._meshVAOMap.get("gizmo")!;
+        WebglGizmoShader.getInstance(gl).renderMesh(
+            this._meshVBOs,
+            vao,
+            mvpMat4,
             shadingComponent
         );
     }

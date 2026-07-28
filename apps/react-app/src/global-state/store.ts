@@ -10,6 +10,8 @@ import { listenerMiddleware } from "./listenerMiddleware";
 import inspectorComponentsReducer from "./slices/inspector-components-slice";
 import sceneAssetReducer from "./slices/scene-asset-slice";
 import prefabAssetReducer from "./slices/prefab-asset-slice";
+import { goTreeGizmoReducer } from "./slices/gizmo-go-tree-slice";
+import { gizmoOrbitCameraReducer } from "./slices/gizmo-orbit-camera-slice";
 
 export const store = configureStore({
     reducer: {
@@ -22,7 +24,9 @@ export const store = configureStore({
         resourceManager: resourceManagerReducer,
         inspectorComponents: inspectorComponentsReducer,
         sceneAsset: sceneAssetReducer,
-        prefabAsset: prefabAssetReducer
+        prefabAsset: prefabAssetReducer,
+        gizmoGoTree: goTreeGizmoReducer,
+        gizmoOrbitCamera: gizmoOrbitCameraReducer
     },
     middleware: (getDefaultMiddleware) => {
         return getDefaultMiddleware({serializableCheck: false}).prepend(listenerMiddleware.middleware);

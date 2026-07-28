@@ -10,9 +10,11 @@ import {
     HdrImage,
     HdrCube,
     HdrAsset,
-    PrefilterMap
+    PrefilterMap,
+    AABB,
+    Vec3
 } from "../fbs-gen/fbsengine";
-import { buildSceneNode, getFloat32Array, getUint8Array, readGameObject } from "./flatbfUtil";
+import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, readGameObject } from "./flatbfUtil";
 
 export function saveImageAssetBinary(imageAsset: ShotEngineType.ImageAsset, filePath: string){
     const builder = new Builder(1024);
@@ -43,11 +45,20 @@ export function saveMeshAssetBinary(meshAsset: ShotEngineType.MeshAsset, filePat
                 prim.indices.byteLength
             )
         );
+
+        const minOffset = buildVec3(builder, prim.aabb.min);
+        const maxOffset = buildVec3(builder, prim.aabb.max);
+        AABB.startAABB(builder);
+        AABB.addMin(builder, minOffset);
+        AABB.addMax(builder, maxOffset);
+        const aabbOffset = AABB.endAABB(builder);
+
         Primitive.startPrimitive(builder);
         Primitive.addAttribute(builder, attrOffset);
         Primitive.addIndices(builder, indicesOffset);
         Primitive.addIndexType(builder, prim.indexType);
         Primitive.addDrawMode(builder, prim.drawMode);
+        Primitive.addAabb(builder, aabbOffset);
         primitiveOffsets.push(Primitive.endPrimitive(builder));
     }
     const primitivesOffset = MeshAsset.createPrimitivesVector(builder, primitiveOffsets);
@@ -178,6 +189,7 @@ export function readMeshAsset(filePath: string){
         if(!attr) continue;
         const rawIndices = prim.indicesArray();
         if(!rawIndices) continue;
+
         let indexType = prim.indexType();
         let indices: Uint8Array | Uint16Array | Uint32Array;
         if(indexType === IndexType.UNSIGNED_BYTE){
@@ -208,6 +220,7 @@ export function readMeshAsset(filePath: string){
             indices = new Uint32Array();
             indexType = IndexType.UNSIGNED_INT;
         }
+
         asset.primitives.push({
             attribute: {
                 interleaveArray: getFloat32Array(attr.interleaveArrayArray())
@@ -215,6 +228,10 @@ export function readMeshAsset(filePath: string){
             indices,
             indexType,
             drawMode: prim.drawMode(),
+            aabb: {
+                min: getVec3(prim.aabb()?.min()),
+                max: getVec3(prim.aabb()?.max()),
+            }
         });
     }
     return asset;

@@ -1,7 +1,7 @@
 import { createAsyncThunk, isAnyOf } from "@reduxjs/toolkit"
 import type { AppDispatch, RootState } from "../store"
 import type { AssetManager, SceneAsset } from "@shot-engine/types";
-import { contructGameObject, flatGameObject } from "./prefab-asset-thunk";
+import { nodeStateToSceneNode, flatGameObject } from "./prefab-asset-thunk";
 import { goTreeOpenedThunk, goTreeSavedThunk } from "./go-tree-thunks";
 import { selectNodeRecord, type NodeState } from "../slices/go-tree-slice";
 import type { AppStartListening } from "../listenerMiddleware";
@@ -25,7 +25,8 @@ export const sceneAssetOpenedThunk = createAsyncThunk
             const rootIds: string[] = [];
             const nodes: NodeState[] = [];
             for(const sceneNode of sceneAsset.scene.roots){
-                const flat = flatGameObject(sceneNode);
+                const flat = await flatGameObject(sceneNode);
+                if(!flat.root) continue;
                 rootIds.push(flat.root.id);
                 nodes.push(...flat.nodeStates);
             }
@@ -33,7 +34,6 @@ export const sceneAssetOpenedThunk = createAsyncThunk
                 assetInfo,
                 rootIds,
                 nodes,
-                allowModify: true,
                 allowAddRoot: true,
                 allowRemoveRoot: true,
             }));
@@ -56,7 +56,7 @@ export function sceneAssetListener(startListening: AppStartListening){
                 if(getState().goTree.assetInfo?.uuid !== assetInfo.uuid) return;
                 if(!assetInfo.allowModify) throw "cant modify";
                 const record = selectNodeRecord(getState());
-                const sceneNodes = getState().goTree.rootIds.map(id => contructGameObject(id, record));
+                const sceneNodes = getState().goTree.rootIds.map(id => nodeStateToSceneNode(id, record));
                 const sceneAssetOut: SceneAsset = {
                     scene: {
                         id: "",

@@ -7,6 +7,7 @@ export function createSimpleShadingComponent(){
         shaderType: "simple",
         culling: "none",
         transparent: false,
+        color: { x: 1, y: 1, z: 1 }
     }
     return component;
 }

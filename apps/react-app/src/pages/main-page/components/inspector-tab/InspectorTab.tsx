@@ -1,7 +1,5 @@
-import { useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
+import { useAppSelector } from "../../../../global-state/hooks";
 import { TextAssetInspector } from "./TextAssetInspector";
-import { showInspector } from "../../../../global-state/slices/inspector-slice";
 import { ImageAssetInspector } from "./ImageAssetInspector";
 import { MeshAssetInspector } from "./MeshAssetInspector";
 import { ComponentsInspector } from "./ComponentsInspector";
@@ -11,19 +9,20 @@ import { HdrAssetInspector } from "./HdrAssetInspector";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
-    const dispatch = useAppDispatch();
-    useEffect(() => {
-        const handler = (event: MouseEvent) => {
-            if(event.button !== 0) return;
-            const target = event.target as HTMLElement | null;
-            if(!target) return;
-            if(target.closest("#inspector")) return;
-            if(target.closest("#context-menu")) return;
-            dispatch(showInspector({ inspector: null }));
-        }
-        window.addEventListener("mousedown", handler);
-        return () => window.removeEventListener("mousedown", handler);
-    }, []);
+    // const dispatch = useAppDispatch();
+
+    // useEffect(() => {
+    //     const handler = (event: MouseEvent) => {
+    //         if(event.button !== 0) return;
+    //         const target = event.target as HTMLElement | null;
+    //         if(!target) return;
+    //         if(target.closest("#inspector")) return;
+    //         if(target.closest("#context-menu")) return;
+    //         dispatch(showInspector({ inspector: null }));
+    //     }
+    //     window.addEventListener("mousedown", handler);
+    //     return () => window.removeEventListener("mousedown", handler);
+    // }, []);
 
     return (
         <div id="inspector" className="flex flex-1 overflow-hidden">

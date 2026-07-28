@@ -1,6 +1,6 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
 import type { NodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { createCubeNode, createEmptyNode, createPbrTest, createSphereNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
+import { createConeNode, createCubeNode, createCylinderNode, createEmptyNode, createPbrTest, createSphereNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 import { createDirectionalLightComponent, createPbrShadingComponent, createPhongShadingComponent, createPointLightComponent, createSimpleShadingComponent, createSkyBoxComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
 import { goAddedThunk, goRemovedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 import { componentAddedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
@@ -10,7 +10,6 @@ export function SceneNodeContextMenu(
 ){
     const { contextMenu, x, y } = props;
     const { node } = contextMenu;
-    const isPrefab = "prefabRef" in node;
     const dispatch = useAppDispatch();
     const createEmptyChild = () => {
         const newNode = createEmptyNode();
@@ -28,6 +27,20 @@ export function SceneNodeContextMenu(
     }
     const createSphereChild = () => {
         const newNode = createSphereNode();
+        newNode.parent = node.id;
+        dispatch(goAddedThunk({
+            node: newNode
+        }));
+    }
+    const createCylinderChild = () => {
+        const newNode = createCylinderNode();
+        newNode.parent = node.id;
+        dispatch(goAddedThunk({
+            node: newNode
+        }));
+    }
+    const createConeChild = () => {
+        const newNode = createConeNode();
         newNode.parent = node.id;
         dispatch(goAddedThunk({
             node: newNode
@@ -87,7 +100,7 @@ export function SceneNodeContextMenu(
             <ul className='flex flex-col p-1 rounded-sm bg-linear-to-b bg-gray-700
                 border border-slate-500'>
                 <span className="select-none text-white text-sm my-1 text-center font-bold">
-                    {!isPrefab ? node.name : "Prefab"}
+                    {node.name}
                 </span>
                 <li className='text-xs text-white select-none cursor-pointer transition
                     hover:bg-blue-500 px-2 py-1 rounded-sm'
@@ -106,6 +119,18 @@ export function SceneNodeContextMenu(
                     onMouseDown={createSphereChild}
                 >
                     Create Sphere Child
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={createCylinderChild}
+                >
+                    Create Cylinder Child
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={createConeChild}
+                >
+                    Create Cone Child
                 </li>
                 <li className='text-xs text-white select-none cursor-pointer transition
                     hover:bg-blue-500 px-2 py-1 rounded-sm'

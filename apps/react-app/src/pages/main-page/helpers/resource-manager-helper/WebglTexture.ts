@@ -18,7 +18,9 @@ export class WebglTexture{
         if(imageType === "Texture"){
             const { sRGB } = property;
             const internalformat = sRGB ? gl.SRGB8_ALPHA8 : gl.RGBA8;
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // flip y before update to gpu
             gl.texImage2D(gl.TEXTURE_2D, 0, internalformat, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); // reset
             if(generateMipmaps) gl.generateMipmap(gl.TEXTURE_2D);
         }
         else if(imageType === "NormalMap"){

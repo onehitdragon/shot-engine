@@ -1,9 +1,8 @@
 import { WebglHelper } from "./WebglHelper";
 import phongShadingVShaderSource from "../shaders/phong-shader/vshader.glsl?raw";
 import phongShadingFShaderSource from "../shaders/phong-shader/fshader.glsl?raw";
-import type { mat3, mat4, vec3 } from "gl-matrix";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
-import type { HdrAsset, PhongShading } from "@shot-engine/types";
+import type { Mat3, Mat4, PhongShading, Vec3 } from "@shot-engine/types";
 import { LightInfo } from "../asset-cache/LightInfo";
 import { AssetCache } from "../asset-cache/asset-cache";
 import { ColorCache } from "../asset-cache/color-cache";
@@ -26,9 +25,9 @@ export class WebglPhongShader{
     private _u_CamWorldPosLoc: WebGLUniformLocation;
     private _u_specularLoc: WebGLUniformLocation;
     private _u_shininessLoc: WebGLUniformLocation;
-    private _u_irradianceMapLoc: WebGLUniformLocation;
-    private _u_prefilterMapLoc: WebGLUniformLocation;
-    private _u_maxShininessLoc: WebGLUniformLocation;
+    // private _u_irradianceMapLoc: WebGLUniformLocation;
+    // private _u_prefilterMapLoc: WebGLUniformLocation;
+    // private _u_maxShininessLoc: WebGLUniformLocation;
     private _u_PointLightSizeLoc: WebGLUniformLocation;
     private _u_DirectionalLightSizeLoc: WebGLUniformLocation;
     private _u_DiffuseSampler: WebGLUniformLocation;
@@ -66,9 +65,9 @@ export class WebglPhongShader{
         this._u_CamWorldPosLoc = WebglHelper.getUniformLocation(gl, program, "u_CamWorldPos");
         this._u_specularLoc = WebglHelper.getUniformLocation(gl, program, "u_specular");
         this._u_shininessLoc = WebglHelper.getUniformLocation(gl, program, "u_shininess");
-        this._u_irradianceMapLoc = WebglHelper.getUniformLocation(gl, program, "u_irradianceMap");
-        this._u_prefilterMapLoc = WebglHelper.getUniformLocation(gl, program, "u_prefilterMap");
-        this._u_maxShininessLoc = WebglHelper.getUniformLocation(gl, program, "u_maxShininess");
+        // this._u_irradianceMapLoc = WebglHelper.getUniformLocation(gl, program, "u_irradianceMap");
+        // this._u_prefilterMapLoc = WebglHelper.getUniformLocation(gl, program, "u_prefilterMap");
+        // this._u_maxShininessLoc = WebglHelper.getUniformLocation(gl, program, "u_maxShininess");
         this._u_PointLightSizeLoc = WebglHelper.getUniformLocation(gl, program, "u_PointLightSize");
         this._u_DirectionalLightSizeLoc = WebglHelper.getUniformLocation(gl, program, "u_DirectionalLightSize");
         this._u_DiffuseSampler = WebglHelper.getUniformLocation(gl, program, "u_DiffuseSampler");
@@ -111,10 +110,10 @@ export class WebglPhongShader{
     renderMesh(
         meshVBOs: WebglMeshVBOs,
         vao: WebGLVertexArrayObject,
-        mvpMat4: mat4,
-        modelMat4: mat4,
-        normalMat3: mat3,
-        camPos: vec3,
+        mvpMat4: Mat4,
+        modelMat4: Mat4,
+        normalMat3: Mat3,
+        camPos: Vec3,
         shadingComponent: PhongShading
     ){
         const gl = this._gl;
@@ -122,10 +121,10 @@ export class WebglPhongShader{
         const { pointLightInfos, directionalInfos } = LightInfo.getInstance();
         const { diffuse, specular, shininess } = shadingComponent;
         gl.useProgram(this._program);
-        gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4);
-        gl.uniformMatrix4fv(this._u_ModelMatrixLoc, false, modelMat4);
-        gl.uniformMatrix3fv(this._u_NormalMatrixLoc, false, normalMat3);
-        gl.uniform3fv(this._u_CamWorldPosLoc, camPos);
+        gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4.values);
+        gl.uniformMatrix4fv(this._u_ModelMatrixLoc, false, modelMat4.values);
+        gl.uniformMatrix3fv(this._u_NormalMatrixLoc, false, normalMat3.values);
+        gl.uniform3fv(this._u_CamWorldPosLoc, [camPos.x, camPos.y, camPos.z]);
         gl.uniform3fv(this._u_specularLoc, [specular.x, specular.y, specular.z]);
         gl.uniform1f(this._u_shininessLoc, shininess);
         gl.uniform1i(this._u_PointLightSizeLoc, pointLightInfos.length);
@@ -159,33 +158,33 @@ export class WebglPhongShader{
         gl.bindTexture(gl.TEXTURE_2D, diffuseWebglTexture.webglTexture);
         gl.uniform1i(this._u_DiffuseSampler, 0);
 
-        // let irradianceMap = ColorCache.getInstance().getEmptyWebglTextureCube();
-        // let prefilterMap = ColorCache.getInstance().getEmptyWebglTextureCube();
-        // // let maxShininess = 0;
-        // const uniqueSkyBox = SkyBoxInfo.getInstance().uniqueSkyBox;
-        // if(uniqueSkyBox && uniqueSkyBox.hdrRef){
-        //     const hdr = AssetCache.getInstance().getHdr(uniqueSkyBox.hdrRef);
-        //     if(hdr && hdr.irradianceMap){
-        //         irradianceMap = hdr.irradianceMap;
-        //     }
-        //     if(hdr && hdr.prefilterMap){
-        //         prefilterMap = hdr.prefilterMap;
-        //     }
-        //     // const hdrAsset = AssetCache.getInstance().getAssetCache(uniqueSkyBox.hdrRef)?.asset as HdrAsset;
-        //     // if(hdrAsset){
-        //     //     maxShininess = hdrAsset.prefilterMap.maxShininess;
-        //     // }
-        // }
+        let irradianceMap = ColorCache.getInstance().getEmptyWebGLTexture().webglTexture;
+        let prefilterMap = ColorCache.getInstance().getEmptyWebGLTexture().webglTexture;
+        // let maxShininess = 0;
+        const uniqueSkyBox = SkyBoxInfo.getInstance().uniqueSkyBox;
+        if(uniqueSkyBox && uniqueSkyBox.hdrRef){
+            const hdr = AssetCache.getInstance().getHdr(uniqueSkyBox.hdrRef);
+            if(hdr && hdr.irradianceMap){
+                irradianceMap = hdr.irradianceMap.webglTexture;
+            }
+            if(hdr && hdr.prefilterMap){
+                prefilterMap = hdr.prefilterMap.webglTexture;
+            }
+            // const hdrAsset = AssetCache.getInstance().getAssetCache(uniqueSkyBox.hdrRef)?.asset as HdrAsset;
+            // if(hdrAsset){
+            //     // maxShininess = hdrAsset.prefilterMap.maxShininess;
+            // }
+        }
         // gl.activeTexture(gl.TEXTURE1);
-        // gl.bindTexture(gl.TEXTURE_CUBE_MAP, irradianceMap.webglTexture);
+        // gl.bindTexture(gl.TEXTURE_CUBE_MAP, irradianceMap);
         // gl.uniform1i(this._u_irradianceMapLoc, 1);
         // gl.activeTexture(gl.TEXTURE2);
-        // gl.bindTexture(gl.TEXTURE_CUBE_MAP, prefilterMap.webglTexture);
+        // gl.bindTexture(gl.TEXTURE_CUBE_MAP, prefilterMap);
         // gl.uniform1i(this._u_prefilterMapLoc, 2);
-        // // gl.uniform1f(this._u_maxShininessLoc, maxShininess);
+        // gl.uniform1f(this._u_maxShininessLoc, 0);
 
-        // gl.bindVertexArray(vao);
-        //     gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
-        // gl.bindVertexArray(null);
+        gl.bindVertexArray(vao);
+            gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
+        gl.bindVertexArray(null);
     }
 }

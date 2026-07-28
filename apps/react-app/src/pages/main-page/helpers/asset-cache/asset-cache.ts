@@ -213,6 +213,11 @@ export class AssetCache{
     public getAssetCache(uuid: string){
         return this.map.get(uuid);
     }
+    public getMeshAssetCache(uuid: string){
+        const asset = this.map.get(uuid)?.asset;
+        if(!asset) return;
+        return asset as MeshAsset;
+    }
     public getWebglMeshes(uuid: string){
         return this.map.get(uuid)?.webglResource?.webglMeshes;
     }

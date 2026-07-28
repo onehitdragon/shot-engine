@@ -9,6 +9,7 @@ import { clamp } from "@math.gl/core";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { quat } from "gl-matrix";
 import { getNormalizeColor, getDenormalizeColor } from "../../helpers/utils/utils";
+import z from "zod";
 
 export function ComponentsInspector(){
     const components = useAppSelector(state => selectComponents(state));
@@ -500,6 +501,15 @@ function Header(props: { label: string, component: Component }){
         </div>
     );
 }
+const numberStringSchema = z.preprocess(
+    (val) => (val === '' || val === null ? NaN : Number(val)),
+    z.number()
+);
+const vec3Schema = z.object({
+    x: numberStringSchema,
+    y: numberStringSchema,
+    z: numberStringSchema,
+});
 function ThreeValueRow(
     props: {
         label: string,
@@ -507,42 +517,56 @@ function ThreeValueRow(
         onChange: (value: {x: number, y: number, z: number}) => void,
     }
 ){
+    function toString(value: {x: number, y: number, z: number}){
+        return { x: value.x.toString(), y: value.y.toString(), z: value.z.toString() }
+    }
+
     const { label, value } = props;
-    const { x, y, z } = value;
-    const inputXRef = useRef<HTMLInputElement>(null);
-    const inputYRef = useRef<HTMLInputElement>(null);
-    const inputZRef = useRef<HTMLInputElement>(null);
-    const onBlurX = () => {
-        const valueX = Number(inputXRef.current?.value ?? "0");
-        props.onChange({ x: valueX, y, z });
-    }
-    const onBlurY = () => {
-        const valueY = Number(inputYRef.current?.value ?? "0");
-        props.onChange({ x, y: valueY, z });
-    }
-    const onBlurZ = () => {
-        const valueZ = Number(inputZRef.current?.value ?? "0");
-        props.onChange({ x, y, z: valueZ });
+    const [localValue, setLocalValue] = useState(toString(value));
+
+    useEffect(() => {
+        setLocalValue(toString(value));
+    }, [value.x, value.y, value.z]);
+
+    const handleChange = (axis: 'x' | 'y' | 'z', valStr: string) => {
+        const newValue = { ...localValue, [axis]: valStr }
+        setLocalValue(newValue);
+        const isNumber = vec3Schema.safeParse(newValue);
+        if(isNumber.success){
+            props.onChange(isNumber.data);
+        }
+    };
+    const onBlur = () => {
+        const newValue = {
+            x: parseFloat(localValue.x) || 0,
+            y: parseFloat(localValue.y) || 0,
+            z: parseFloat(localValue.z) || 0
+        }
+        setLocalValue(toString(newValue));
+        props.onChange(newValue);
     }
 
     return (
         <div className="flex items-center my-0.5">
             <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
             <div className="flex items-center justify-evenly w-full gap-1">
-                <input ref={inputXRef} className="outline-none border text-sm px-0.5 w-1/3"
-                    type="number" defaultValue={x}
-                    onBlur={onBlurX}
-                    onKeyDown={(e) => e.key === "Enter" && onBlurX()}
+                <input className="outline-none border text-sm px-0.5 w-1/3"
+                    value={localValue.x}
+                    onChange={(e) => { handleChange("x", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
                 />
-                <input ref={inputYRef} className="outline-none border text-sm px-0.5 w-1/3"
-                    type="number" defaultValue={y}
-                    onBlur={onBlurY}
-                    onKeyDown={(e) => e.key === "Enter" && onBlurY()}
+                <input className="outline-none border text-sm px-0.5 w-1/3"
+                    value={localValue.y}
+                    onChange={(e) => { handleChange("y", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
                 />
-                <input ref={inputZRef} className="outline-none border text-sm px-0.5 w-1/3"
-                    type="number" defaultValue={z}
-                    onBlur={onBlurZ}
-                    onKeyDown={(e) => e.key === "Enter" && onBlurZ()}
+                <input className="outline-none border text-sm px-0.5 w-1/3"
+                    value={localValue.z}
+                    onChange={(e) => { handleChange("z", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
                 />
             </div>
         </div>

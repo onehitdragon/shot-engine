@@ -2,11 +2,10 @@
 
 uniform mat4 u_VpMatrix;
 in vec4 a_Position;
-out vec2 v_WorldPosition;
+out vec3 v_WorldPos;
 void main(){
-    vec3 vertex = vec3(a_Position);
-    float scale = 100.0;
-    vertex *= scale;
+    vec3 vertex = vec3(a_Position) * 1000.0;
+    v_WorldPos = vertex;
+
     gl_Position = u_VpMatrix * vec4(vertex, 1.0);
-    v_WorldPosition = vec2(vertex.x, -vertex.z);
 }

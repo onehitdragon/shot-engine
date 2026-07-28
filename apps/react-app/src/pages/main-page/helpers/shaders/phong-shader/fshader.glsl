@@ -24,9 +24,9 @@ uniform sampler2D u_DiffuseSampler;
 uniform vec3 u_specular;
 uniform float u_shininess;
 
-uniform samplerCube u_irradianceMap;
-uniform samplerCube u_prefilterMap;
-uniform float u_maxShininess;
+// uniform samplerCube u_irradianceMap;
+// uniform samplerCube u_prefilterMap;
+// uniform float u_maxShininess;
 
 uniform PointLight u_PointLights[NUM_LIGHTS];
 uniform int u_PointLightSize;
@@ -72,6 +72,7 @@ void main(){
         vec3 L = toLight * inversesqrt(distanceSq);
 
         totalReflection += reflection(Li, diffuse, u_specular, u_shininess, N, L, V);
+        // totalReflection += vec3(10.0);
     }
     for(int i = 0; i < u_DirectionalLightSize; i++){
         DirectionalLight light = u_DirectionalLights[i];
@@ -81,10 +82,11 @@ void main(){
     vec3 Rv = reflect(-V, N);
     float NoRv = max(dot(N, Rv), 0.0);
     vec3 kd = diffuse * (1.0 - u_specular);
-    vec3 ambientDiffuse = kd * texture(u_irradianceMap, N).rgb;
-    float level = (u_maxShininess / max(u_shininess, 0.001)) - 1.0;
-    vec3 ambientSpecular = u_specular * NoRv * textureLod(u_prefilterMap, Rv, level).rgb;
-    vec3 ambient = ambientDiffuse + ambientSpecular;
+    // vec3 ambientDiffuse = kd * texture(u_irradianceMap, N).rgb;
+    // float level = (u_maxShininess / max(u_shininess, 0.001)) - 1.0;
+    // vec3 ambientSpecular = u_specular * NoRv * textureLod(u_prefilterMap, Rv, level).rgb;
+    // vec3 ambient = ambientDiffuse + ambientSpecular;
+    vec3 ambient = vec3(0.0);
 
     vec3 finalColor = ambient + totalReflection;
 

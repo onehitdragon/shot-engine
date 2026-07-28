@@ -1,7 +1,7 @@
 import { WebglHelper } from "./WebglHelper";
 import gridShadingVShaderSource from "../shaders/grid-shader/vshader.glsl?raw";
 import gridShadingFShaderSource from "../shaders/grid-shader/fshader.glsl?raw";
-import type { mat4 } from "gl-matrix";
+import type { Mat4 } from "@shot-engine/types";
 
 export class WebglGridShader{
     private static _instance: WebglGridShader;
@@ -43,12 +43,15 @@ export class WebglGridShader{
         gl.bindVertexArray(null);
         return vao;
     }
-    render(vpMat4: mat4){
+    render(vpMat4: Mat4){
         const gl = this._gl;
         gl.useProgram(this._program);
-        gl.uniformMatrix4fv(this._u_VpMatrixLoc, false, vpMat4);
+        gl.uniformMatrix4fv(this._u_VpMatrixLoc, false, vpMat4.values);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.bindVertexArray(this._vao);
             gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
         gl.bindVertexArray(null);
+        gl.disable(gl.BLEND);
     }
 }

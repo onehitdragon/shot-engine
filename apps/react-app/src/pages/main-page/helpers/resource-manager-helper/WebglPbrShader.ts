@@ -1,9 +1,8 @@
 import { WebglHelper } from "./WebglHelper";
 import pbrShadingVShaderSource from "../shaders/pbr-shader/vshader.glsl?raw";
 import pbrShadingFShaderSource from "../shaders/pbr-shader/fshader.glsl?raw";
-import type { mat3, mat4, vec3 } from "gl-matrix";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
-import type { PbrShading } from "@shot-engine/types";
+import type { Mat3, Mat4, PbrShading, Vec3 } from "@shot-engine/types";
 import { LightInfo } from "../asset-cache/LightInfo";
 import { AssetCache } from "../asset-cache/asset-cache";
 import { ColorCache } from "../asset-cache/color-cache";
@@ -119,10 +118,10 @@ export class WebglPbrShader{
     renderMesh(
         meshVBOs: WebglMeshVBOs,
         vao: WebGLVertexArrayObject,
-        mvpMat4: mat4,
-        modelMat4: mat4,
-        normalMat3: mat3,
-        camPos: vec3,
+        mvpMat4: Mat4,
+        modelMat4: Mat4,
+        normalMat3: Mat3,
+        camPos: Vec3,
         shadingComponent: PbrShading
     ){
         const gl = this._gl;
@@ -130,10 +129,10 @@ export class WebglPbrShader{
         const { pointLightInfos, directionalInfos } = LightInfo.getInstance();
         const { diffuse, metallic, roughness } = shadingComponent;
         gl.useProgram(this._program);
-        gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4);
-        gl.uniformMatrix4fv(this._u_ModelMatrixLoc, false, modelMat4);
-        gl.uniformMatrix3fv(this._u_NormalMatrixLoc, false, normalMat3);
-        gl.uniform3fv(this._u_CamWorldPosLoc, camPos);
+        gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4.values);
+        gl.uniformMatrix4fv(this._u_ModelMatrixLoc, false, modelMat4.values);
+        gl.uniformMatrix3fv(this._u_NormalMatrixLoc, false, normalMat3.values);
+        gl.uniform3fv(this._u_CamWorldPosLoc, [camPos.x, camPos.y, camPos.z]);
         gl.uniform1f(this._u_metallicLoc, metallic);
         gl.uniform1f(this._u_perceptualRoughnessLoc, roughness);
         gl.uniform1f(this._u_reflectanceLoc, 0.5); // to-do

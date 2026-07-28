@@ -42,7 +42,8 @@ export function createCubeNode(){
         type: "Shading",
         shaderType: "simple",
         transparent: false,
-        culling: 'none'
+        culling: 'none',
+        color: { x: 1, y: 1, z: 1 }
     }
     const sceneNode: NodeState = {
         name: "CubeNode",
@@ -74,10 +75,77 @@ export function createSphereNode(){
         type: "Shading",
         shaderType: "simple",
         transparent: false,
-        culling: 'none'
+        culling: 'none',
+        color: { x: 1, y: 1, z: 1 }
     }
     const sceneNode: NodeState = {
         name: "SphereNode",
+        id: "",
+        components: [transform, mesh, shading],
+        childs: []
+    }
+
+    return sceneNode;
+}
+export function createCylinderNode(){
+    const transform: Transform = {
+        type: "Transform",
+        id: "",
+        pos: { x: 0, y: 0, z: 0 },
+        rot: { x: 0, y: 0, z: 0, w: 1 },
+        scale: { x: 1, y: 1, z: 1 },
+        editor: {
+            euler: { x: 0, y: 0, z: 0}
+        }
+    }
+    const mesh: Mesh = {
+        id: "",
+        type: "Mesh",
+        meshRef: "cylinder-engine.mesh"
+    }
+    const shading: Shading = {
+        id: "",
+        type: "Shading",
+        shaderType: "simple",
+        transparent: false,
+        culling: 'none',
+        color: { x: 1, y: 1, z: 1 }
+    }
+    const sceneNode: NodeState = {
+        name: "CylinderNode",
+        id: "",
+        components: [transform, mesh, shading],
+        childs: []
+    }
+
+    return sceneNode;
+}
+export function createConeNode(){
+    const transform: Transform = {
+        type: "Transform",
+        id: "",
+        pos: { x: 0, y: 0, z: 0 },
+        rot: { x: 0, y: 0, z: 0, w: 1 },
+        scale: { x: 1, y: 1, z: 1 },
+        editor: {
+            euler: { x: 0, y: 0, z: 0}
+        }
+    }
+    const mesh: Mesh = {
+        id: "",
+        type: "Mesh",
+        meshRef: "cone-engine.mesh"
+    }
+    const shading: Shading = {
+        id: "",
+        type: "Shading",
+        shaderType: "simple",
+        transparent: false,
+        culling: 'none',
+        color: { x: 1, y: 1, z: 1 }
+    }
+    const sceneNode: NodeState = {
+        name: "ConeNode",
         id: "",
         components: [transform, mesh, shading],
         childs: []

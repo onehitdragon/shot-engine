@@ -19,11 +19,17 @@ enum IndexType : uint {
     UNSIGNED_INT = 5125
 }
 
+table AABB{
+    min: Vec3;
+    max: Vec3;
+}
+
 table Primitive{
     attribute: PrimitiveAttribute;
     indices: [ubyte];
     index_type: IndexType;
     drawMode: int;
+    aabb: AABB;
 }
 
 table MeshAsset{
