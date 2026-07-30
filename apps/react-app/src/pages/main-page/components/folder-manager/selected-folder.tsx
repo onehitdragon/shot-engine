@@ -38,8 +38,7 @@ export function SelectedFolder(){
         <div className='flex-4 bg-gray-500 flex flex-col'></div> :
         <div className='flex-4 bg-gray-500 flex flex-col overflow-hidden'>
             <ButtonBar selectedDirectory={selectedEntry}/>
-            <div ref={ref} className='p-1 flex flex-col overflow-auto
-                scrollbar-thin'>
+            <div ref={ref} className='p-1 flex-1 flex flex-col overflow-auto scrollbar-thin'>
                 {
                     selectedEntry.children.map(
                         path => <Entry key={path}
@@ -49,7 +48,6 @@ export function SelectedFolder(){
                     )
                 }
             </div>
-            <div className="flex-1"></div>
             <Footer />
         </div>
     );

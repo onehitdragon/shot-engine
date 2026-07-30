@@ -26,24 +26,38 @@ table SimpleShading{
     color: Vec3;
 }
 
-table ImageDiffuse{
-    imageRef: string;
+table Image{
+    image_ref: string;
 }
-
-table ColorDiffuse{
+table Color{
     color: Vec3;
 }
-
-union Diffuse{
-    ImageDiffuse,
-    ColorDiffuse
+table Value{
+    value: double;
+}
+table None{}
+union ImageOrColor{
+    Image,
+    Color
+}
+union ImageOrValue{
+    Image,
+    Value
+}
+union OptionalImage{
+    Image,
+    None
+}
+table Emissive{
+    color: ImageOrColor;
+    intensity: double;
 }
 
 table PhongShading{
     id: string;
     culling: string;
     transparent: bool;
-    diffuse: Diffuse;
+    diffuse: ImageOrColor;
     specular: Vec3;
     shininess: double;
 }
@@ -52,9 +66,19 @@ table PbrShading{
     id: string;
     culling: string;
     transparent: bool;
-    diffuse: Diffuse;
-    metallic: double;
-    roughness: double;
+    diffuse: ImageOrColor;
+    metallic: ImageOrValue;
+    roughness: ImageOrValue;
+    reflectance: double;
+    emissive: Emissive;
+    normal: OptionalImage;
+    ao: OptionalImage;
+}
+
+table DirectionalLight{
+    id: string;
+    color: Vec3;
+    intensity: double;
 }
 
 table PointLight{
@@ -64,11 +88,13 @@ table PointLight{
     radius: double;
 }
 
-table DirectionalLight{
+table SpotLight{
     id: string;
-    dir: Vec3;
+    color: Vec3;
     intensity: double;
     radius: double;
+    innerAngle: double;
+    outerAngle: double;
 }
 
 table SkyBox{
@@ -84,5 +110,6 @@ union Component{
     PbrShading,
     PointLight,
     DirectionalLight,
+    SpotLight,
     SkyBox
 }

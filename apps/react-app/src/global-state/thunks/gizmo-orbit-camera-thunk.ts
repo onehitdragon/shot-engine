@@ -1,12 +1,13 @@
-import { isAnyOf } from "@reduxjs/toolkit";
 import type { AppStartListening } from "../listenerMiddleware";
-import { updateAspect, updateCamera, type GizmoOrbitCameraState } from "../slices/gizmo-orbit-camera-slice";
+import { type GizmoOrbitCameraState } from "../slices/gizmo-orbit-camera-slice";
 import { Mat4, Vec3 } from "@shot-engine/types";
 import { sphereCoordinateToCartesian } from "../../pages/main-page/helpers/math-helpers/sphere-coordinate-helpers";
 
 export function gizmoOrbitCameraListener(startListening: AppStartListening){
   startListening({
-    matcher: isAnyOf(updateCamera, updateAspect),
+    predicate: (_, curState, oldState) => {
+      return (curState.gizmoOrbitCamera.camera !== oldState.gizmoOrbitCamera.camera)
+    },
     effect: ({  }, { getState }) => {
       const { camera } = getState().gizmoOrbitCamera;
       const [worldPos, forward, viewMat4] = createViewMatrix(camera);

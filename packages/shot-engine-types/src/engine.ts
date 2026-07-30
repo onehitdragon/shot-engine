@@ -1,5 +1,22 @@
 import * as glm from "gl-matrix";
 
+export class Vec2{
+    public x: number = 0;
+    public y: number = 0;
+    public static FromArray(arr: glm.vec2){
+        return { x: arr[0], y: arr[1] };
+    }
+    public static ToArray(vec2: Vec2){
+        return [vec2.x, vec2.y];
+    }
+    public static Sub(v1In: Vec2, v2In: Vec2){
+        const v1 = Vec2.ToArray(v1In);
+        const v2 = Vec2.ToArray(v2In);
+        const result = glm.vec2.create();
+        glm.vec2.subtract(result, v1, v2);
+        return Vec2.FromArray(result);
+    }
+}
 export class Vec3{
     public x: number = 0;
     public y: number = 0;
@@ -163,7 +180,7 @@ export class Mat4{
         glm.mat4.getRotation(result, mat4In.values);
         return Vec4.FromArray(result);
     }
-    public static GetAsix(mat4In: Mat4, axis: "x" | "y" | "z"){
+    public static GetAxis(mat4In: Mat4, axis: "x" | "y" | "z"){
         if(axis === "x"){
             return Vec3.FromArray([mat4In.values[0], mat4In.values[1], mat4In.values[2]]);
         }
@@ -174,6 +191,11 @@ export class Mat4{
             return Vec3.FromArray([mat4In.values[8], mat4In.values[9], mat4In.values[10]]);
         }
         return Vec3.Zero();
+    }
+    public static Identity(){
+        const result = new Mat4();;
+        glm.mat4.identity(result.values);
+        return result;
     }
 }
 export class Mat3{
@@ -349,6 +371,108 @@ export type Mesh = {
     id: string,
     meshRef: string
 }
+export class MeshHelper{
+    private static GetTangent(
+        vertex1: Vec3, vertex2: Vec3, vertex3: Vec3,
+        uv1: Vec2, uv2: Vec2, uv3: Vec2
+    ){
+        const edge1 = Vec3.Sub(vertex2, vertex1);
+        const edge2 = Vec3.Sub(vertex3, vertex1);
+        const deltaUV1 = Vec2.Sub(uv2, uv1);
+        const deltaUV2 = Vec2.Sub(uv3, uv1);
+        const det = (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+        if(Math.abs(det) < 1e-8) return Vec3.Zero();
+        const f = 1 / det;
+        const tangent = new Vec3();
+        tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        return Vec3.Normalize(tangent);
+    }
+    public static InterleaveArrayTangent(
+        interleaveArray: Float32Array, // vertex(3), normal(3), uv(2)
+        indices: ArrayLike<number>
+    ){
+        const vertexCount = Math.floor(interleaveArray.length / 8);
+        const tangents = Array.from(
+            { length: vertexCount },
+            () => new Float32Array([0,0,0])
+        );
+        for(let i = 0; i < indices.length; i += 3){
+            const i0 = indices[i];
+            const i1 = indices[i + 1];
+            const i2 = indices[i + 2];
+            const index1 = i0 * 8; // 3 + 3 + 2
+            const index2 = i1 * 8; // 3 + 3 + 2
+            const index3 = i2 * 8; // 3 + 3 + 2
+            const vertex1 = Vec3.FromArray([
+                interleaveArray[index1 + 0],
+                interleaveArray[index1 + 1],
+                interleaveArray[index1 + 2]
+            ]);
+            const uv1 = Vec2.FromArray([
+                interleaveArray[index1 + 6],
+                interleaveArray[index1 + 7]
+            ]);
+            const vertex2 = Vec3.FromArray([
+                interleaveArray[index2 + 0],
+                interleaveArray[index2 + 1],
+                interleaveArray[index2 + 2]
+            ]);
+            const uv2 = Vec2.FromArray([
+                interleaveArray[index2 + 6],
+                interleaveArray[index2 + 7]
+            ]);
+            const vertex3 = Vec3.FromArray([
+                interleaveArray[index3 + 0],
+                interleaveArray[index3 + 1],
+                interleaveArray[index3 + 2]
+            ]);
+            const uv3 = Vec2.FromArray([
+                interleaveArray[index3 + 6],
+                interleaveArray[index3 + 7]
+            ]);
+            const tangent = MeshHelper.GetTangent(vertex1, vertex2, vertex3, uv1, uv2, uv3);
+            tangents[i0][0] += tangent.x;
+            tangents[i0][1] += tangent.y;
+            tangents[i0][2] += tangent.z;
+            tangents[i1][0] += tangent.x;
+            tangents[i1][1] += tangent.y;
+            tangents[i1][2] += tangent.z;
+            tangents[i2][0] += tangent.x;
+            tangents[i2][1] += tangent.y;
+            tangents[i2][2] += tangent.z;
+        }
+        for(let i = 0; i < vertexCount; i++){
+            let normal = Vec3.FromArray([
+                interleaveArray[i * 8 + 3],
+                interleaveArray[i * 8 + 4],
+                interleaveArray[i * 8 + 5],
+            ]);
+            normal = Vec3.Normalize(normal);
+            let tangent = Vec3.FromArray([
+                tangents[i][0],
+                tangents[i][1],
+                tangents[i][2],
+            ]);
+            tangent = Vec3.Sub(tangent, Vec3.Scale(normal, Vec3.Dot(normal, tangent)));
+            tangent = Vec3.Normalize(tangent);
+            tangents[i][0] = tangent.x;
+            tangents[i][1] = tangent.y;
+            tangents[i][2] = tangent.z;
+        }
+        const newInterleaveArray = new Float32Array(vertexCount * 11);
+        for(let i = 0; i < vertexCount; i++){
+            const src = i * 8;
+            const dst = i * 11;
+            newInterleaveArray.set(interleaveArray.subarray(src, src + 8), dst);
+            newInterleaveArray[dst + 8] = tangents[i][0];
+            newInterleaveArray[dst + 9] = tangents[i][1];
+            newInterleaveArray[dst + 10] = tangents[i][2];
+        }
+        return newInterleaveArray;
+    }
+}
 export type ShadingBase = {
     type: "Shading",
     id: string,
@@ -371,17 +495,22 @@ export type PhongShading = ShadingBase & {
     specular: Vec3,
     shininess: number
 }
+export type ImageOrColor = { type: "image"; imageRef: string } | { type: "color"; color: Vec3 };
+export type ImageOrValue = { type: "image"; imageRef: string } | { type: "value"; value: number };
+export type OptionalImage = { type: "image"; imageRef: string } | { type: "none" };
+export type Emissive = {
+    color: ImageOrColor,
+    intensity: number
+}
 export type PbrShading = ShadingBase & {
     shaderType: "pbr",
-    diffuse: {
-        type: "image",
-        imageRef: string
-    } | {
-        type: "color",
-        color: Vec3
-    },
-    metallic: number,
-    roughness: number,
+    diffuse: ImageOrColor,
+    metallic: ImageOrValue,
+    roughness: ImageOrValue,
+    reflectance: number,
+    emissive: Emissive,
+    normal: OptionalImage,
+    ao: OptionalImage
 }
 export type GizmoShading = ShadingBase & {
     shaderType: "gizmo",
@@ -391,20 +520,23 @@ export type Shading = SimpleShading | PhongShading | PbrShading | GizmoShading;
 export type LightBase = {
     type: "Light",
     id: string,
-};
-export type PointLight = LightBase & {
-    lightType: "PointLight",
-    color: Vec3,
     intensity: number,
-    radius: number,
-}
+    color: Vec3,
+};
 export type DirectionalLight = LightBase & {
     lightType: "DirectionalLight",
-    dir: Vec3,
-    intensity: number,
-    radius: number,
 }
-export type Light = PointLight | DirectionalLight;
+export type PointLight = LightBase & {
+    lightType: "PointLight",
+    radius: number
+}
+export type SpotLight = LightBase & {
+    lightType: "SpotLight",
+    radius: number,
+    innerAngle: number,
+    outerAngle: number
+}
+export type Light = DirectionalLight | PointLight | SpotLight;
 export type SkyBox = {
     type: "SkyBox",
     id: string,

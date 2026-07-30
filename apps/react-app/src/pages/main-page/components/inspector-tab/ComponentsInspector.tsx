@@ -1,15 +1,14 @@
-import type { AssetManager, Component, DirectionalLight, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, SkyBox, Transform } from "@shot-engine/types";
-import { useEffect, useRef, useState } from "react";
+import type { AssetManager, Component, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, SkyBox, SpotLight, Transform } from "@shot-engine/types";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { selectComponents } from "../../../../global-state/slices/inspector-components-slice";
 import { cloneDeep } from "lodash";
 import { componentUpdatedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
-import { CheckBox, OneValueRow, Selection, TextRow } from "./components";
-import { clamp } from "@math.gl/core";
+import { ThreeValueRow, RGBValueRow, CheckBox, OneValueRow, Selection, TextRow, ImageOrColorSelection, ImageOrValueSelection, OptionalImageSelection } from "./components";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { quat } from "gl-matrix";
 import { getNormalizeColor, getDenormalizeColor } from "../../helpers/utils/utils";
-import z from "zod";
+
 
 export function ComponentsInspector(){
     const components = useAppSelector(state => selectComponents(state));
@@ -262,98 +261,89 @@ function PhongShadingEditor(props: { phongShading: PhongShading }){
 }
 function PbrShadingEditor(props: { pbrShading: PbrShading }){
     const { pbrShading } = props;
-    const { diffuse, metallic, roughness } = pbrShading;
+    const { diffuse, metallic, roughness, reflectance, emissive, normal, ao } = pbrShading;
     const dispatch = useAppDispatch();
-    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+    
     const shadingClone = cloneDeep(pbrShading);
     const update = () => {
         dispatch(componentUpdatedThunk({ component: shadingClone }));
     }
-    useEffect(() => {
-        let cancelled = false;
-        const load = async () => {
-            if(diffuse.type === "color") setAssetInfos([]);
-            else{
-                const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
-                if(cancelled) return;
-                setAssetInfos(assetInfos);
-            }
-        }
-        load();
-        return () => {
-            cancelled = true;
-        }
-    }, [diffuse.type]);
 
     return (
         <div className="flex flex-col">
-            <Selection
+            <ImageOrColorSelection
                 label="Diffuse"
-                options={[
-                    { label: "image", value: "image" },
-                    { label: "color", value: "color" },
-                ]}
-                value={diffuse.type}
-                onChange={(value) => {
-                    shadingClone.diffuse.type = value;
-                    if(shadingClone.diffuse.type === "color"){
-                        shadingClone.diffuse.color = { x: 1, y: 1, z: 1 };
-                    }
-                    if(shadingClone.diffuse.type === "image"){
-                        shadingClone.diffuse.imageRef = "";
-                    }
+                imageOrColor={diffuse}
+                onChange={(imageOrColor) => {
+                    shadingClone.diffuse = imageOrColor;
                     update();
                 }}
             />
-            {
-                diffuse.type === "color" &&
-                <RGBValueRow
-                    label="Color"
-                    value={getDenormalizeColor(diffuse.color)}
-                    onChange={(value) => {
-                    if(shadingClone.diffuse.type === "color"){
-                        shadingClone.diffuse.color = getNormalizeColor(value);;
-                        update();
-                    }
-                }}/>
-            }
-            {
-                diffuse.type === "image" &&
-                <Selection
-                    label="imageRef"
-                    options={
-                        assetInfos.map(e => {
-                            return {
-                                label: e.name,
-                                value: e.uuid
-                            }
-                        })
-                    }
-                    value={diffuse.imageRef}
-                    onChange={(value) => {
-                        if(shadingClone.diffuse.type === "image"){
-                            console.log("change", shadingClone.diffuse.imageRef, "->",  value);
-                            shadingClone.diffuse.imageRef = value;
-                            update();
-                        }
-                    }}
-                />
-            }
-            <OneValueRow
+            <ImageOrValueSelection
                 label="Metallic"
-                value={metallic}
-                range={[0, 1]}
+                imageOrValue={metallic}
                 onChange={(value) => {
                     shadingClone.metallic = value;
                     update();
                 }}
+                valueConfig={{
+                    default: 0,
+                    range: [0, 1]
+                }}
             />
-            <OneValueRow
+            <ImageOrValueSelection
                 label="Roughness"
-                value={roughness}
-                range={[0, 1]}
+                imageOrValue={roughness}
                 onChange={(value) => {
                     shadingClone.roughness = value;
+                    update();
+                }}
+                valueConfig={{
+                    default: 1,
+                    range: [0, 1]
+                }}
+            />
+            <OneValueRow
+                label="Reflectance"
+                value={reflectance}
+                range={[0, 1]}
+                onChange={(value) => {
+                    shadingClone.reflectance = value;
+                    update();
+                }}
+            />
+
+            <ImageOrColorSelection
+                label="Emissive"
+                imageOrColor={emissive.color}
+                onChange={(imageOrColor) => {
+                    shadingClone.emissive.color = imageOrColor;
+                    update();
+                }}
+            />
+            <OneValueRow
+                label="Emissive intensity"
+                value={emissive.intensity}
+                range={[0, Number.MAX_VALUE]}
+                onChange={(value) => {
+                    shadingClone.emissive.intensity = value;
+                    update();
+                }}
+            />
+
+            <OptionalImageSelection
+                label="Normal"
+                optionalImage={normal}
+                onChange={(value) => {
+                    shadingClone.normal = value;
+                    update();
+                }}
+            />
+            <OptionalImageSelection
+                label="AO"
+                optionalImage={ao}
+                onChange={(value) => {
+                    shadingClone.ao = value;
                     update();
                 }}
             />
@@ -362,26 +352,28 @@ function PbrShadingEditor(props: { pbrShading: PbrShading }){
 }
 function LightSection(props: { light: Light }){
     const { light } = props;
+    let label = "";
+    if(light.lightType === "DirectionalLight") label = "Direction Light";
+    if(light.lightType === "PointLight") label = "Point Light";
+    if(light.lightType === "SpotLight") label = "Spot Light";
 
     return (
         <div className="flex flex-col">
-            <Header label={light.lightType === "PointLight" ? "Point Light" : "Direction Light"}
-                component={light}/>
-            {
-                light.lightType === "PointLight" ?
-                <PointLightEditor pointLight={light}/> :
-                <DirectionalLightEditor dirLight={light}/>
-            }
+            <Header label={label} component={light}/>
+            <BaseLightEditor baseLight={light}/>
+            { light.lightType === "PointLight" && <PointLightEditor pointLight={light}/> }
+            { light.lightType === "DirectionalLight" && <DirectionalLightEditor /> }
+            { light.lightType === "SpotLight" && <SpotLightEditor spotLight={light}/> }
         </div>
     );
 }
-function PointLightEditor(props: { pointLight: PointLight }){
-    const { pointLight } = props;
-    const { color, intensity, radius } = pointLight;
+function BaseLightEditor(props: { baseLight: Light }){
+    const { baseLight } = props;
+    const { color, intensity } = baseLight;
+    const baseLightClone = cloneDeep(baseLight);
     const dispatch = useAppDispatch();
-    const pointLightClone = cloneDeep(pointLight);
     const update = () => {
-        dispatch(componentUpdatedThunk({ component: pointLightClone }));
+        dispatch(componentUpdatedThunk({ component: baseLightClone }));
     }
 
     return (
@@ -390,7 +382,7 @@ function PointLightEditor(props: { pointLight: PointLight }){
                 label="Color"
                 value={getDenormalizeColor(color)}
                 onChange={(value) => {
-                    pointLightClone.color = getNormalizeColor(value);
+                    baseLightClone.color = getNormalizeColor(value);
                     update();
                 }}
             />
@@ -399,10 +391,24 @@ function PointLightEditor(props: { pointLight: PointLight }){
                 value={intensity}
                 range={[0, Number.MAX_VALUE]}
                 onChange={(value) => {
-                    pointLightClone.intensity = value;
+                    baseLightClone.intensity = value;
                     update();
                 }}
             />
+        </div>
+    );
+}
+function PointLightEditor(props: { pointLight: PointLight }){
+    const { pointLight } = props;
+    const { radius } = pointLight;
+    const dispatch = useAppDispatch();
+    const pointLightClone = cloneDeep(pointLight);
+    const update = () => {
+        dispatch(componentUpdatedThunk({ component: pointLightClone }));
+    }
+
+    return (
+        <div className="flex flex-col">
             <OneValueRow
                 label="Radius"
                 value={radius}
@@ -415,22 +421,47 @@ function PointLightEditor(props: { pointLight: PointLight }){
         </div>
     );
 }
-function DirectionalLightEditor(props: { dirLight: DirectionalLight }){
-    const { dirLight } = props;
-    const { dir } = dirLight;
+function DirectionalLightEditor(){
+    return (
+        <div className="flex flex-col">
+        </div>
+    );
+}
+function SpotLightEditor(props: { spotLight: SpotLight }){
+    const { spotLight } = props;
+    const { radius, innerAngle, outerAngle } = spotLight;
     const dispatch = useAppDispatch();
-    const pointLightClone = cloneDeep(dirLight);
+    const spotLightClone = cloneDeep(spotLight);
     const update = () => {
-        dispatch(componentUpdatedThunk({ component: pointLightClone }));
+        dispatch(componentUpdatedThunk({ component: spotLightClone }));
     }
 
     return (
         <div className="flex flex-col">
-            <ThreeValueRow
-                label="Direction"
-                value={dir}
+            <OneValueRow
+                label="Radius"
+                value={radius}
+                range={[0, Number.MAX_VALUE]}
                 onChange={(value) => {
-                    pointLightClone.dir = value;
+                    spotLightClone.radius = value;
+                    update();
+                }}
+            />
+            <OneValueRow
+                label="Inner angle"
+                value={innerAngle}
+                range={[0, 89]}
+                onChange={(value) => {
+                    spotLightClone.innerAngle = value;
+                    update();
+                }}
+            />
+            <OneValueRow
+                label="Out angle"
+                value={outerAngle}
+                range={[0, 89]}
+                onChange={(value) => {
+                    spotLightClone.outerAngle = value;
                     update();
                 }}
             />
@@ -501,135 +532,4 @@ function Header(props: { label: string, component: Component }){
         </div>
     );
 }
-const numberStringSchema = z.preprocess(
-    (val) => (val === '' || val === null ? NaN : Number(val)),
-    z.number()
-);
-const vec3Schema = z.object({
-    x: numberStringSchema,
-    y: numberStringSchema,
-    z: numberStringSchema,
-});
-function ThreeValueRow(
-    props: {
-        label: string,
-        value: {x: number, y: number, z: number},
-        onChange: (value: {x: number, y: number, z: number}) => void,
-    }
-){
-    function toString(value: {x: number, y: number, z: number}){
-        return { x: value.x.toString(), y: value.y.toString(), z: value.z.toString() }
-    }
 
-    const { label, value } = props;
-    const [localValue, setLocalValue] = useState(toString(value));
-
-    useEffect(() => {
-        setLocalValue(toString(value));
-    }, [value.x, value.y, value.z]);
-
-    const handleChange = (axis: 'x' | 'y' | 'z', valStr: string) => {
-        const newValue = { ...localValue, [axis]: valStr }
-        setLocalValue(newValue);
-        const isNumber = vec3Schema.safeParse(newValue);
-        if(isNumber.success){
-            props.onChange(isNumber.data);
-        }
-    };
-    const onBlur = () => {
-        const newValue = {
-            x: parseFloat(localValue.x) || 0,
-            y: parseFloat(localValue.y) || 0,
-            z: parseFloat(localValue.z) || 0
-        }
-        setLocalValue(toString(newValue));
-        props.onChange(newValue);
-    }
-
-    return (
-        <div className="flex items-center my-0.5">
-            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
-            <div className="flex items-center justify-evenly w-full gap-1">
-                <input className="outline-none border text-sm px-0.5 w-1/3"
-                    value={localValue.x}
-                    onChange={(e) => { handleChange("x", e.target.value) }}
-                    onBlur={onBlur}
-                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
-                />
-                <input className="outline-none border text-sm px-0.5 w-1/3"
-                    value={localValue.y}
-                    onChange={(e) => { handleChange("y", e.target.value) }}
-                    onBlur={onBlur}
-                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
-                />
-                <input className="outline-none border text-sm px-0.5 w-1/3"
-                    value={localValue.z}
-                    onChange={(e) => { handleChange("z", e.target.value) }}
-                    onBlur={onBlur}
-                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
-                />
-            </div>
-        </div>
-    );
-}
-function RGBValueRow(
-    props: {
-        label: string,
-        value: {x: number, y: number, z: number},
-        onChange: (value: {x: number, y: number, z: number}) => void
-    }
-){
-    const { label, value } = props;
-    const { x, y, z } = value;
-    const inputXRef = useRef<HTMLInputElement>(null);
-    const inputYRef = useRef<HTMLInputElement>(null);
-    const inputZRef = useRef<HTMLInputElement>(null);
-    const onBlurX = () => {
-        const valueX = stringToNumber(inputXRef.current?.value ?? "0");
-        props.onChange({ x: valueX, y, z });
-        if(inputXRef.current) inputXRef.current.value = valueX + "";
-    }
-    const onBlurY = () => {
-        const valueY = stringToNumber(inputYRef.current?.value ?? "0");
-        props.onChange({ x, y: valueY, z });
-        if(inputYRef.current) inputYRef.current.value = valueY + "";
-    }
-    const onBlurZ = () => {
-        const valueZ = stringToNumber(inputZRef.current?.value ?? "0");
-        props.onChange({ x, y, z: valueZ });
-        if(inputZRef.current) inputZRef.current.value = valueZ + "";
-    }
-    const stringToNumber = (s: string) => {
-        let num = Number(s);
-        num = clamp(num, 0, 255);
-        return num;
-    }
-
-    return (
-        <div className="flex items-center my-0.5">
-            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
-            <div className="flex items-center justify-evenly w-full gap-1">
-                <input ref={inputXRef}
-                    className="outline-none border text-sm px-0.5 w-1/3" type="number"
-                    defaultValue={x}
-                    onBlur={onBlurX}
-                    onKeyDown={(e) => e.key === "Enter" && onBlurX()}
-                />
-                <input ref={inputYRef}
-                    className="outline-none border text-sm px-0.5 w-1/3" type="number"
-                    defaultValue={y}
-                    onBlur={onBlurY}
-                    onKeyDown={(e) => e.key === "Enter" && onBlurY()}
-                />
-                <input ref={inputZRef}
-                    className="outline-none border text-sm px-0.5 w-1/3" type="number"
-                    defaultValue={z}
-                    onBlur={onBlurZ}
-                    onKeyDown={(e) => e.key === "Enter" && onBlurZ()}
-                />
-                <div style={{background: `rgb(${x * 255}, ${y * 255}, ${z * 255})`}}
-                    className="size-3"></div>
-            </div>
-        </div>
-    );
-}

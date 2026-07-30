@@ -33,9 +33,15 @@ const slice = createSlice({
     },
     updateMoveable(state, action: PayloadAction<boolean>){
       state.moveable = action.payload;
+    },
+    updateOrigin(state, action: PayloadAction<{ origin: Vec3 }>){
+      state.camera.origin = action.payload.origin;
+    },
+    updateR(state, action: PayloadAction<{ r: number }>){
+      state.camera.sphereCoordinate.r = action.payload.r;
     }
   }
 })
 
-export const { updateCamera, updateAspect, updateMoveable } = slice.actions;
+export const { updateCamera, updateAspect, updateMoveable, updateOrigin, updateR } = slice.actions;
 export const gizmoOrbitCameraReducer =  slice.reducer;

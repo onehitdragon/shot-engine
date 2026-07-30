@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { type ImageAssetInspector } from "../../../../global-state/slices/inspector-slice";
 import { ButtonRow, CheckBox, OneValueRow, RawImage, Selection, TextRow } from "./components";
 import type { AssetProperty } from "@shot-engine/types";
+import { cloneDeep } from "lodash";
 
 export function ImageAssetInspector(props: { inspector: ImageAssetInspector }){
     const { assetInfo } = props.inspector;
@@ -15,157 +16,147 @@ export function ImageAssetInspector(props: { inspector: ImageAssetInspector }){
 function AssetImage(props: { inspector: ImageAssetInspector }){
     const { assetInfo, imageAsset } = props.inspector;
     const property = JSON.parse(assetInfo.property) as AssetProperty.Image;
-    const [imageType, setImageType] = useState(property.type === "image" ? property.imageType : null);
-    if(property.type !== "image" || !imageType) return null;
+    const [imageProperty, setImageProperty] = useState(property);
+    const [saving, setSaving] = useState(false);
+    const getDefaultImageProperty = (type: AssetProperty.Image["imageType"]): AssetProperty.Image => {
+        if(type === "NormalMap"){
+            return {
+                type: "image",
+                imageType: "NormalMap",
+                wrapMode: "REPEAT",
+                filterMode: "BILINEAR",
+                flip: false,
+                generateMipmaps: false,
+            };
+        }
+        return {
+            type: "image",
+            imageType: "Texture",
+            wrapMode: "REPEAT",
+            filterMode: "BILINEAR",
+            flip: false,
+            generateMipmaps: true,
+            sRGB: true,
+            qualityLevel: 255,
+        };
+    }
+    useEffect(() => {
+        if(!saving) return;
+        const save = async () => {
+            await window.api.assetManager.updateAssetPropertyByUuid(
+                props.inspector.assetInfo.uuid,
+                JSON.stringify(imageProperty)
+            );
+            setSaving(false);
+        }
+        save();
+    }, [saving])
+
     return (
         <>
             <RawImage width={imageAsset.width} height={imageAsset.height} data={imageAsset.data}/>
             <Selection
                 label="Image type"
-                value={imageType}
+                value={imageProperty.imageType}
                 options={[
                     { label: "Texture", value: "Texture" },
                     { label: "Normal Map", value: "NormalMap" },
                     { label: "Light Map", value: "LightMap" },
                 ]}
                 onChange={(value) => {
-                    setImageType(value)
+                    setImageProperty(getDefaultImageProperty(value));
                 }}
             />
             {
-                (imageType === "Texture" && imageType === property.imageType) &&
+                imageProperty.imageType === "Texture" &&
                 <TextureModifier
-                    texture={property}
-                    inspector={props.inspector}
+                    textureProperty={imageProperty}
+                    onChange={(value) => {
+                        setImageProperty(value);
+                    }}
                 />
             }
             {
-                (imageType === "Texture" && imageType !== property.imageType) &&
-                <TextureModifier
-                    texture={{
-                        type: "image",
-                        imageType: "Texture",
-                        sRGB: true,
-                        qualityLevel: 255,
-                        generateMipmaps: true,
-                        wrapMode: "REPEAT",
-                        filterMode: "BILINEAR"
-                    }}
-                    inspector={props.inspector}
-                />
+                !saving &&
+                <ButtonRow buttons={[
+                    {
+                        label: "Apply",
+                        onClick: () => {
+                            setSaving(true);
+                        }
+                    }
+                ]}/>
             }
         </>
     );
 }
-function TextureBaseModifer(
-    props: {
-        textureBase: AssetProperty.TextureBase,
-        setTexture: (textureBase: AssetProperty.TextureBase) => void
-    }
-){
-    const { textureBase, setTexture } = props;
+function TextureModifier(props: {
+    textureProperty: AssetProperty.Texture,
+    onChange: (textureProperty: AssetProperty.Texture) => void
+}){
+    const { textureProperty, onChange } = props;
+    const texturePropertyClone = cloneDeep(textureProperty);
 
     return(
         <>
             <Selection
                 label="Wrap mode"
-                value={textureBase.wrapMode}
+                value={textureProperty.wrapMode}
                 options={[
                     { label: "REPEAT", value: "REPEAT" },
                     { label: "CLAMP", value: "CLAMP" },
                     { label: "MIRROR", value: "MIRROR" },
                 ]}
                 onChange={(value) => {
-                    setTexture({
-                        ...textureBase,
-                        wrapMode: value
-                    })
+                    texturePropertyClone.wrapMode = value;
+                    onChange(texturePropertyClone);
                 }}
             />
             <Selection
                 label="Filter mode"
-                value={textureBase.filterMode}
+                value={textureProperty.filterMode}
                 options={[
                     { label: "NONE", value: "NONE" },
                     { label: "BILINEAR", value: "BILINEAR" },
                     { label: "TRILINEAR", value: "TRILINEAR" },
                 ]}
                 onChange={(value) => {
-                    setTexture({
-                        ...textureBase,
-                        filterMode: value
-                    })
+                    texturePropertyClone.filterMode = value;
+                    onChange(texturePropertyClone);
+                }}
+            />
+            <CheckBox
+                label="Flip Y"
+                value={textureProperty.flip}
+                onChange={(value) => {
+                    texturePropertyClone.flip = value;
+                    onChange(texturePropertyClone);
                 }}
             />
             <CheckBox
                 label="Generate mipmaps"
-                value={textureBase.generateMipmaps}
+                value={textureProperty.generateMipmaps}
                 onChange={(value) => {
-                    setTexture({
-                        ...textureBase,
-                        generateMipmaps: value
-                    })
+                    texturePropertyClone.generateMipmaps = value;
+                    onChange(texturePropertyClone);
                 }}
             />
-        </>
-    );
-}
-function TextureModifier(props: { texture: AssetProperty.Texture, inspector: ImageAssetInspector }){
-    const [texture, setTexture] = useState(props.texture);
-    const [saving, setSaving] = useState(false);
-
-    const save = async () => {
-        setSaving(true);
-        await window.api.assetManager.updateAssetPropertyByUuid(
-            props.inspector.assetInfo.uuid,
-            JSON.stringify(texture)
-        );
-        setSaving(false);
-    }
-
-    useEffect(() => {
-        setTexture(props.texture);
-    }, [props.texture]);
-
-    return(
-        <>
-            <TextureBaseModifer textureBase={texture} setTexture={(textureBase => {
-                setTexture({
-                    ...texture,
-                    ...textureBase
-                });
-            })}/>
             <CheckBox
                 label="sRGB"
-                value={texture.sRGB}
+                value={textureProperty.sRGB}
                 onChange={(value) => {
-                    setTexture({
-                        ...texture,
-                        sRGB: value
-                    })
+                    texturePropertyClone.sRGB = value;
+                    onChange(texturePropertyClone);
                 }}
             />
             <OneValueRow
                 label="Quality level"
-                value={texture.qualityLevel}
+                value={textureProperty.qualityLevel}
                 onChange={(value) => {
-                    setTexture({
-                        ...texture,
-                        qualityLevel: value
-                    })
+                    texturePropertyClone.qualityLevel = value;
+                    onChange(texturePropertyClone);
                 }}
             />
-            {
-                texture !== props.texture &&
-                <ButtonRow buttons={[
-                    {
-                        label: !saving ? "Apply" : "Saving...",
-                        onClick: async () => {
-                            if(!saving) save();
-                        }
-                    }
-                ]}/>
-            }
         </>
     );
 }

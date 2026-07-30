@@ -20,11 +20,14 @@ let ASSET_GENERATED_DIR = "";
 let filesQuery: ReturnType<typeof createDBIfNotExist>["filesQuery"] = {} as any;
 let assetsQuery: ReturnType<typeof createDBIfNotExist>["assetsQuery"] = {} as any; 
 
+/**
+ * require call before open project folder
+ */
 export function config(config: AssetManager.Config){
-    ASSET_DIR = config.assetDir;
-    ASSET_DEFAULT_DIR = config.assetDefaultDir;
-    ASSET_GENERATED_DIR = config.assetGenerateDir;
-    const { filesQuery: filesQ, assetsQuery: assetsQ } = createDBIfNotExist(config.dbFilePath);
+    ASSET_DIR = config.assetDir; // "Assets"
+    ASSET_DEFAULT_DIR = config.assetDefaultDir; // "Assets/.default"
+    ASSET_GENERATED_DIR = config.assetGenerateDir; // "Engine/Resource"
+    const { filesQuery: filesQ, assetsQuery: assetsQ } = createDBIfNotExist(config.dbFilePath); // "Engine/sqlite3.db"
     filesQuery = filesQ;
     assetsQuery = assetsQ;
     configed = true;
@@ -84,10 +87,10 @@ export function query(){
         return assetInfos;
     }
     function getAssetFromUuid(uuid: string, type: ShotEngineType.AssetType){
-        if(type === "other"){
-            return;
-        }
         const filePath = path.join(ASSET_GENERATED_DIR, uuid);
+        if(type === "other"){
+            return { content: fs.readFileSync(filePath).toString() } as ShotEngineType.OtherAsset;
+        }
         if(type === "image"){
             return readImageAsset(filePath);
         }
@@ -139,12 +142,13 @@ export async function rescan(){
     if(!configed) return;
     ensureDefaultFiles();
 
-    const fileRowsDB = filesQuery.gets.all() as FileRow[];
+    // check db first
+    const fileRowsDB = filesQuery.gets.all();
     const hashCache = new Map<string, string>();
     for(const fileRow of fileRowsDB){
         if(!fileRow.path) continue;
         const fullPath = path.join(ASSET_DIR, fileRow.path);
-        if(!fs.existsSync(fullPath)){
+        if(!fs.existsSync(fullPath)){ // file exist in db but not in real (rename, move, deleted)
             filesQuery.updatePath.run(null, fileRow.uuid);
             fileRow.path = null;
             fileRow.dirty = true;
@@ -152,7 +156,7 @@ export async function rescan(){
         }
         const hash = await hashFile(fullPath);
         hashCache.set(fullPath, hash);
-        if(fileRow.hash !== hash){
+        if(fileRow.hash !== hash){ // file exist in db and real but different content (modify)
             filesQuery.updateHash.run(hash, fileRow.uuid);
             fileRow.hash = hash;
             fileRow.dirty = true;
@@ -162,12 +166,14 @@ export async function rescan(){
     // console.log(performance.now() - now, "ms");
     // now = performance.now();
 
+    // group file in db with hash
     const hashToFileRows = new Map<string, FileRow[]>();
     for(const fileRow of fileRowsDB){
         const exist = hashToFileRows.get(fileRow.hash);
         if(!exist) hashToFileRows.set(fileRow.hash, [fileRow]);
         else exist.push(fileRow);
     }
+    
     const entries = fsWalk.walkSync(ASSET_DIR);
     for(const entry of entries){
         if(entry.dirent.isDirectory()) continue;
@@ -279,6 +285,7 @@ function ensureDefaultFiles(){
         saveMeshAssetBinary(assetMesh, coneAssetMeshPath);
     }
 
+    // remove other files in ASSET_DEFAULT_DIR
     const set = new Set<string>([
         cubeAssetMeshPath,
         sphereAssetMeshPath,
@@ -292,7 +299,7 @@ function ensureDefaultFiles(){
 }
 
 let xxHashAPI: XXHashAPI | undefined;
-async function hashFile(filePath: string){
+export async function hashFile(filePath: string){
     if(!xxHashAPI) xxHashAPI = await xxhash();
     const hash = xxHashAPI.create64();
     
@@ -389,8 +396,9 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
     const glb = await readGLBFile(fullPath);
     if(!glb) return;
     const usedSet = new Set<string>();
-    const { textures, meshes, prefabAssets } = glb;
+    const { textures, meshes, prefabAssets, mats } = glb;
     const textureAssetRows: AssetRow[] = [];
+    const matAssetRows: AssetRow[] = [];
     const meshAssetRows: AssetRow[] = [];
     for(const texture of textures){
         const hash = await hashImageAsset(texture.imageAsset);
@@ -422,6 +430,38 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
             textureAssetRows.push(assetRow);
             assetRows.push(assetRow);
             genImageAsset(assetRow, texture.imageAsset);
+        }
+    }
+    for(const mat of mats){
+        const hash = await hashObject(mat);
+        const assetRow = assetRows.find(e => e.hash === hash);
+        if(assetRow){
+            usedSet.add(assetRow.uuid);
+            matAssetRows.push(assetRow);
+        }
+        else{
+            const assetRow: AssetRow = {
+                uuid: uuidv4(),
+                fileId: fileRow.uuid,
+                hash,
+                type: "other",
+                name: path.basename(fileRow.path) + "/" + mat.name,
+                modifiable: 0,
+                property: createAssetDefaultProterpty("other")
+            };
+            assetsQuery.insert.run(
+                assetRow.uuid,
+                assetRow.fileId,
+                assetRow.hash,
+                assetRow.type,
+                assetRow.name,
+                assetRow.modifiable,
+                assetRow.property
+            );
+            usedSet.add(assetRow.uuid);
+            matAssetRows.push(assetRow);
+            assetRows.push(assetRow);
+            genTextAsset(assetRow, mat.info);
         }
     }
     for(const mesh of meshes){
@@ -611,6 +651,13 @@ function genHdrAsset(assetRow: AssetRow, hdrAsset: ShotEngineType.HdrAsset){
     fs.ensureDirSync(ASSET_GENERATED_DIR);
     const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
     saveHdrAssetBinary(hdrAsset, genAssetPath);
+}
+function genTextAsset(assetRow: AssetRow, text: string){
+    fs.ensureDirSync(ASSET_GENERATED_DIR);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    const file = fs.openSync(genAssetPath, "w");
+    fs.writeSync(file, text);
+    fs.closeSync(file);
 }
 function deleteGenAsset(uuid: string){
     const genAssetPath = path.join(ASSET_GENERATED_DIR, uuid);

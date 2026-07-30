@@ -7,7 +7,8 @@ import { imageToRaw } from './imageToRaw';
 type GLB = {
     textures: GLBTexture[],
     meshes: GLBMesh[],
-    prefabAssets: ShotEngineType.PrefabAsset[]
+    prefabAssets: ShotEngineType.PrefabAsset[],
+    mats: MatInfo[]
 }
 type GLBTexture = {
     name: string,
@@ -16,6 +17,10 @@ type GLBTexture = {
 type GLBMesh = {
     name: string,
     meshAsset: ShotEngineType.MeshAsset
+}
+type MatInfo = {
+    name: string,
+    info: string
 }
 
 // readGLBFile(path.join(process.cwd(), "test", "ark-rm", "Untitled2.glb"));
@@ -30,18 +35,51 @@ export async function readGLBFile(filePath: string){
     const glb: GLB = {
         textures: [],
         meshes: [],
-        prefabAssets: []
+        prefabAssets: [],
+        mats: []
     };
-    for(const texture of root.listTextures()){
+    const textureNameMap = new Map<Texture, string>();
+    for(let i = 0; i < root.listTextures().length; i++){
+        const texture = root.listTextures()[i];
+        const textureName = "tex" + i;
+        textureNameMap.set(texture, textureName);
+
         const image = texture.getImage();
         const raw = await imageToRaw(image ?? new Uint8Array());
         glb.textures.push({
-            name: texture.getName(),
+            name: textureName,
             imageAsset: {
                 width: raw.info.width,
                 height: raw.info.height,
                 data: raw.data
             }
+        });
+    }
+    for(const material of root.listMaterials()){
+        let info = "";
+        const baseColor = material.getBaseColorTexture();
+        const normal = material.getNormalTexture();
+        const metallicRoughness = material.getMetallicRoughnessTexture();
+        const emissive = material.getEmissiveTexture();
+        const occlusion = material.getOcclusionTexture();
+        if(baseColor && textureNameMap.has(baseColor)){
+            info += `baseColor: ${textureNameMap.get(baseColor)}\n`;
+        }
+        if(metallicRoughness && textureNameMap.has(metallicRoughness)){
+            info += `metallicRoughness: ${textureNameMap.get(metallicRoughness)}\n`;
+        }
+        if(emissive && textureNameMap.has(emissive)){
+            info += `emissive: ${textureNameMap.get(emissive)}\n`;
+        }
+        if(occlusion && textureNameMap.has(occlusion)){
+            info += `occlusion: ${textureNameMap.get(occlusion)}\n`;
+        }
+        if(normal && textureNameMap.has(normal)){
+            info += `normal: ${textureNameMap.get(normal)}\n`;
+        }
+        glb.mats.push({
+            name: material.getName(),
+            info
         });
     }
     for(const mesh of root.listMeshes()){
@@ -54,9 +92,13 @@ export async function readGLBFile(filePath: string){
             if(indices instanceof Uint8Array) indexType = 5121;
             if(indices instanceof Uint16Array) indexType = 5123;
             if(indices instanceof Uint32Array) indexType = 5125;
+            const interleaveArray = createInterleaveArr(positions, normals, uvs);
             const primitive: ShotEngineType.MeshAsset["primitives"][0] = {
                 attribute: {
-                    interleaveArray: createInterleaveArr(positions, normals, uvs)
+                    interleaveArray: ShotEngineType.MeshHelper.InterleaveArrayTangent(
+                        interleaveArray,
+                        indices
+                    )
                 },
                 indices,
                 indexType,

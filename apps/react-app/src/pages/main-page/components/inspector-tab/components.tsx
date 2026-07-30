@@ -2,7 +2,157 @@ import { useEffect, useRef, useState } from "react";
 import { type JSX } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { clamp } from "lodash";
+import type { AssetManager, ImageOrColor, ImageOrValue, OptionalImage } from "@shot-engine/types";
+import z from "zod";
+import { getDenormalizeColor, getNormalizeColor } from "../../helpers/utils/utils";
 
+const numberStringSchema = z.preprocess(
+    (val) => (val === '' || val === null ? NaN : Number(val)),
+    z.number()
+);
+const vec3Schema = z.object({
+    x: numberStringSchema,
+    y: numberStringSchema,
+    z: numberStringSchema,
+});
+export function ThreeValueRow(
+    props: {
+        label: string,
+        value: {x: number, y: number, z: number},
+        onChange: (value: {x: number, y: number, z: number}) => void,
+    }
+){
+    function toString(value: {x: number, y: number, z: number}){
+        return { x: value.x.toString(), y: value.y.toString(), z: value.z.toString() }
+    }
+
+    const { label, value } = props;
+    const [localValue, setLocalValue] = useState(toString(value));
+
+    useEffect(() => {
+        setLocalValue(toString(value));
+    }, [value.x, value.y, value.z]);
+
+    const handleChange = (axis: 'x' | 'y' | 'z', valStr: string) => {
+        const newValue = { ...localValue, [axis]: valStr }
+        setLocalValue(newValue);
+        const isNumber = vec3Schema.safeParse(newValue);
+        if(isNumber.success){
+            props.onChange(isNumber.data);
+        }
+    };
+    const onBlur = () => {
+        const newValue = {
+            x: parseFloat(localValue.x) || 0,
+            y: parseFloat(localValue.y) || 0,
+            z: parseFloat(localValue.z) || 0
+        }
+        setLocalValue(toString(newValue));
+        props.onChange(newValue);
+    }
+
+    return (
+        <div className="flex items-center my-0.5">
+            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
+            <div className="flex items-center justify-evenly w-full gap-1">
+                <input className="outline-none border text-sm px-0.5 w-1/3"
+                    value={localValue.x}
+                    onChange={(e) => { handleChange("x", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+                <input className="outline-none border text-sm px-0.5 w-1/3"
+                    value={localValue.y}
+                    onChange={(e) => { handleChange("y", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+                <input className="outline-none border text-sm px-0.5 w-1/3"
+                    value={localValue.z}
+                    onChange={(e) => { handleChange("z", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+            </div>
+        </div>
+    );
+}
+const rgbStringSchema = z.preprocess(
+    (val) => (val === '' || val === null ? NaN : Number(val)),
+    z.number().min(0).max(255)
+);
+const rgbSchema = z.object({
+    x: rgbStringSchema,
+    y: rgbStringSchema,
+    z: rgbStringSchema,
+});
+export function RGBValueRow(
+    props: {
+        label: string,
+        value: {x: number, y: number, z: number}, // 255
+        onChange: (value: {x: number, y: number, z: number}) => void // 255
+    }
+){
+    function toString(value: {x: number, y: number, z: number}){
+        return { x: value.x.toString(), y: value.y.toString(), z: value.z.toString() }
+    }
+
+    const { label, value } = props;
+    const [localValue, setLocalValue] = useState(toString(value));
+
+    useEffect(() => {
+        setLocalValue(toString(value));
+    }, [value.x, value.y, value.z]);
+
+    const handleChange = (axis: 'x' | 'y' | 'z', valStr: string) => {
+        const newValue = { ...localValue, [axis]: valStr }
+        setLocalValue(newValue);
+        const isNumber = rgbSchema.safeParse(newValue);
+        if(isNumber.success){
+            props.onChange(isNumber.data);
+        }
+    };
+    const onBlur = () => {
+        const newValue = {
+            x: parseFloat(localValue.x) || 0,
+            y: parseFloat(localValue.y) || 0,
+            z: parseFloat(localValue.z) || 0
+        }
+        newValue.x = clamp(newValue.x, 0, 255);
+        newValue.y = clamp(newValue.y, 0, 255);
+        newValue.z = clamp(newValue.z, 0, 255);
+        setLocalValue(toString(newValue));
+        props.onChange(newValue);
+    }
+
+    return (
+        <div className="flex items-center my-0.5">
+            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
+            <div className="flex items-center justify-evenly w-full gap-1">
+                <input className="outline-none border text-sm px-0.5 w-1/3"
+                    value={localValue.x}
+                    onChange={(e) => { handleChange("x", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+                <input className="outline-none border text-sm px-0.5 w-1/3"
+                    value={localValue.y}
+                    onChange={(e) => { handleChange("y", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+                <input className="outline-none border text-sm px-0.5 w-1/3"
+                    value={localValue.z}
+                    onChange={(e) => { handleChange("z", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+                <div style={{background: `rgb(${localValue.x}, ${localValue.y}, ${localValue.z})`}}
+                    className="size-3"></div>
+            </div>
+        </div>
+    );
+}
 export function TextRow(props: {
     label: string,
     content: string
@@ -59,6 +209,243 @@ export function Selection<T extends number | string>(
             </div>
         </div>
     );
+}
+export function ImageOrColorSelection(props: {
+    label: string,
+    imageOrColor: ImageOrColor,
+    onChange: (imageOrColor: ImageOrColor) => void,
+}){
+    const { label, imageOrColor, onChange } = props;
+    const [imageAssetInfos, setImageAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            if(imageOrColor.type === "color") setImageAssetInfos([]);
+            else{
+                const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
+                if(cancelled) return;
+                setImageAssetInfos(assetInfos);
+            }
+        }
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, [imageOrColor.type]);
+
+    return <>
+        <Selection
+            label={label}
+            options={[
+                { label: "image", value: "image" },
+                { label: "color", value: "color" },
+            ]}
+            value={imageOrColor.type}
+            onChange={(value) => {
+                if(value === "color"){
+                    onChange({
+                        type: "color",
+                        color: { x: 1, y: 1, z: 1 }
+                    });
+                }
+                else{
+                    onChange({
+                        type: "image",
+                        imageRef: ""
+                    });
+                }
+            }}
+        />
+        {
+            imageOrColor.type === "color" &&
+            <RGBValueRow
+                label={`${label} color`}
+                value={getDenormalizeColor(imageOrColor.color)}
+                onChange={(value) => {
+                    onChange({
+                        type: "color",
+                        color: getNormalizeColor(value)
+                    });
+                }
+            }/>
+        }
+        {
+            imageOrColor.type === "image" &&
+            <Selection
+                label={`${label} image`}
+                options={
+                    imageAssetInfos.map(e => {
+                        return {
+                            label: e.name,
+                            value: e.uuid
+                        }
+                    })
+                }
+                value={imageOrColor.imageRef}
+                onChange={(value) => {
+                    onChange({
+                        type: "image",
+                        imageRef: value
+                    });
+                }}
+            />
+        }
+    </>
+}
+export function ImageOrValueSelection(props: {
+    label: string,
+    imageOrValue: ImageOrValue,
+    onChange: (imageOrValue: ImageOrValue) => void,
+    valueConfig: { default: number, range: [number, number] }
+}){
+    const { label, imageOrValue, onChange, valueConfig } = props;
+    const [imageAssetInfos, setImageAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            if(imageOrValue.type === "value") setImageAssetInfos([]);
+            else{
+                const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
+                if(cancelled) return;
+                setImageAssetInfos(assetInfos);
+            }
+        }
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, [imageOrValue.type]);
+
+    return <>
+        <Selection
+            label={label}
+            options={[
+                { label: "image", value: "image" },
+                { label: "value", value: "value" },
+            ]}
+            value={imageOrValue.type}
+            onChange={(value) => {
+                if(value === "value"){
+                    onChange({
+                        type: "value",
+                        value: valueConfig.default
+                    });
+                }
+                else{
+                    onChange({
+                        type: "image",
+                        imageRef: ""
+                    });
+                }
+            }}
+        />
+        {
+            imageOrValue.type === "value" &&
+            <OneValueRow
+                label={`${label} value`}
+                value={imageOrValue.value}
+                range={valueConfig.range}
+                onChange={(value) => {
+                    onChange({
+                        type: "value",
+                        value
+                    });
+                }}
+            />
+        }
+        {
+            imageOrValue.type === "image" &&
+            <Selection
+                label={`${label} image`}
+                options={
+                    imageAssetInfos.map(e => {
+                        return {
+                            label: e.name,
+                            value: e.uuid
+                        }
+                    })
+                }
+                value={imageOrValue.imageRef}
+                onChange={(value) => {
+                    onChange({
+                        type: "image",
+                        imageRef: value
+                    });
+                }}
+            />
+        }
+    </>
+}
+export function OptionalImageSelection(props: {
+    label: string,
+    optionalImage: OptionalImage,
+    onChange: (optionalImage: OptionalImage) => void,
+}){
+    const { label, optionalImage, onChange } = props;
+    const [imageAssetInfos, setImageAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            if(optionalImage.type === "none") setImageAssetInfos([]);
+            else{
+                const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
+                if(cancelled) return;
+                setImageAssetInfos(assetInfos);
+            }
+        }
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, [optionalImage.type]);
+
+    return <>
+        <Selection
+            label={label}
+            options={[
+                { label: "image", value: "image" },
+                { label: "none", value: "none" },
+            ]}
+            value={optionalImage.type}
+            onChange={(value) => {
+                if(value === "none"){
+                    onChange({
+                        type: "none"
+                    });
+                }
+                else{
+                    onChange({
+                        type: "image",
+                        imageRef: ""
+                    });
+                }
+            }}
+        />
+        {
+            optionalImage.type === "image" &&
+            <Selection
+                label={`${label} image`}
+                options={
+                    imageAssetInfos.map(e => {
+                        return {
+                            label: e.name,
+                            value: e.uuid
+                        }
+                    })
+                }
+                value={optionalImage.imageRef}
+                onChange={(value) => {
+                    onChange({
+                        type: "image",
+                        imageRef: value
+                    });
+                }}
+            />
+        }
+    </>
 }
 export function CheckBox(
     props: {

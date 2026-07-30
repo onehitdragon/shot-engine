@@ -24,7 +24,7 @@ export class WebglMesh{
         );
         this._meshVAOMap.set(
             "pbr",
-            WebglPhongShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
+            WebglPbrShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
         );
         this._meshVAOMap.set(
             "gizmo",

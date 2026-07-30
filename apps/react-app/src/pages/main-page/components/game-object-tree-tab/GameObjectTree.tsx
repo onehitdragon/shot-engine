@@ -6,8 +6,9 @@ import { renameGameObject, toggleCollapse } from "../../../../global-state/slice
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { createEmptyNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 import type { NodeState } from "../../../../global-state/slices/go-tree-slice";
-import { goAddedThunk, goTreeClosedThunk, goTreeSavedThunk, nodeFocusedThunk } from "../../../../global-state/thunks/go-tree-thunks";
+import { goAddedThunk, goTreeClosedThunk, goTreeSavedThunk, nodeFocusedThunk, NodesInfo } from "../../../../global-state/thunks/go-tree-thunks";
 import { Virtuoso } from "react-virtuoso";
+import { updateOrigin, updateR } from "../../../../global-state/slices/gizmo-orbit-camera-slice";
 
 export function GameObjectTree(){
     const rootIds = useAppSelector(state => state.goTree.rootIds);
@@ -166,11 +167,20 @@ function Selected(props: { nodeState: NodeState }){
         if(!allowModify) return;
         setEditing(true);
     }
+    const cameraFocus = () => {
+        const nodeWorldPos = NodesInfo.getInstance().getWorldPos(nodeState.id);
+        if(!nodeWorldPos) return;
+        dispatch(updateOrigin({ origin: nodeWorldPos }));
+        dispatch(updateR({ r: 5 }));
+    }
 
     return (
         <div id="scene-node-selected" className="flex flex-1 items-center cursor-pointer bg-gray-600"
             onContextMenu={rightClick}
-            onDoubleClick={doubleClick}
+            onDoubleClick={() => {
+                doubleClick();
+                cameraFocus();
+            }}
         >
             <CubeIcon className="text-white size-4 mx-1"/>
             {

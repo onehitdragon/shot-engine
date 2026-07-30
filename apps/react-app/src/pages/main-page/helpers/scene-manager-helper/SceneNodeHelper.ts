@@ -1,4 +1,4 @@
-import type { Mesh, PbrShading, Shading, Transform } from '@shot-engine/types';
+import type { GameObject, Mesh, PbrShading, Shading, Transform } from '@shot-engine/types';
 import type { NodeState } from '../../../../global-state/slices/go-tree-slice';
 
 export function createEmptyNode(){
@@ -164,7 +164,7 @@ export function createEmptyPrefab(){
             euler: { x: 0, y: 0, z: 0}
         }
     }
-    const sceneNode: NodeState = {
+    const sceneNode: GameObject = {
         name: "EmptyNode",
         id: "",
         components: [transform],
@@ -246,7 +246,7 @@ export function createPbrTest(){
     function createSphere(
         name: string,
         x: number, z: number,
-        baseColor: number[], metallic: number, roughness: number
+        baseColor: number[], metallic: number, roughness: number, reflectance: number
     ){
         const transform: Transform = {
             type: "Transform",
@@ -273,8 +273,28 @@ export function createPbrTest(){
                 type: "color",
                 color: { x: baseColor[0] / 255, y: baseColor[1] / 255, z: baseColor[2] / 255 }
             },
-            metallic,
-            roughness
+            metallic: {
+                type: "value",
+                value: metallic
+            },
+            roughness: {
+                type: "value",
+                value: roughness
+            },
+            reflectance,
+            emissive: {
+                color: {
+                    type: "color",
+                    color: { x: 0, y: 0, z: 0 }
+                },
+                intensity: 0
+            },
+            normal: {
+                type: "none"
+            },
+            ao: {
+                type: "none"
+            }
         }
         const sceneNode: NodeState = {
             name: name,
@@ -294,7 +314,7 @@ export function createPbrTest(){
         let roughness = 0.9;
         for(let i = 1; i <= 9; i++){
             sphereChilds.push(createSphere(
-                metallic.name, x, z, metallic.baseColor, 1, roughness
+                metallic.name, x, z, metallic.baseColor, 1, roughness, 0
             ));
             x += 2;
             roughness -= 0.1;
@@ -306,7 +326,7 @@ export function createPbrTest(){
         let roughness = 0.9;
         for(let i = 1; i <= 9; i++){
             sphereChilds.push(createSphere(
-                nonMetallic.name, x, z, nonMetallic.baseColor, 0, roughness
+                nonMetallic.name, x, z, nonMetallic.baseColor, 0, roughness, 0.5
             ));
             x += 2;
             roughness -= 0.1;

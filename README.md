@@ -2,3 +2,4 @@
 ![Screenshot](demo/images/pbr-screen.PNG)
 ![Screenshot](demo/images/cubemap-screen.PNG)
 ![Screenshot](demo/images/modified-phong.PNG)
+![Screenshot](demo/images/screen3.PNG)

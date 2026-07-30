@@ -4,32 +4,54 @@
 
 precision highp float;
 
-struct PointLight {
-    vec3 position;
-    vec3 color;
-    float intensity;
-    float radius;
-};
 struct DirectionalLight {
-    vec3 dir;
+    vec3 color;
+    float intensity;
+    vec3 dir; // other
+};
+struct PointLight {
     vec3 color;
     float intensity;
     float radius;
+    vec3 position; // other
+};
+struct SpotLight {
+    vec3 color;
+    float intensity;
+    float radius;
+    float innerAngle;
+    float outerAngle;
+    vec3 position; // other
+    vec3 dir;
 };
 
 uniform vec3 u_CamWorldPos;
-uniform PointLight u_PointLights[NUM_LIGHTS];
-uniform int u_PointLightSize;
-uniform DirectionalLight u_DirectionalLights[NUM_LIGHTS];
-uniform int u_DirectionalLightSize;
+uniform DirectionalLight u_directionalLights[NUM_LIGHTS];
+uniform int u_directionalLightSize;
+uniform PointLight u_pointLights[NUM_LIGHTS];
+uniform int u_pointLightSize;
+uniform SpotLight u_spotLights[NUM_LIGHTS];
+uniform int u_spotLightSize;
+
+uniform bool u_hasNormalMap;
+uniform sampler2D u_normalMap;
+uniform bool u_hasAoMap;
+uniform sampler2D u_aoMap;
 
 uniform sampler2D u_baseColorSampler; // rgb
 uniform float u_metallic; // 0...1
+uniform bool u_hasMetallicMap;
+uniform sampler2D u_metallicMap;
 uniform float u_perceptualRoughness; // 0...1
+uniform bool u_hasRoughnessMap;
+uniform sampler2D u_roughnessMap;
 uniform float u_reflectance; // 0...1
 uniform vec3 u_emissive; // rgb
-uniform float u_ao; // 0...1
+uniform float u_emissiveIntensity;
+uniform bool u_hasEmissiveMap;
+uniform sampler2D u_emissiveMap;
 
+uniform bool u_hasIBL;
 uniform samplerCube u_irradianceMap;
 uniform samplerCube u_prefilterMap;
 uniform sampler2D u_brdfLUT;
@@ -37,15 +59,69 @@ uniform sampler2D u_brdfLUT;
 in vec3 v_WorldPos;
 in vec3 v_WorldNormal;
 in vec2 v_TextCoord;
+in mat3 v_WorldTBN;
 
 out vec4 fragColor;
 
-vec3 calcLi(vec3 lightColor, float intensity, float radiusSq, float distanceSq){
-    float attenuation = 1.0 / (distanceSq + 0.0001);
-    float ratio2 = distanceSq / (radiusSq + 0.0001);
-    float ratio4 = ratio2 * ratio2;
-    float windowing = clamp(1.0 - ratio4, 0.0, 1.0);
-    return (lightColor * intensity) * (attenuation * windowing * windowing);
+float invertSquareAtt(float r, float d){
+    if (d >= r) return 0.0;
+    float t1 = 1.0 / (1.0 + d*d);
+    float ratio = d / r;
+    float ratio2 = ratio * ratio;
+    float t2 = 1.0 - ratio2 * ratio2;
+    float att = t1 * (t2 * t2);
+    return att;
+}
+float spotAtt(float cosTheta, float cosInner, float cosOuter){
+    if(cosTheta > cosInner) return 1.0;
+    if(cosTheta < cosOuter) return 0.0;
+    return (cosTheta - cosOuter) / (cosInner - cosOuter);
+}
+vec3 pointLightIntensity(PointLight light, vec3 point){
+    float d = distance(light.position, point);
+    return light.color * light.intensity * invertSquareAtt(light.radius, d);
+}
+vec3 spotLightIntensity(SpotLight light, vec3 point, vec3 L){
+    float d = distance(light.position, point);
+    float cosTheta = dot(light.dir, L);
+    float cosInner = cos(light.innerAngle);
+    float cosOuter = cos(light.outerAngle);
+    return light.color * light.intensity 
+    * invertSquareAtt(light.radius, d) * spotAtt(cosTheta, cosInner, cosOuter);
+}
+
+vec3 getWorldNormal(){
+    if(u_hasNormalMap){
+        vec3 normal = texture(u_normalMap, v_TextCoord).rgb;
+        normal = normal * 2.0 - 1.0;
+        normal = normalize(v_WorldTBN * normal);
+        return normal;
+    }
+    return normalize(v_WorldNormal);
+}
+float getMetallic(){
+    if(u_hasMetallicMap){
+        return texture(u_metallicMap, v_TextCoord).b; // b metallic in gltf
+    }
+    return u_metallic;
+}
+float getRoughness(){
+    if(u_hasRoughnessMap){
+        return texture(u_roughnessMap, v_TextCoord).g; // g roughness in gltf
+    }
+    return u_perceptualRoughness;
+}
+vec3 getEmissive(){
+    if(u_hasEmissiveMap){
+        return texture(u_emissiveMap, v_TextCoord).rgb * u_emissiveIntensity;
+    }
+    return u_emissive * u_emissiveIntensity;
+}
+float getAo(){
+    if(u_hasAoMap){
+        return texture(u_aoMap, v_TextCoord).r; // r in gltf
+    }
+    return 1.0;
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness){
@@ -106,6 +182,8 @@ vec3 ambient(
     vec3 diffuseColor, vec3 F0, float roughness,
     vec3 N, vec3 V
 ){
+    if(!u_hasIBL) return vec3(0.0);
+
     float NoV = max(dot(N, V), 0.0);
     vec3 F = fresnelSchlick(NoV, F0);
     vec3 irradiance = texture(u_irradianceMap, N).rgb;
@@ -121,30 +199,40 @@ vec3 ambient(
 }
 
 void main(){
-    vec3 N = normalize(v_WorldNormal);
+    vec3 N = getWorldNormal();
     vec3 V = normalize(u_CamWorldPos - v_WorldPos);
     vec4 baseColor = texture(u_baseColorSampler, v_TextCoord);
+    float metallic = getMetallic();
+    float roughness = getRoughness();
 
-    vec3 diffuseColor = (1.0 - u_metallic) * baseColor.rgb;
-    vec3 F0 = 0.16 * u_reflectance * u_reflectance * (1.0 - u_metallic) + baseColor.rgb * u_metallic;
+    vec3 diffuseColor = (1.0 - metallic) * baseColor.rgb;
+    vec3 F0 = 0.16 * u_reflectance * u_reflectance * (1.0 - metallic) + baseColor.rgb * metallic;
 
     vec3 totalReflection = vec3(0.0);
-    for(int i = 0; i < u_DirectionalLightSize; i++){
-        DirectionalLight light = u_DirectionalLights[i];
+    for(int i = 0; i < u_directionalLightSize; i++){
+        DirectionalLight light = u_directionalLights[i];
         vec3 L = normalize(-light.dir);
-        totalReflection += BRDF(diffuseColor, F0, u_perceptualRoughness, N, V, L) * light.intensity * light.color;
+        vec3 Li = light.color * light.intensity;
+        totalReflection += BRDF(diffuseColor, F0, roughness, N, V, L) * Li;
     }
-    for(int i = 0; i < u_PointLightSize; i++){
-        PointLight light = u_PointLights[i];
-        vec3 toLight = light.position - v_WorldPos;
-        totalReflection += vec3(0.0) * toLight;
+    for(int i = 0; i < u_pointLightSize; i++){
+        PointLight light = u_pointLights[i];
+        vec3 L = normalize(light.position - v_WorldPos);
+        vec3 Li = pointLightIntensity(light, v_WorldPos);
+        totalReflection += BRDF(diffuseColor, F0, roughness, N, V, L) * Li;
+    }
+    for(int i = 0; i < u_spotLightSize; i++){
+        SpotLight light = u_spotLights[i];
+        vec3 L = normalize(light.position - v_WorldPos);
+        vec3 Li = spotLightIntensity(light, v_WorldPos, -L);
+        totalReflection += BRDF(diffuseColor, F0, roughness, N, V, L) * Li;
     }
 
     // ambient
-    totalReflection += ambient(diffuseColor, F0, u_perceptualRoughness, N, V);
+    totalReflection += ambient(diffuseColor, F0, roughness, N, V) * getAo();
 
     // emissive
-    // totalReflection += u_emissive;
+    totalReflection += getEmissive();
 
     // exposure
 

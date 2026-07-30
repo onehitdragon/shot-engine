@@ -7,11 +7,12 @@ export const defaultOtherAsset: AssetProperty.Other = {
 export const defaultImageAsset: AssetProperty.Image = {
     type: "image",
     imageType: "Texture",
+    wrapMode: "REPEAT",
+    filterMode: "BILINEAR",
+    flip: false,
+    generateMipmaps: true,
     sRGB: true,
     qualityLevel: 255,
-    generateMipmaps: true,
-    wrapMode: "REPEAT",
-    filterMode: "BILINEAR"
 };
 export const defaultMeshAsset: AssetProperty.Mesh = {
     type: "mesh"

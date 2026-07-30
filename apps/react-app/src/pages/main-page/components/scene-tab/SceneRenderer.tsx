@@ -3,7 +3,7 @@ import { useAppSelector } from "../../../../global-state/hooks";
 import { getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
 import { WebglRenderer } from "../../helpers/resource-manager-helper/WebglRenderer";
 import { selectNodes, type NodeState } from "../../../../global-state/slices/go-tree-slice";
-import { ComponentHelper, Mat3, Mat4, type Component, type MeshAsset, type Transform } from "@shot-engine/types";
+import { ComponentHelper, Mat3, Mat4, type Component, type MeshAsset } from "@shot-engine/types";
 import { AssetCache } from "../../helpers/asset-cache/asset-cache";
 import { LightInfo } from "../../helpers/asset-cache/LightInfo";
 import { SkyBoxInfo } from "../../helpers/asset-cache/SkyBoxInfo";
@@ -46,7 +46,7 @@ export function SceneRenderer(){
             AssetCache.getInstance().deleteUnused();
 
             prepareColorTexture(componentArrs);
-            prepareLight(componentArrs);
+            prepareLight(nodes);
             prepareSkyBox(componentArrs);
             setPrepareAssetCount(state => state + 1);
         }
@@ -62,8 +62,6 @@ export function SceneRenderer(){
 
         webglRenderer.clear();
 
-        webglRenderer.renderAxis(GizmoOrbitCameraInfo.getInstance().vpMat4);
-
         GlobalSceneNodeRenderer.getInstance().reset();
         const renderer = new SceneNodeRenderer(webglRenderer);
         renderer.renderNodes(nodes, NodesInfo.getInstance().nodeInfos);
@@ -75,7 +73,7 @@ export function SceneRenderer(){
 
         webglRenderer.renderGrid(GizmoOrbitCameraInfo.getInstance().vpMat4);
 
-        
+        webglRenderer.renderAxis(GizmoOrbitCameraInfo.getInstance().vpMat4);
 
         renderer.renderNodes(gizmoNodes, NodesInfo.getInstance().nodeInfos);
     },[
@@ -166,10 +164,26 @@ async function prepareAsset(nodes: NodeState[], signal: AbortSignal){
             }
             if(
                 component.type === "Shading" && 
-                component.shaderType === "phong" &&
-                component.diffuse.type === "image"
+                component.shaderType === "pbr"
             ){
-                await AssetCache.getInstance().createAssetCache(component.diffuse.imageRef, "image");
+                if(component.diffuse.type === "image"){
+                    await AssetCache.getInstance().createAssetCache(component.diffuse.imageRef, "image");
+                }
+                if(component.metallic.type === "image"){
+                    await AssetCache.getInstance().createAssetCache(component.metallic.imageRef, "image");
+                }
+                if(component.roughness.type === "image"){
+                    await AssetCache.getInstance().createAssetCache(component.roughness.imageRef, "image");
+                }
+                if(component.emissive.color.type === "image"){
+                    await AssetCache.getInstance().createAssetCache(component.emissive.color.imageRef, "image");
+                }
+                if(component.normal.type === "image"){
+                    await AssetCache.getInstance().createAssetCache(component.normal.imageRef, "image");
+                }
+                if(component.ao.type === "image"){
+                    await AssetCache.getInstance().createAssetCache(component.ao.imageRef, "image");
+                }
             }
             if(
                 component.type === "SkyBox"
@@ -197,23 +211,19 @@ function prepareColorTexture(componentArrs: Component[][]){
     }
     ColorCache.getInstance().deleteUnused();
 }
-function prepareLight(componentArrs: Component[][]){
+function prepareLight(nodes: NodeState[]){
     LightInfo.getInstance().reset();
-    for(const componentArr of componentArrs){
-        let transform: Transform | undefined;
-        for(const component of componentArr){
-            if(component.type === "Transform"){
-                transform = component;
-            }
-            if(component.type === "Light"){
-                if(!transform){
-                    console.warn("light component but dont have transform component");
-                }
-                else{
-                    LightInfo.getInstance().addLight(component, transform);
-                }
-            }
-        }
+    for(const node of nodes){
+        const transform = ComponentHelper.FindComponentByType(node.components, "Transform");
+        if(!transform) continue;
+        const light = ComponentHelper.FindComponentByType(node.components, "Light");
+        if(!light) continue;
+        const worldPos = NodesInfo.getInstance().getWorldPos(node.id);
+        if(!worldPos) continue;
+        const worldForward = NodesInfo.getInstance().getWorldAxis(node.id, "z");
+        if(!worldForward) continue;
+        NodesInfo.getInstance().nodeInfos.get(node.id)
+        LightInfo.getInstance().addLight(light, worldPos, worldForward);
     }
 }
 function prepareSkyBox(componentArrs: Component[][]){

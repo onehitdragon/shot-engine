@@ -352,6 +352,11 @@ export class NodesInfo{
         if(!worldMatrix) return;
         return Mat4.GetTranslation(worldMatrix);
     }
+    public getWorldAxis(nodeId: string, axis: "x" | "y" | "z"){
+        const worldMatrix = NodesInfo.getInstance().nodeInfos.get(nodeId)?.worldMatrix;
+        if(!worldMatrix) return;
+        return Mat4.GetAxis(worldMatrix, axis);
+    }
     public static DFS(
         nodeIds: string[],
         nodeRecord: Record<string, NodeState>
@@ -377,7 +382,7 @@ export class NodesInfo{
             NodesInfo.getInstance().nodeInfos.set(node.id, {
                 localMatrix,
                 worldMatrix,
-                parentWorldMatrix: parentWorldMatrix ?? localMatrix
+                parentWorldMatrix: parentWorldMatrix ?? Mat4.Identity()
             });
             this.DFS(node.childs, nodeRecord);
         }

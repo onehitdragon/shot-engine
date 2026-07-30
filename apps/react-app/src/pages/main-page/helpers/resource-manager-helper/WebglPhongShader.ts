@@ -96,7 +96,7 @@ export class WebglPhongShader{
         const vao = gl.createVertexArray();
         gl.bindVertexArray(vao);
             vbos.bindVertexVBO();
-            const stride = (3 + 3 + 2) * 4; // (3 verter, 3 normal, 2 uv) * floatSize = 4
+            const stride = (3 + 3 + 2 + 3) * 4; // (3 verter, 3 normal, 2 uv, 3 tangent) * floatSize = 4
             gl.vertexAttribPointer(this._a_PositionLoc, 3, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(this._a_PositionLoc);
             gl.vertexAttribPointer(this._a_NormalLoc, 3, gl.FLOAT, false, stride, 3 * 4);
@@ -130,20 +130,20 @@ export class WebglPhongShader{
         gl.uniform1i(this._u_PointLightSizeLoc, pointLightInfos.length);
         gl.uniform1i(this._u_DirectionalLightSizeLoc, directionalInfos.length);
         // todo: light local -> world position
-        for(let i = 0; i < pointLightInfos.length; i++){
-            const lightInfo = pointLightInfos[i];
-            gl.uniform3fv(this._programLoc.u_PointLights[i].position, [lightInfo.position.x, lightInfo.position.y, lightInfo.position.z]);
-            gl.uniform3fv(this._programLoc.u_PointLights[i].color, [lightInfo.color.x, lightInfo.color.y, lightInfo.color.z]);
-            gl.uniform1f(this._programLoc.u_PointLights[i].intensity, lightInfo.intensity);
-            gl.uniform1f(this._programLoc.u_PointLights[i].radius, lightInfo.radius);
-        }
-        for(let i = 0; i < directionalInfos.length; i++){
-            const lightInfo = directionalInfos[i];
-            gl.uniform3fv(this._programLoc.u_DirectionalLights[i].dir, [lightInfo.dir.x, lightInfo.dir.y, lightInfo.dir.z]);
-            gl.uniform3fv(this._programLoc.u_DirectionalLights[i].color, [lightInfo.color.x, lightInfo.color.y, lightInfo.color.z]);
-            gl.uniform1f(this._programLoc.u_DirectionalLights[i].intensity, lightInfo.intensity);
-            gl.uniform1f(this._programLoc.u_DirectionalLights[i].radius, lightInfo.radius);
-        }
+        // for(let i = 0; i < pointLightInfos.length; i++){
+        //     const lightInfo = pointLightInfos[i];
+        //     gl.uniform3fv(this._programLoc.u_PointLights[i].position, [lightInfo.position.x, lightInfo.position.y, lightInfo.position.z]);
+        //     gl.uniform3fv(this._programLoc.u_PointLights[i].color, [lightInfo.color.x, lightInfo.color.y, lightInfo.color.z]);
+        //     gl.uniform1f(this._programLoc.u_PointLights[i].intensity, lightInfo.intensity);
+        //     gl.uniform1f(this._programLoc.u_PointLights[i].radius, lightInfo.radius);
+        // }
+        // for(let i = 0; i < directionalInfos.length; i++){
+        //     const lightInfo = directionalInfos[i];
+        //     gl.uniform3fv(this._programLoc.u_DirectionalLights[i].dir, [lightInfo.dir.x, lightInfo.dir.y, lightInfo.dir.z]);
+        //     gl.uniform3fv(this._programLoc.u_DirectionalLights[i].color, [lightInfo.color.x, lightInfo.color.y, lightInfo.color.z]);
+        //     gl.uniform1f(this._programLoc.u_DirectionalLights[i].intensity, lightInfo.intensity);
+        //     gl.uniform1f(this._programLoc.u_DirectionalLights[i].radius, lightInfo.radius);
+        // }
 
         const diffuseWebglTexture = 
             diffuse.type === "image" ?

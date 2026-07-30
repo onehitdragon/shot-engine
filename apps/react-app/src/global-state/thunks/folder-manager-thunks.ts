@@ -6,6 +6,7 @@ import { loop } from "../../pages/main-page/helpers/folder-manager-helper/helper
 import { createEmptyPrefab } from "../../pages/main-page/helpers/scene-manager-helper/SceneNodeHelper";
 import { showInspector } from "../slices/inspector-slice";
 import { goTreeClosedThunk } from "./go-tree-thunks";
+import type { PrefabAsset } from "@shot-engine/types";
 
 export const projectOpenedThunk = createAsyncThunk
 <
@@ -279,6 +280,62 @@ export const prefabFileCreatedThunk = createAsyncThunk
                     name,
                     path
                 }
+            }
+        }
+        catch(err){
+            await window.api.showError(String(err));
+            return rejectWithValue(err);
+        }
+    }
+);
+export const prefabDuplicatedThunk = createAsyncThunk
+<
+    {
+        fileCreated: DirectoryTree.File,
+        parentPath: string
+    },
+    { name: string, prefabAsset: PrefabAsset },
+    {
+        dispatch: AppDispatch,
+        state: RootState
+    }
+>
+(
+    "folder-manager/prefabDuplicated",
+    async ({ name, prefabAsset }, { getState, rejectWithValue }) => {
+        try{
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "no project has been opened yet";
+            
+            const parentPath = getState().folderManager.selectedPath;
+            if(!parentPath) throw "folderManager need selecting";
+            if(parentPath.startsWith(projectPaths.assetDefault)) throw "Dont create inside default";
+            if(!parentPath.startsWith(projectPaths.asset)) throw "Dont create outside asset folder";
+
+            let safeName = name.replace(/[\\/]/g, "_");
+            let path: string;
+            let i = 0;
+            do{
+                path = await window.fsPath.join(parentPath, `${safeName}_copy${i}.prefab`);
+                i++;
+            }
+            while(await window.api.file.exist(path));
+            name = `${safeName}_copy${i}.prefab`;
+            
+            await window.api.assetManager.savePrefabAssetBinary(
+                prefabAsset,
+                path
+            );
+
+            await window.api.assetManager.rescan();
+
+            return {
+                fileCreated: {
+                    type: "File",
+                    name,
+                    path
+                },
+                parentPath
             }
         }
         catch(err){

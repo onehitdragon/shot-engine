@@ -38,8 +38,28 @@ export function createPbrShadingComponent(){
             type: "color",
             color: { x: 1, y: 1, z: 1 }
         },
-        metallic: 0,
-        roughness: 0.01
+        metallic: {
+            type: "value",
+            value: 0
+        },
+        roughness: {
+            type: "value",
+            value: 0.01
+        },
+        reflectance: 0.5, // F0 = 0.04,
+        emissive: {
+            color: {
+                type: "color",
+                color: { x: 0, y: 0, z: 0 }
+            },
+            intensity: 0
+        },
+        normal: {
+            type: "none"
+        },
+        ao: {
+            type: "none"
+        }
     }
     return component;
 }
@@ -49,8 +69,8 @@ export function createPointLightComponent(){
         type: "Light",
         lightType: "PointLight",
         color: { x: 1, y: 1, z: 1 },
-        intensity: 1000,
-        radius: 1000,
+        intensity: 100,
+        radius: 10,
     }
     return light;
 }
@@ -59,9 +79,21 @@ export function createDirectionalLightComponent(){
         id: "",
         type: "Light",
         lightType: "DirectionalLight",
-        dir: { x: 0, y: -1, z: 0 },
-        intensity: 1000,
-        radius: 1000,
+        color: { x: 1, y: 1, z: 1 },
+        intensity: 100,
+    }
+    return light;
+}
+export function createSpotLightComponent(){
+    const light: Light = {
+        id: "",
+        type: "Light",
+        lightType: "SpotLight",
+        color: { x: 1, y: 1, z: 1 },
+        intensity: 100,
+        radius: 10,
+        innerAngle: 30,
+        outerAngle: 45
     }
     return light;
 }

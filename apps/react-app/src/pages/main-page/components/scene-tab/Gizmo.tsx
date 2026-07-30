@@ -82,16 +82,18 @@ export function Gizmo(){
         if(!parentWorldMatrix) return;
         const parentWorldMatrixInvert = Mat3.FromMat4(Mat4.Invert(parentWorldMatrix));
         if(latestProps.current.mode === "global"){
-          localAxis = Vec3.TransformMat3(
-            Vec3.Scale(Vec3.Axis(translate), moveDir[translate]), parentWorldMatrixInvert
-          );
+          const axis = Vec3.Axis(translate);
+          const distance = Vec3.Dot(moveDir, axis);
+          const worldDelta = Vec3.Scale(axis, distance);
+          localAxis = Vec3.TransformMat3(worldDelta, parentWorldMatrixInvert);
         }
         else{
           const worldMatrix = NodesInfo.getInstance().nodeInfos.get(gizmoNodeId)?.worldMatrix;
           if(!worldMatrix) return;
-          localAxis = Vec3.TransformMat3(
-            Vec3.Scale(Mat4.GetAsix(worldMatrix, translate), moveDir[translate]), parentWorldMatrixInvert
-          );
+          const axis = Vec3.Normalize(Mat4.GetAxis(worldMatrix, translate));
+          const distance = Vec3.Dot(moveDir, axis);
+          const worldDelta = Vec3.Scale(axis, distance);
+          localAxis = Vec3.TransformMat3(worldDelta, parentWorldMatrixInvert);
         }
 
         const components = latestProps.current.nodeRecord[gizmoNodeId].components;

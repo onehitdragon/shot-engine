@@ -1,5 +1,8 @@
 import { GameObject, Scene, AABB } from "./engine.js"
 
+export type OtherAsset = {
+    content: string
+}
 export type ImageAsset = {
     width: number,
     height: number,
@@ -8,7 +11,7 @@ export type ImageAsset = {
 export type MeshAsset = {
     primitives: {
         attribute: {
-            interleaveArray: Float32Array,
+            interleaveArray: Float32Array, // vertex(3), normal(3), uv(2), tangent(3)
         },
         indices: Uint8Array | Uint16Array | Uint32Array,
         indexType: number,
@@ -40,7 +43,7 @@ export type HdrAsset = {
     },
     brdfLUT: HdrImage
 }
-export type Asset = ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset;
+export type Asset = OtherAsset | ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset;
 export function isPrefabAsset(asset?: Asset | null): asset is PrefabAsset{
     if(!asset) return false;
     return "root" in asset;
@@ -56,6 +59,7 @@ export namespace AssetProperty{
         type: "image"
         wrapMode: "REPEAT" | "MIRROR" | "CLAMP",
         filterMode: "NONE" | "BILINEAR" | "TRILINEAR",
+        flip: boolean,
         generateMipmaps: boolean
     }
     export type Texture = TextureBase & {

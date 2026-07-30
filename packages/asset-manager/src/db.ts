@@ -44,7 +44,7 @@ export function createDBIfNotExist(dbFilePath: string){
     `);
 
     const filesQuery: {
-        gets: Statement,
+        gets: Statement<[], FileRow>,
         getByPath: Statement<[string], FileRow>,
         getById: Statement<[string], FileRow>,
         updatePath: Statement,

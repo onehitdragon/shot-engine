@@ -10,7 +10,7 @@ export class WebglTexture{
     constructor(gl: WebGL2RenderingContext, imageAsset: ImageAsset, property: AssetProperty.Image){
         this._gl = gl;
         const { width, height, data } = imageAsset;
-        const { imageType, wrapMode, filterMode, generateMipmaps } = property;
+        const { imageType, wrapMode, filterMode, flip, generateMipmaps } = property;
         const webglTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, webglTexture);
         this.setWrapMode(wrapMode);
@@ -18,14 +18,15 @@ export class WebglTexture{
         if(imageType === "Texture"){
             const { sRGB } = property;
             const internalformat = sRGB ? gl.SRGB8_ALPHA8 : gl.RGBA8;
-            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // flip y before update to gpu
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip); // flip y before update to gpu
             gl.texImage2D(gl.TEXTURE_2D, 0, internalformat, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); // reset
             if(generateMipmaps) gl.generateMipmap(gl.TEXTURE_2D);
         }
         else if(imageType === "NormalMap"){
-            // todo
-            // ignore sRGB
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip); // flip y before update to gpu
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); // reset
         }
         gl.bindTexture(gl.TEXTURE_2D, null);
         this._webglTexture = webglTexture;

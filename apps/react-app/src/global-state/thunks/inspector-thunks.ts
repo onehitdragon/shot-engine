@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"
 import type { AppDispatch, RootState } from "../store"
 import { showInspector } from "../slices/inspector-slice"
-import type { AssetManager, HdrAsset, HdrCube, ImageAsset, MeshAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
+import type { AssetManager, HdrAsset, HdrCube, ImageAsset, MeshAsset, OtherAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
 import { mat4 } from "gl-matrix";
 import { WebglHelper } from "../../pages/main-page/helpers/resource-manager-helper/WebglHelper";
 import { getCubeMeshData } from "../../pages/main-page/helpers/scene-manager-helper/mesh-datas";
@@ -31,9 +31,11 @@ export const inspectAssetThunk = createAsyncThunk
     async ({ assetInfo }, { dispatch, rejectWithValue }) => {
         try{
             if(assetInfo.type === "other"){
+                const asset = await window.api.assetManager.getAssetFromUuid(assetInfo.uuid, "other");
+                if(!asset) throw "asset is bad";
                 dispatch(showInspector({ inspector: {
                     type: "text",
-                    content: "this asset not support"
+                    content: (asset as OtherAsset).content
                 } }));
                 return;
             }

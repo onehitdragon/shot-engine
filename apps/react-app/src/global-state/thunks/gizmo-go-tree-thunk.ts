@@ -26,6 +26,9 @@ export function gizmoGoTreeListener(startListening: AppStartListening){
         pos: Mat4.GetTranslation(nodeWorld),
         rot: Mat4.GetRotation(nodeWorld),
       }));
+
+      // light
+      
     }
   });
 }
