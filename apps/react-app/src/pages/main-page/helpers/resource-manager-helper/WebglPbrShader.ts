@@ -350,9 +350,18 @@ export class WebglPbrShader{
             if(hdr && hdr.brdfLUT){
                 brdfLUT = hdr.brdfLUT.webglTexture;
             }
-            if(!irradianceMap) console.warn("skybox missing irradianceMap");
-            if(!prefilterMap) console.warn("skybox missing prefilterMap");
-            if(!brdfLUT) console.warn("skybox missing brdfLUT");
+            if(!irradianceMap){
+                console.warn("skybox missing irradianceMap");
+                return;
+            }
+            if(!prefilterMap){
+                console.warn("skybox missing prefilterMap");
+                return;
+            }
+            if(!brdfLUT){
+                console.warn("skybox missing brdfLUT");
+                return;
+            }
         }
         if(irradianceMap && prefilterMap && brdfLUT){
             gl.uniform1i(this._u_hasIBL, 1);

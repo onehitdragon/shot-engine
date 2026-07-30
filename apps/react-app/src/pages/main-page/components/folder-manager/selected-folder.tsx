@@ -14,6 +14,7 @@ import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk, prefabFileCre
 import { inspectAssetThunk } from "../../../../global-state/thunks/inspector-thunks";
 import type { AssetManager, AssetType } from "@shot-engine/types";
 import { getBaseName } from "../../helpers/utils/utils";
+import { showInspector } from "../../../../global-state/slices/inspector-slice";
 
 export function SelectedFolder(){
     const selectedEntry = useAppSelector(state => selectSelectedEntry(state));
@@ -21,16 +22,18 @@ export function SelectedFolder(){
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const handler = (e: MouseEvent) => {
-            const wrapper = ref.current;
             const target = e.target as HTMLElement | null;
-            if(!wrapper || !target) return;
+            if(!target) return;
             if(target.closest("#inspector")) return;
-            if(!wrapper.contains(target)){
-                dispatch(unfocusEntry());
-            }
+            dispatch(unfocusEntry());
+            dispatch(showInspector({
+                inspector: null
+            }));
         }
         window.addEventListener("mousedown", handler);
-        return () => window.removeEventListener("mousedown", handler);
+        return () => {
+            window.removeEventListener("mousedown", handler);
+        }
     }, []);
 
     return (

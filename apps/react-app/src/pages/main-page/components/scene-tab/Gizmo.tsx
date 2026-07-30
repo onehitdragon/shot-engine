@@ -155,11 +155,13 @@ export function rayPick(
     const localRay = Ray.TransformSpace(viewRay, modelMat4);
 
     for(const { aabb, indices, attribute } of meshAsset.primitives){
-      if(!localRay.aabbIntersect(aabb)) continue;
+      if(!localRay.aabbIntersect(aabb)){
+        continue;
+      }
       for(let i = 0; i < indices.length; i += 3){
-        const v0_index = indices[i] * 8;
-        const v1_index = indices[i + 1] * 8;
-        const v2_index = indices[i + 2] * 8;
+        const v0_index = indices[i] * 11; // (3 verter, 3 normal, 2 uv, 3 tangent)
+        const v1_index = indices[i + 1] * 11;
+        const v2_index = indices[i + 2] * 11;
         const v0 = new Vec3();
         v0.x = attribute.interleaveArray[v0_index];
         v0.y = attribute.interleaveArray[v0_index + 1];

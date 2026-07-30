@@ -529,7 +529,7 @@ export function readGameObject(gameObject: GameObject){
             let ao: Image;
             let aoOut: ShotEngineType.PbrShading["ao"];
             if(aoType === OptionalImage.Image){
-                ao = pbrShading.normal(new Image()) as Image;
+                ao = pbrShading.ao(new Image()) as Image;
                 aoOut = {
                     type: "image",
                     imageRef: ao.imageRef() ?? ""
