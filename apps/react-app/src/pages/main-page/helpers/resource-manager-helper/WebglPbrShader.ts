@@ -57,7 +57,16 @@ export class WebglPbrShader{
             color: WebGLUniformLocation,
             intensity: WebGLUniformLocation,
             dir: WebGLUniformLocation, // other
+            hasShadow: WebGLUniformLocation,
+            bias: WebGLUniformLocation,
+            normalBias: WebGLUniformLocation
         }[],
+        u_viewMat4: WebGLUniformLocation,
+        u_cascadeCount: WebGLUniformLocation,
+        u_cascadeFars: WebGLUniformLocation[],
+        u_cascadeVPs: WebGLUniformLocation[],
+        u_cascadeShadowMap: WebGLUniformLocation
+
         u_pointLights: {
             color: WebGLUniformLocation,
             intensity: WebGLUniformLocation,
@@ -122,6 +131,12 @@ export class WebglPbrShader{
         this._u_spotLightSizeLoc = WebglHelper.getUniformLocation(gl, program, "u_spotLightSize");
         this._programLoc = {
             u_directionalLights: [],
+            u_viewMat4: -1,
+            u_cascadeCount: -1,
+            u_cascadeFars: [],
+            u_cascadeVPs: [],
+            u_cascadeShadowMap: -1,
+
             u_pointLights: [],
             u_spotLights: []
         };
@@ -130,6 +145,9 @@ export class WebglPbrShader{
                 color: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].color`),
                 intensity: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].intensity`),
                 dir: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].dir`),
+                hasShadow: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].hasShadow`),
+                bias: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].bias`),
+                normalBias: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].normalBias`),
             });
             this._programLoc.u_pointLights.push({
                 color: WebglHelper.getUniformLocation(gl, program, `u_pointLights[${i}].color`),
@@ -147,6 +165,20 @@ export class WebglPbrShader{
                 dir: WebglHelper.getUniformLocation(gl, program, `u_spotLights[${i}].dir`),
             });
         }
+        this._programLoc.u_viewMat4 = 
+            WebglHelper.getUniformLocation(gl, program, `u_viewMat4`);
+        this._programLoc.u_cascadeCount =
+            WebglHelper.getUniformLocation(gl, program, `u_cascadeCount`);
+        for(let i = 0; i < 16; i++){
+            this._programLoc.u_cascadeFars.push(
+                WebglHelper.getUniformLocation(gl, program, `u_cascadeFars[${i}]`)
+            );
+            this._programLoc.u_cascadeVPs.push(
+                WebglHelper.getUniformLocation(gl, program, `u_cascadeVPs[${i}]`)
+            );
+        }
+        this._programLoc.u_cascadeShadowMap =
+            WebglHelper.getUniformLocation(gl, program, `u_cascadeShadowMap`);
     }
     createMeshVAOs(meshVBOs: WebglMeshVBOs){
         const gl = this._gl;
@@ -172,6 +204,7 @@ export class WebglPbrShader{
         vao: WebGLVertexArrayObject,
         mvpMat4: Mat4,
         modelMat4: Mat4,
+        viewMat4: Mat4,
         normalMat3: Mat3,
         camPos: Vec3,
         shadingComponent: PbrShading
@@ -191,8 +224,10 @@ export class WebglPbrShader{
         gl.uniform1i(this._u_directionalLightSizeLoc, directionalInfos.length);
         gl.uniform1i(this._u_pointLightSizeLoc, pointLightInfos.length);
         gl.uniform1i(this._u_spotLightSizeLoc, spotLightInfos.length);
+        const maxNumDirectionalShadownMap = 1;
+        let nDirectionalShadownMap = 0;
         for(let i = 0; i < directionalInfos.length; i++){
-            const { light, forward } = directionalInfos[i];
+            const { light, forward, cascadeShadow } = directionalInfos[i];
             gl.uniform3fv(
                 this._programLoc.u_directionalLights[i].color,
                 [light.color.x, light.color.y, light.color.z]
@@ -202,6 +237,32 @@ export class WebglPbrShader{
                 this._programLoc.u_directionalLights[i].dir,
                 [forward.x, forward.y, forward.z]
             );
+            if(
+                cascadeShadow &&
+                nDirectionalShadownMap < maxNumDirectionalShadownMap
+            ){
+                nDirectionalShadownMap++;
+                gl.uniform1i(this._programLoc.u_directionalLights[i].hasShadow, 1);
+                gl.uniform1f(this._programLoc.u_directionalLights[i].bias, light.shadow.bias);
+                gl.uniform1f(this._programLoc.u_directionalLights[i].normalBias, light.shadow.normalBias);
+
+                const { cascadeFars, cascadeVPs, cascadeShadowMap } = cascadeShadow;
+                const cascadeCount = cascadeFars.length;
+                gl.uniformMatrix4fv(this._programLoc.u_viewMat4, false, viewMat4.values);
+                gl.uniform1i(this._programLoc.u_cascadeCount, cascadeCount);
+                for(let j = 0; j < cascadeCount; j++){
+                    gl.uniform1f(this._programLoc.u_cascadeFars[j], cascadeFars[j]);
+                    gl.uniformMatrix4fv(this._programLoc.u_cascadeVPs[j], false, cascadeVPs[j].values);
+                }
+                gl.activeTexture(gl.TEXTURE31);
+                gl.bindTexture(gl.TEXTURE_2D_ARRAY, cascadeShadowMap);
+                gl.uniform1i(this._programLoc.u_cascadeShadowMap, 31);
+            }
+            else{
+                gl.uniform1i(this._programLoc.u_directionalLights[i].hasShadow, 0);
+                gl.activeTexture(gl.TEXTURE31);
+                gl.uniform1i(this._programLoc.u_cascadeShadowMap, 31);
+            }
         }
         for(let i = 0; i < pointLightInfos.length; i++){
             const { light, pos } = pointLightInfos[i];

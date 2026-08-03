@@ -369,7 +369,7 @@ function LightSection(props: { light: Light }){
 }
 function BaseLightEditor(props: { baseLight: Light }){
     const { baseLight } = props;
-    const { color, intensity } = baseLight;
+    const { color, intensity, shadow } = baseLight;
     const baseLightClone = cloneDeep(baseLight);
     const dispatch = useAppDispatch();
     const update = () => {
@@ -395,6 +395,60 @@ function BaseLightEditor(props: { baseLight: Light }){
                     update();
                 }}
             />
+            <CheckBox
+                label="Shadow"
+                value={shadow.enable}
+                onChange={(value) => {
+                    baseLightClone.shadow.enable = value;
+                    update();
+                }}
+            />
+            {
+                shadow.enable &&
+                <>
+                    <OneValueRow
+                        label="Bias"
+                        value={shadow.bias}
+                        onChange={(value) => {
+                            baseLightClone.shadow.bias = value;
+                            update();
+                        }}
+                    />
+                    <OneValueRow
+                        label="Normal bias"
+                        value={shadow.normalBias}
+                        onChange={(value) => {
+                            baseLightClone.shadow.normalBias = value;
+                            update();
+                        }}
+                    />
+                    <Selection
+                        label="Map size"
+                        value={shadow.mapSize}
+                        options={[
+                            { label: "512", value: 512 },
+                            { label: "1024", value: 1024 },
+                            { label: "2048", value: 2048 }
+                        ]}
+                        onChange={(value) => {
+                            baseLightClone.shadow.mapSize = value;
+                            update();
+                        }}
+                    />
+                    <Selection
+                        label="Soft shadow"
+                        value={shadow.softShadow}
+                        options={[
+                            { label: "Hard", value: "hard" },
+                            { label: "Smooth", value: "smooth" }
+                        ]}
+                        onChange={(value) => {
+                            baseLightClone.shadow.softShadow = value;
+                            update();
+                        }}
+                    />
+                </>
+            }
         </div>
     );
 }

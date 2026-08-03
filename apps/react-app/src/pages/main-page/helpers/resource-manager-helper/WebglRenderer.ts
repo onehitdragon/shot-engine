@@ -28,6 +28,7 @@ export class WebglRenderer{
         meshComponent: Mesh,
         mvpMat4: Mat4,
         modelMat4: Mat4,
+        viewMat4: Mat4,
         normalMat3: Mat3,
         camPos: Vec3
     ){
@@ -48,7 +49,7 @@ export class WebglRenderer{
         }
         else if(shaderType === "pbr"){
             webglMeshs.forEach(
-                e => e.renderWithPbrShader(mvpMat4, modelMat4, normalMat3, camPos, shadingComponent)
+                e => e.renderWithPbrShader(mvpMat4, modelMat4, viewMat4, normalMat3, camPos, shadingComponent)
             );
         }
         else if(shaderType === "gizmo"){

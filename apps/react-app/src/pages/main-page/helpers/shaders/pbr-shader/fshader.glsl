@@ -3,11 +3,15 @@
 #define PI 3.14159265
 
 precision highp float;
+precision highp sampler2DArray;
 
 struct DirectionalLight {
     vec3 color;
     float intensity;
     vec3 dir; // other
+    bool hasShadow;
+    float bias;
+    float normalBias;
 };
 struct PointLight {
     vec3 color;
@@ -28,6 +32,12 @@ struct SpotLight {
 uniform vec3 u_CamWorldPos;
 uniform DirectionalLight u_directionalLights[NUM_LIGHTS];
 uniform int u_directionalLightSize;
+uniform mat4 u_viewMat4; // for cascade
+uniform int u_cascadeCount; 
+uniform float u_cascadeFars[16]; 
+uniform mat4 u_cascadeVPs[16]; 
+uniform sampler2DArray u_cascadeShadowMap;
+
 uniform PointLight u_pointLights[NUM_LIGHTS];
 uniform int u_pointLightSize;
 uniform SpotLight u_spotLights[NUM_LIGHTS];
@@ -88,6 +98,32 @@ vec3 spotLightIntensity(SpotLight light, vec3 point, vec3 L){
     float cosOuter = cos(light.outerAngle);
     return light.color * light.intensity 
     * invertSquareAtt(light.radius, d) * spotAtt(cosTheta, cosInner, cosOuter);
+}
+
+float directionalShadow(int i, vec3 N, vec3 L){
+    DirectionalLight light = u_directionalLights[i];
+    if(!light.hasShadow) return 0.0;
+
+    vec4 fragPosViewSpace = u_viewMat4 * vec4(v_WorldPos, 1.0);
+    float depValue = abs(fragPosViewSpace.z);
+    int layer = -1;
+    for(int j = 0; j < u_cascadeCount; j++){
+        if(depValue <= u_cascadeFars[j]){
+            layer = j;
+            break;
+        }
+    }
+    if(layer == -1) return 0.0;
+
+    vec4 fragLightPos = u_cascadeVPs[layer] * vec4(v_WorldPos, 1.0);
+    vec3 projectPos = fragLightPos.xyz / fragLightPos.w; // [-1,1]
+    projectPos = projectPos * 0.5 + 0.5; // [0,1]
+    
+    float closestDepth = texture(u_cascadeShadowMap, vec3(projectPos.xy, layer)).r;
+    float curDepth = projectPos.z;
+    float bias = max(light.normalBias * (1.0 - dot(N,L)), light.bias);
+    float shadow = curDepth - bias > closestDepth  ? 1.0 : 0.0;
+    return shadow;
 }
 
 vec3 getWorldNormal(){
@@ -214,6 +250,7 @@ void main(){
         vec3 L = normalize(-light.dir);
         vec3 Li = light.color * light.intensity;
         totalReflection += BRDF(diffuseColor, F0, roughness, N, V, L) * Li;
+        totalReflection = totalReflection * (1.0 - directionalShadow(i, N, L));
     }
     for(int i = 0; i < u_pointLightSize; i++){
         PointLight light = u_pointLights[i];

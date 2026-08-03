@@ -194,7 +194,12 @@ export function Selection<T extends number | string>(
                 <select className="cursor-pointer outline-none text-sm border"
                     value={safeValue}
                     onChange={(e) => {
-                        onChange(e.target.value as T);
+                        if(typeof value === "number"){
+                            onChange(Number(e.target.value) as T);
+                        }
+                        else{
+                            onChange(e.target.value as T);
+                        }
                     }}
                 >
                     <option value="" disabled>Select</option>

@@ -71,6 +71,13 @@ export function createPointLightComponent(){
         color: { x: 1, y: 1, z: 1 },
         intensity: 100,
         radius: 10,
+        shadow: {
+            enable: false,
+            bias: 0.005,
+            normalBias: 0.05,
+            mapSize: 1024,
+            softShadow: "hard"
+        }
     }
     return light;
 }
@@ -81,6 +88,13 @@ export function createDirectionalLightComponent(){
         lightType: "DirectionalLight",
         color: { x: 1, y: 1, z: 1 },
         intensity: 100,
+        shadow: {
+            enable: false,
+            bias: 0.005,
+            normalBias: 0.05,
+            mapSize: 1024,
+            softShadow: "hard"
+        }
     }
     return light;
 }
@@ -93,7 +107,14 @@ export function createSpotLightComponent(){
         intensity: 100,
         radius: 10,
         innerAngle: 30,
-        outerAngle: 45
+        outerAngle: 45,
+        shadow: {
+            enable: false,
+            bias: 0.005,
+            normalBias: 0.05,
+            mapSize: 1024,
+            softShadow: "hard"
+        }
     }
     return light;
 }

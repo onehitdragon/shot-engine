@@ -75,10 +75,19 @@ table PbrShading{
     ao: OptionalImage;
 }
 
+table LightShadow{
+    enable: bool;
+    bias: double;
+    normalBias: double;
+    mapSize: int;
+    softShadow: string;
+}
+
 table DirectionalLight{
     id: string;
     color: Vec3;
     intensity: double;
+    shadow: LightShadow;
 }
 
 table PointLight{
@@ -86,6 +95,7 @@ table PointLight{
     color: Vec3;
     intensity: double;
     radius: double;
+    shadow: LightShadow;
 }
 
 table SpotLight{
@@ -95,6 +105,7 @@ table SpotLight{
     radius: double;
     innerAngle: double;
     outerAngle: double;
+    shadow: LightShadow;
 }
 
 table SkyBox{

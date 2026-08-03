@@ -4,6 +4,8 @@ import { Vec3 } from "@shot-engine/types"
 export interface GizmoOrbitCameraState{
   fov: number,
   aspect: number,
+  near: number,
+  far: number,
   sphereCoordinate: { r: number, theta: number, phi: number },
   origin: Vec3
 }
@@ -15,6 +17,8 @@ const initialState:InitState = {
   camera: {
     fov: 45 * Math.PI / 180, // radian
     aspect: 0,
+    near: 0.1,
+    far: 1000,
     sphereCoordinate: { r: 5, theta: 0, phi: 0 },
     origin: {x: 0, y: 0, z: 0}
   },

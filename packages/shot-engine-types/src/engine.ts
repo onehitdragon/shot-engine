@@ -93,6 +93,39 @@ export class Vec3{
         glm.vec3.transformMat3(result, v, mat3.values);
         return Vec3.FromArray(result);
     }
+    public static TransformMat4(vIn: Vec3, mat4: Mat4){
+        const v = Vec3.ToArray(vIn);
+        const result = glm.vec3.create();
+        glm.vec3.transformMat4(result, v, mat4.values);
+        return Vec3.FromArray(result);
+    }
+    public static Distance(v1In: Vec3, v2In: Vec3){
+        const v1 = Vec3.ToArray(v1In);
+        const v2 = Vec3.ToArray(v2In);
+        return glm.vec3.distance(v1, v2);
+    }
+    public static Length(v1In: Vec3){
+        const v1 = Vec3.ToArray(v1In);
+        return glm.vec3.length(v1);
+    }
+    public static Ceil(v1In: Vec3){
+        const v1 = Vec3.ToArray(v1In);
+        const result = glm.vec3.create();
+        glm.vec3.ceil(result, v1);
+        return Vec3.FromArray(result);
+    }
+    public static Floor(v1In: Vec3){
+        const v1 = Vec3.ToArray(v1In);
+        const result = glm.vec3.create();
+        glm.vec3.floor(result, v1);
+        return Vec3.FromArray(result);
+    }
+    public static Round(v1In: Vec3){
+        const v1 = Vec3.ToArray(v1In);
+        const result = glm.vec3.create();
+        glm.vec3.round(result, v1);
+        return Vec3.FromArray(result);
+    }
 }
 export class Vec4{
     public x: number = 0;
@@ -138,6 +171,12 @@ export class Mat4{
         mat4.values = [...values];
         return mat4;
     }
+    public static Equal(m1: Mat4, m2: Mat4){
+        for(let i = 0; i < 16; i++){
+            if(m1.values[i] !== m2.values[i]) return false;
+        }
+        return true;
+    }
     public static Multiply(m1: Mat4, m2: Mat4){
         const result = new Mat4();
         glm.mat4.multiply(result.values, m1.values, m2.values);
@@ -163,7 +202,12 @@ export class Mat4{
     public static Perspective(fovy: number, aspect: number, near: number, far: number){
         const result = new Mat4();
         glm.mat4.perspective(result.values, fovy, aspect, near, far);
-        return result
+        return result;
+    }
+    public static Ortho(left: number, right: number, bottom: number, top: number, near: number, far: number){
+        const result = new Mat4();
+        glm.mat4.ortho(result.values, left, right, bottom, top, near, far);
+        return result;
     }
     public static GetTranslation(mat4In: Mat4){
         const result = glm.vec3.create();
@@ -182,19 +226,31 @@ export class Mat4{
     }
     public static GetAxis(mat4In: Mat4, axis: "x" | "y" | "z"){
         if(axis === "x"){
-            return Vec3.FromArray([mat4In.values[0], mat4In.values[1], mat4In.values[2]]);
+            return Vec3.Normalize(
+                Vec3.FromArray([mat4In.values[0], mat4In.values[1], mat4In.values[2]])
+            );
         }
         if(axis === "y"){
-            return Vec3.FromArray([mat4In.values[4], mat4In.values[5], mat4In.values[6]]);
+            return Vec3.Normalize(
+                Vec3.FromArray([mat4In.values[4], mat4In.values[5], mat4In.values[6]])
+            );
         }
         if(axis === "z"){
-            return Vec3.FromArray([mat4In.values[8], mat4In.values[9], mat4In.values[10]]);
+            return Vec3.Normalize(
+                Vec3.FromArray([mat4In.values[8], mat4In.values[9], mat4In.values[10]])
+            );
         }
         return Vec3.Zero();
     }
     public static Identity(){
-        const result = new Mat4();;
+        const result = new Mat4();
         glm.mat4.identity(result.values);
+        return result;
+    }
+    public static FromScaling(v3In: Vec3){
+        const v3 = Vec3.ToArray(v3In);
+        const result = new Mat4();
+        glm.mat4.fromScaling(result.values, v3);
         return result;
     }
 }
@@ -330,6 +386,19 @@ export class AABB{
             max.x = Math.max(max.x, values[i]);
             max.y = Math.max(max.y, values[i + 1]);
             max.z = Math.max(max.z, values[i + 2]);
+        }
+        return new AABB(min, max);
+    }
+    public static FromVec3s(vec3s: Vec3[]){
+        let min: Vec3 = {x: Infinity, y: Infinity, z: Infinity};
+        let max: Vec3 = {x: -Infinity, y: -Infinity, z: -Infinity};
+        for(const vec3 of vec3s){
+            min.x = Math.min(min.x, vec3.x);
+            min.y = Math.min(min.y, vec3.y);
+            min.z = Math.min(min.z, vec3.z);
+            max.x = Math.max(max.x, vec3.x);
+            max.y = Math.max(max.y, vec3.y);
+            max.z = Math.max(max.z, vec3.z);
         }
         return new AABB(min, max);
     }
@@ -517,11 +586,19 @@ export type GizmoShading = ShadingBase & {
     color: Vec3
 }
 export type Shading = SimpleShading | PhongShading | PbrShading | GizmoShading;
+export type LightShadow = {
+    enable: boolean,
+    bias: number,
+    normalBias: number,
+    mapSize: number,
+    softShadow: "hard" | "smooth"
+}
 export type LightBase = {
     type: "Light",
     id: string,
     intensity: number,
     color: Vec3,
+    shadow: LightShadow
 };
 export type DirectionalLight = LightBase & {
     lightType: "DirectionalLight",

@@ -46,7 +46,6 @@ export function SceneRenderer(){
             AssetCache.getInstance().deleteUnused();
 
             prepareColorTexture(componentArrs);
-            prepareLight(nodes);
             prepareSkyBox(componentArrs);
             setPrepareAssetCount(state => state + 1);
         }
@@ -56,6 +55,10 @@ export function SceneRenderer(){
             controller2.abort();
         }
     }, [nodes, gizmoNodes]);
+
+    useEffect(() => {
+        prepareLight(nodes);
+    }, [camera, nodes, gizmoNodes]);
 
     useEffect(() => {
         if(!webglRenderer || !camera || nodes.length === 0) return;
@@ -110,12 +113,14 @@ export class SceneNodeRenderer{
         const shadingComponent = ComponentHelper.FindComponentByType(go.components, "Shading");
         if(!shadingComponent) return;
         const mvpMat4 = this.createMVPMatrix(modelMat4);
+        const viewMat4 = GizmoOrbitCameraInfo.getInstance().viewMat4;
         const normalMat3 = this.createNormalMatrix(modelMat4);
         this._webglRenderer.render(
             shadingComponent,
             meshComponent,
             mvpMat4,
             modelMat4,
+            viewMat4,
             normalMat3,
             GizmoOrbitCameraInfo.getInstance().worldPos
         );
@@ -223,7 +228,7 @@ function prepareLight(nodes: NodeState[]){
         const worldForward = NodesInfo.getInstance().getWorldAxis(node.id, "z");
         if(!worldForward) continue;
         NodesInfo.getInstance().nodeInfos.get(node.id)
-        LightInfo.getInstance().addLight(light, worldPos, worldForward);
+        LightInfo.getInstance().addLight(light, worldPos, worldForward, nodes);
     }
 }
 function prepareSkyBox(componentArrs: Component[][]){

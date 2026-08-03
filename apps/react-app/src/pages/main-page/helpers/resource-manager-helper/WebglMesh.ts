@@ -5,11 +5,12 @@ import { WebglPhongShader } from "./WebglPhongShader";
 import type { GizmoShading, Mat3, Mat4, MeshAsset, PbrShading, PhongShading, Shading, Vec3 } from "@shot-engine/types";
 import { WebglPbrShader } from "./WebglPbrShader";
 import { WebglGizmoShader } from "./WebglGizmoShader";
+import { WebglShadowMapShader } from "./WebglShadowMapShader";
 
 export class WebglMesh{
     private _gl: WebGL2RenderingContext;
     private _meshVBOs: WebglMeshVBOs;
-    private _meshVAOMap: Map<Shading["shaderType"], WebGLVertexArrayObject>;
+    private _meshVAOMap: Map<Shading["shaderType"] | "shadowMap", WebGLVertexArrayObject>;
     constructor(gl: WebGL2RenderingContext, primitive: MeshAsset["primitives"][0]){
         this._gl = gl;
         this._meshVBOs = new WebglMeshVBOs(gl, primitive);
@@ -29,6 +30,10 @@ export class WebglMesh{
         this._meshVAOMap.set(
             "gizmo",
             WebglGizmoShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
+        );
+        this._meshVAOMap.set(
+            "shadowMap",
+            WebglShadowMapShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
         );
     }
     renderWithSimpleShader(mvpMat4: Mat4, color?: Vec3){
@@ -58,6 +63,7 @@ export class WebglMesh{
     renderWithPbrShader(
         mvpMat4: Mat4,
         modelMat4: Mat4,
+        viewMat4: Mat4,
         normalMat3: Mat3,
         camPos: Vec3,
         shadingComponent: PbrShading
@@ -69,6 +75,7 @@ export class WebglMesh{
             vao,
             mvpMat4,
             modelMat4,
+            viewMat4,
             normalMat3,
             camPos,
             shadingComponent
@@ -85,6 +92,19 @@ export class WebglMesh{
             vao,
             mvpMat4,
             shadingComponent
+        );
+    }
+    renderWithShadowMapShader(
+        lightVPMat4: Mat4,
+        modelMat4: Mat4
+    ){
+        const gl = this._gl;
+        const vao = this._meshVAOMap.get("shadowMap")!;
+        WebglShadowMapShader.getInstance(gl).renderMesh(
+            this._meshVBOs,
+            vao,
+            lightVPMat4,
+            modelMat4
         );
     }
     dispose(){

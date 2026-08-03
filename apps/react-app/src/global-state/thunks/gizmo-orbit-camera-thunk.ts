@@ -13,6 +13,7 @@ export function gizmoOrbitCameraListener(startListening: AppStartListening){
       const [worldPos, forward, viewMat4] = createViewMatrix(camera);
       const clipMat4 = createClipMatrix(camera);
       const vpMat4 = Mat4.Multiply(clipMat4, viewMat4); // P * V
+      GizmoOrbitCameraInfo.getInstance().camera = { ...camera };
       GizmoOrbitCameraInfo.getInstance().worldPos = worldPos;
       GizmoOrbitCameraInfo.getInstance().forward = forward;
       GizmoOrbitCameraInfo.getInstance().viewMat4 = viewMat4;
@@ -23,6 +24,7 @@ export function gizmoOrbitCameraListener(startListening: AppStartListening){
 }
 export class GizmoOrbitCameraInfo{
   private static _instance: GizmoOrbitCameraInfo;
+  public camera: { near: number, far: number, fov: number, aspect: number };
   public worldPos: Vec3;
   public forward: Vec3;
   public viewMat4: Mat4;
@@ -35,6 +37,7 @@ export class GizmoOrbitCameraInfo{
     return this._instance;
   }
   private constructor(){
+    this.camera = { near: 0, far: 0, fov: 0, aspect: 0 };
     this.worldPos = Vec3.Zero();
     this.forward = Vec3.Zero();
     this.viewMat4 = new Mat4();
@@ -52,5 +55,5 @@ function createViewMatrix(camera: GizmoOrbitCameraState){
   return [camWorldPos, forward, viewMat4] as const;
 }
 function createClipMatrix(camera: GizmoOrbitCameraState){
-  return Mat4.Perspective(camera.fov, camera.aspect, 0.1, 1000);
+  return Mat4.Perspective(camera.fov, camera.aspect, camera.near, camera.far);
 }

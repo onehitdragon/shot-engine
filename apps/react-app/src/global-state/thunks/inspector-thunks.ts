@@ -140,10 +140,10 @@ async function bake(
     gl.enable(gl.DEPTH_TEST);
 
     // setup RBO, FBO
-    const captureRBO = gl.createRenderbuffer();
+    const captureRBO = gl.createRenderbuffer(); // like texture
     gl.bindRenderbuffer(gl.RENDERBUFFER, captureRBO);
     gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, 512, 512);
-    const captureFBO = gl.createFramebuffer();
+    const captureFBO = gl.createFramebuffer(); // render
     gl.bindFramebuffer(gl.FRAMEBUFFER, captureFBO);
     gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, captureRBO);
     

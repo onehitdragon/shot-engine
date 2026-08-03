@@ -14,7 +14,8 @@ import {
     ImageOrValue,
     OptionalImage,
     None,
-    Emissive
+    Emissive,
+    LightShadow
 } from "../fbs-gen/fbsengine";
 import { Builder, Offset } from "flatbuffers";
 
@@ -281,10 +282,12 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             Vec3.addY(builder, component.color.y);
             Vec3.addZ(builder, component.color.z);
             const colorOffset = Vec3.endVec3(builder);
+            const lightShadowOffset = buildLightShadow(builder, component.shadow);
             DirectionalLight.startDirectionalLight(builder);
             DirectionalLight.addId(builder, idOffset);
             DirectionalLight.addColor(builder, colorOffset);
             DirectionalLight.addIntensity(builder, component.intensity);
+            DirectionalLight.addShadow(builder, lightShadowOffset);
             componentOffset = DirectionalLight.endDirectionalLight(builder);
             componentTypeOffsets.push(Component.DirectionalLight);
         }
@@ -295,11 +298,13 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             Vec3.addY(builder, component.color.y);
             Vec3.addZ(builder, component.color.z);
             const colorOffset = Vec3.endVec3(builder);
+            const lightShadowOffset = buildLightShadow(builder, component.shadow);
             PointLight.startPointLight(builder);
             PointLight.addId(builder, idOffset);
             PointLight.addColor(builder, colorOffset);
             PointLight.addIntensity(builder, component.intensity);
             PointLight.addRadius(builder, component.radius);
+            PointLight.addShadow(builder, lightShadowOffset);
             componentOffset = PointLight.endPointLight(builder);
             componentTypeOffsets.push(Component.PointLight);
         }
@@ -310,6 +315,7 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             Vec3.addY(builder, component.color.y);
             Vec3.addZ(builder, component.color.z);
             const colorOffset = Vec3.endVec3(builder);
+            const lightShadowOffset = buildLightShadow(builder, component.shadow);
             SpotLight.startSpotLight(builder);
             SpotLight.addId(builder, idOffset);
             SpotLight.addColor(builder, colorOffset);
@@ -317,6 +323,7 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             SpotLight.addRadius(builder, component.radius);
             SpotLight.addInnerAngle(builder, component.innerAngle);
             SpotLight.addOuterAngle(builder, component.outerAngle);
+            SpotLight.addShadow(builder, lightShadowOffset);
             componentOffset = SpotLight.endSpotLight(builder);
             componentTypeOffsets.push(Component.SpotLight);
         }
@@ -356,6 +363,17 @@ export function buildVec3(builder: Builder, vec3: ShotEngineType.Vec3){
     Vec3.addY(builder, vec3.y);
     Vec3.addZ(builder, vec3.z);
    return Vec3.endVec3(builder);
+}
+
+function buildLightShadow(builder: Builder, shadow: ShotEngineType.LightShadow){
+    const softShadowOffset = builder.createString(shadow.softShadow);
+    LightShadow.startLightShadow(builder);
+    LightShadow.addEnable(builder, shadow.enable);
+    LightShadow.addBias(builder, shadow.bias);
+    LightShadow.addNormalBias(builder, shadow.normalBias);
+    LightShadow.addMapSize(builder, shadow.mapSize);
+    LightShadow.addSoftShadow(builder, softShadowOffset);
+    return LightShadow.endLightShadow(builder);
 }
 
 export function readGameObject(gameObject: GameObject){
@@ -555,29 +573,47 @@ export function readGameObject(gameObject: GameObject){
                 ao: aoOut
             });
         }
+        function readShawdowLight(lightShadow: LightShadow): ShotEngineType.LightShadow {
+            const softShadow = lightShadow.softShadow() as ShotEngineType.LightShadow["softShadow"] | null;
+            return {
+                enable: lightShadow.enable(),
+                bias: lightShadow.bias(),
+                normalBias: lightShadow.normalBias(),
+                mapSize: lightShadow.mapSize(),
+                softShadow: softShadow ?? "hard"
+            }
+        }
         if(componentType === Component.DirectionalLight){
             const directionalLight = gameObject.components(i, new DirectionalLight()) as DirectionalLight;
+            const shadow = directionalLight.shadow();
+            if(!shadow) continue;
             gameObjectResult.components.push({
                 type: "Light",
                 lightType: "DirectionalLight",
                 id: directionalLight.id() ?? "",
                 color: getVec3(directionalLight.color()),
                 intensity: directionalLight.intensity(),
+                shadow: readShawdowLight(shadow)
             });
         }
         if(componentType === Component.PointLight){
             const pointLight = gameObject.components(i, new PointLight()) as PointLight;
+            const shadow = pointLight.shadow();
+            if(!shadow) continue;
             gameObjectResult.components.push({
                 type: "Light",
                 lightType: "PointLight",
                 id: pointLight.id() ?? "",
                 color: getVec3(pointLight.color()),
                 intensity: pointLight.intensity(),
-                radius: pointLight.radius()
+                radius: pointLight.radius(),
+                shadow: readShawdowLight(shadow)
             });
         }
         if(componentType === Component.SpotLight){
             const spotLight = gameObject.components(i, new SpotLight()) as SpotLight;
+            const shadow = spotLight.shadow();
+            if(!shadow) continue;
             gameObjectResult.components.push({
                 type: "Light",
                 lightType: "SpotLight",
@@ -587,6 +623,7 @@ export function readGameObject(gameObject: GameObject){
                 radius: spotLight.radius(),
                 innerAngle: spotLight.innerAngle(),
                 outerAngle: spotLight.outerAngle(),
+                shadow: readShawdowLight(shadow)
             });
         }
         if(componentType === Component.SkyBox){
