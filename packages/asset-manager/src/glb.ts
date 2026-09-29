@@ -3,6 +3,7 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import path from "node:path";
 import * as ShotEngineType from "@shot-engine/types";
 import { imageToRaw } from './imageToRaw';
+import { v4 as uuidv4 } from "uuid";
 
 type GLB = {
     textures: GLBTexture[],
@@ -23,7 +24,7 @@ type MatInfo = {
     info: string
 }
 
-// readGLBFile(path.join(process.cwd(), "test", "ark-rm", "Untitled2.glb"));
+// readGLBFile(path.join(process.cwd(), "test", "Cube.glb"));
 export async function readGLBFile(filePath: string){
     const io = new NodeIO()
     .registerExtensions(ALL_EXTENSIONS)
@@ -31,6 +32,59 @@ export async function readGLBFile(filePath: string){
 
     const document = await io.read(filePath);
     const root = document.getRoot();
+    
+    // set id for all node
+    for(const node of root.listNodes()){
+        node.setExtras({ id: uuidv4() })
+    }
+
+    // for(const skin of root.listSkins()){
+    //     console.log(`--- Skin: ${skin.getName()} ---`);
+
+    //     const joints = skin.listJoints();
+    //     console.log(joints);
+
+        // const rootJoint = skin.getSkeleton() || joints[0];
+        // if(!rootJoint) continue;
+        // console.log(`Skeleton Root: ${rootJoint.getName()}`);
+        
+        // for (const joint of joints) {
+        //     console.log(`Bone Node: ${joint.getName()}`);
+        // }
+    // }
+
+    // function getNodePath(nodeIn?: Node | null){
+    //     const names: string[] = [];
+    //     let isSkin = false;
+    //     function recur(node?: Node | null){
+    //         if(!node) return;
+    //         const skin = node.getSkin();
+    //         if(skin){
+    //             console.log("aa");
+    //             isSkin = true;
+    //             return;
+    //         }
+    //         names.unshift(node.getName());
+    //         recur(node.getParentNode());
+    //     }
+    //     recur(nodeIn);
+    //     if(!isSkin) return "/";
+    //     return "/" + names.join("/");
+    // }
+    // for(const ani of root.listAnimations()){
+    //     console.log(`--- Animation: ${ani.getName()} ---`);
+    //     for(const channel of ani.listChannels()){
+    //         const targetNode = channel.getTargetNode();
+    //         console.log("child path: ", targetNode?.getName());
+
+    //         const targetPath = channel.getTargetPath();
+    //         // console.log(`Target: ${targetNode ? targetNode.getName() : 'Unknown'} | Path: ${targetPath}`);
+    //         const sampler = channel.getSampler();
+    //         const times = sampler?.getInput()?.getArray();
+    //         const values = sampler?.getOutput()?.getArray();
+    //         // console.log(times, values);
+    //     }
+    // }
     
     const glb: GLB = {
         textures: [],
@@ -84,26 +138,44 @@ export async function readGLBFile(filePath: string){
     }
     for(const mesh of root.listMeshes()){
         const primitives = mesh.listPrimitives().map((e => {
-            const positions = getAttr(e.getAttribute("POSITION"));
-            const normals = getAttr(e.getAttribute("NORMAL"));
-            const uvs = getAttr(e.getAttribute("TEXCOORD_0"));
             const indices = getIndices(e.getIndices());
             let indexType = 0;
             if(indices instanceof Uint8Array) indexType = 5121;
             if(indices instanceof Uint16Array) indexType = 5123;
             if(indices instanceof Uint32Array) indexType = 5125;
-            const interleaveArray = createInterleaveArr(positions, normals, uvs);
+
+            const positions = getAttr(e.getAttribute("POSITION")); // vec3
+            const normals = getAttr(e.getAttribute("NORMAL")); // vec3
+            const uvs = getAttr(e.getAttribute("TEXCOORD_0")); // vec2
+
+            const weights = getAttr(e.getAttribute("WEIGHTS_0")); // vec4
+            const joints = getAttrUint8(e.getAttribute("JOINTS_0")); // vec4
+            let invBindPoseMatrices: Float32Array = new Float32Array();
+            // many nodes use 1 mesh, those node share same skin
+            const parentNode = mesh.listParents().find(p => p instanceof Node);
+            const skin = parentNode?.getSkin();
+            if(skin){
+                invBindPoseMatrices = getAttr(skin.getInverseBindMatrices());
+            }
+            
+            const interleaveArray = createInterleaveArr(positions, normals, uvs); // new buffer
+            const interleaveArrayWithTangent = ShotEngineType.MeshHelper.InterleaveArrayTangent(
+                interleaveArray, indices
+            ); // new buffer
+            const interleaveArrayWithJoint = extendInterleaveArr(
+                interleaveArrayWithTangent, weights, joints
+            );
+
             const primitive: ShotEngineType.MeshAsset["primitives"][0] = {
+                type: joints.length === 0 ? "static" : "skin",
                 attribute: {
-                    interleaveArray: ShotEngineType.MeshHelper.InterleaveArrayTangent(
-                        interleaveArray,
-                        indices
-                    )
+                    interleaveArray: interleaveArrayWithJoint
                 },
                 indices,
                 indexType,
                 drawMode: e.getMode(),
-                aabb: ShotEngineType.AABB.FromVertices([...positions])
+                aabb: ShotEngineType.AABB.FromVertices([...positions]),
+                invBindPoseMatrices
             }
             return primitive;
         }));
@@ -142,6 +214,22 @@ function getAttr(attr?: Accessor | null){
     }
     return result;
 }
+function getAttrUint8(attr?: Accessor | null){
+    const array = attr?.getArray();
+    let result: Uint8Array;
+    if(!array){
+        result = new Uint8Array();
+    }
+    else{
+        if(array instanceof Uint8Array){
+            result = array;
+        }
+        else{
+            result = new Uint8Array();
+        }
+    }
+    return result;
+}
 function getIndices(attr?: Accessor | null){
     const array = attr?.getArray();
     let result: Uint8Array | Uint16Array | Uint32Array;
@@ -162,9 +250,7 @@ function getIndices(attr?: Accessor | null){
     }
     return result;
 }
-function createInterleaveArr(
-    positions: Float32Array, normals: Float32Array, uvs: Float32Array
-){
+function createInterleaveArr(positions: Float32Array, normals: Float32Array, uvs: Float32Array){
     const vertexCount = positions.length / 3;
     if(normals.length !== positions.length) throw "Positions and Normals mismatch";
     if(uvs.length !== vertexCount * 2) throw "UV count mismatch";
@@ -186,10 +272,44 @@ function createInterleaveArr(
 
     return interleaveBuffer;
 }
+function extendInterleaveArr(
+    interleaveArray: Float32Array, // pos 3, normal 3, uv 2, tangent 3
+    weights: Float32Array, joints: Uint8Array // weight 4 float joint 4 uint
+){
+    if(joints.length === 0) return new Uint8Array(interleaveArray.buffer);
+    // create interleaveBuffer
+    // (pos 12bytes + normal 12bytes + uv 8bytes + tangent 12bytes) 44
+    // (weights 16bytes joint 4bytes) 20
+    const vertexCount = Math.floor(interleaveArray.length / 11);
+    const buffer = new ArrayBuffer(64 * vertexCount);
+    const floatView = new Float32Array(buffer);
+    const uint8View = new Uint8Array(buffer);
+    let floatIdx = 0;
+    let interleaveArrayIdx = 0;
+    let weightIdx = 0;
+    let jointIdx = 0;
+    for(let i = 0; i < vertexCount; i++){
+        floatView.set(
+            interleaveArray.subarray(interleaveArrayIdx, interleaveArrayIdx + 11),
+            floatIdx
+        );
+        interleaveArrayIdx += 11;
+        floatIdx += 11;
+
+        floatView.set(weights.subarray(weightIdx, weightIdx + 4), floatIdx);
+        weightIdx += 4;
+        floatIdx += 4;
+
+        uint8View.set(joints.subarray(jointIdx, jointIdx + 4), floatIdx * 4);
+        jointIdx += 4;
+        floatIdx += 1;
+    }
+    return new Uint8Array(buffer);
+}
 function createGameObject(node: Node, meshMap: Map<Mesh, number>){
     node.getRotation()
     let gameObject: ShotEngineType.GameObject = {
-        id: "",
+        id: node.getExtras()["id"] as string,
         name: node.getName(),
         components: [],
         childs: []
@@ -220,19 +340,30 @@ function createGameObject(node: Node, meshMap: Map<Mesh, number>){
         }
     );
     const mesh = node.getMesh();
+    const skin = node.getSkin();
+    if(mesh && skin){
+        const rootJoint = skin.listJoints()[0];
+        if(rootJoint){
+            gameObject.components.push({
+                type: "Skeleton",
+                id: uuidv4(),
+                rootJointId: rootJoint.getExtras()["id"] as string
+            });
+        }
+    }
     if(mesh){
         let meshIndex = meshMap.get(mesh);
         if(meshIndex === undefined) meshIndex = -1;
         gameObject.components.push(
             {
                 type: "Mesh",
-                id: "",
+                id: uuidv4(),
                 meshRef: meshIndex as any
             },
             {
                 type: "Shading",
                 shaderType: "simple",
-                id: "",
+                id: uuidv4(),
                 culling: "none",
                 transparent: false,
                 color: { x: 1, y: 1, z: 1 }

@@ -8,7 +8,21 @@ import { selectNodeRecord, type NodeState } from "../slices/go-tree-slice";
 
 export async function flatGameObject(sceneNodeIn: SceneNode){
     const nodeStates: NodeState[] = [];
+    const idSet = new Set<string>();
 
+    function getId(curId: string){
+        if(!curId || idSet.has(curId)){
+            let newId: string;
+            do{
+                newId = uuidv4();
+            }
+            while(idSet.has(newId));
+            idSet.add(newId);
+            return newId;
+        }
+        idSet.add(curId);
+        return curId;
+    }
     async function recur(sceneNode: SceneNode, parentId?: string, isPrefab?: boolean){
         let gameObject: GameObject;
         let prefabRef: string | undefined = undefined;
@@ -23,7 +37,7 @@ export async function flatGameObject(sceneNodeIn: SceneNode){
             gameObject = sceneNode;
         }
         
-        const id = uuidv4();
+        const id = getId(gameObject.id);
         const childs: string[] = [];
         for(let child of gameObject.childs){
             const c = await recur(child, id, isPrefab);
@@ -54,7 +68,7 @@ export function nodeStateToSceneNode(rootIdIn: string, record: Record<string, No
         const root = record[rootId];
         if(root.prefabRef){
             const goPrefab: GameObjectPrefab = {
-                id: "",
+                id: root.id,
                 prefabRef: root.prefabRef
             }
             return goPrefab;
@@ -64,7 +78,7 @@ export function nodeStateToSceneNode(rootIdIn: string, record: Record<string, No
             childs.push(recur(childId));
         }
         const go: GameObject = {
-            id: "",
+            id: root.id,
             name: root.name,
             components: root.components.map(c => { return { ...c, id: "" }; }),
             childs

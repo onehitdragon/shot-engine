@@ -12,7 +12,8 @@ import {
     HdrAsset,
     PrefilterMap,
     AABB,
-    Vec3
+    Vec3,
+    PrimitiveType
 } from "../fbs-gen/fbsengine";
 import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, readGameObject } from "./flatbfUtil";
 
@@ -33,6 +34,14 @@ export function saveMeshAssetBinary(meshAsset: ShotEngineType.MeshAsset, filePat
     const builder = new Builder(1024);
     const primitiveOffsets: Offset[] = [];
     for(const prim of meshAsset.primitives){
+        let primitiveType: PrimitiveType;
+        if(prim.type === "skin"){
+            primitiveType = PrimitiveType.SKIN;
+        }
+        else{
+            primitiveType = PrimitiveType.STATIC;
+        }
+
         const interleaveArrayOffset = PrimitiveAttribute.createInterleaveArrayVector(builder, prim.attribute.interleaveArray);
         PrimitiveAttribute.startPrimitiveAttribute(builder);
         PrimitiveAttribute.addInterleaveArray(builder, interleaveArrayOffset);
@@ -53,12 +62,16 @@ export function saveMeshAssetBinary(meshAsset: ShotEngineType.MeshAsset, filePat
         AABB.addMax(builder, maxOffset);
         const aabbOffset = AABB.endAABB(builder);
 
+        const invBindPoseMatricesOffset = Primitive.createInvBindPoseMatricesVector(builder, prim.invBindPoseMatrices);
+
         Primitive.startPrimitive(builder);
+        Primitive.addType(builder, primitiveType);
         Primitive.addAttribute(builder, attrOffset);
         Primitive.addIndices(builder, indicesOffset);
         Primitive.addIndexType(builder, prim.indexType);
         Primitive.addDrawMode(builder, prim.drawMode);
         Primitive.addAabb(builder, aabbOffset);
+        Primitive.addInvBindPoseMatrices(builder, invBindPoseMatricesOffset);
         primitiveOffsets.push(Primitive.endPrimitive(builder));
     }
     const primitivesOffset = MeshAsset.createPrimitivesVector(builder, primitiveOffsets);
@@ -190,6 +203,18 @@ export function readMeshAsset(filePath: string){
         const rawIndices = prim.indicesArray();
         if(!rawIndices) continue;
 
+        let type = prim.type();
+        let primType: ShotEngineType.MeshAsset["primitives"][0]["type"];
+        if(type === PrimitiveType.STATIC){
+            primType = "static";
+        }
+        else if(type === PrimitiveType.SKIN){
+            primType = "skin"
+        }
+        else{
+            primType = "static";
+        }
+
         let indexType = prim.indexType();
         let indices: Uint8Array | Uint16Array | Uint32Array;
         if(indexType === IndexType.UNSIGNED_BYTE){
@@ -222,8 +247,9 @@ export function readMeshAsset(filePath: string){
         }
 
         asset.primitives.push({
+            type: primType,
             attribute: {
-                interleaveArray: getFloat32Array(attr.interleaveArrayArray())
+                interleaveArray: getUint8Array(attr.interleaveArrayArray())
             },
             indices,
             indexType,
@@ -231,7 +257,8 @@ export function readMeshAsset(filePath: string){
             aabb: {
                 min: getVec3(prim.aabb()?.min()),
                 max: getVec3(prim.aabb()?.max()),
-            }
+            },
+            invBindPoseMatrices: getFloat32Array(prim.invBindPoseMatricesArray())
         });
     }
     return asset;

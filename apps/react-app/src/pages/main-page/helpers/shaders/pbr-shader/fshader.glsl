@@ -12,6 +12,7 @@ struct DirectionalLight {
     bool hasShadow;
     float bias;
     float normalBias;
+    bool softShadow;
 };
 struct PointLight {
     vec3 color;
@@ -118,11 +119,26 @@ float directionalShadow(int i, vec3 N, vec3 L){
     vec4 fragLightPos = u_cascadeVPs[layer] * vec4(v_WorldPos, 1.0);
     vec3 projectPos = fragLightPos.xyz / fragLightPos.w; // [-1,1]
     projectPos = projectPos * 0.5 + 0.5; // [0,1]
-    
-    float closestDepth = texture(u_cascadeShadowMap, vec3(projectPos.xy, layer)).r;
     float curDepth = projectPos.z;
     float bias = max(light.normalBias * (1.0 - dot(N,L)), light.bias);
-    float shadow = curDepth - bias > closestDepth  ? 1.0 : 0.0;
+
+    float shadow = 0.0;
+    if(!light.softShadow){
+        float closestDepth = texture(u_cascadeShadowMap, vec3(projectPos.xy, layer)).r;;
+        shadow = curDepth - bias > closestDepth ? 1.0 : 0.0;
+    }
+    else{
+        vec2 texelSize = 1.0 / vec2(textureSize(u_cascadeShadowMap, 0).xy);
+        for(int x = -1; x <= 1; x++){
+            for(int y = -1; y <= 1; y++){
+                vec2 samplePos = projectPos.xy + vec2(x, y) * texelSize;
+                float pcfDepth = texture(u_cascadeShadowMap, vec3(samplePos, layer)).r;
+                shadow += curDepth - bias > pcfDepth ? 1.0 : 0.0;
+            }
+        }
+        shadow /= 9.0;
+    }
+
     return shadow;
 }
 

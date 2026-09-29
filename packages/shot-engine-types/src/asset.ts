@@ -10,13 +10,17 @@ export type ImageAsset = {
 }
 export type MeshAsset = {
     primitives: {
+        type: "static" | "skin",
         attribute: {
-            interleaveArray: Float32Array, // vertex(3), normal(3), uv(2), tangent(3)
+            // vertex(3) 12 bytes, normal(3) 12 bytes, uv(2) 8 bytes, tangent(3) 12 bytes
+            // weight(4) 16 bytes, joint(4 uint) 4 bytes
+            interleaveArray: Uint8Array,
         },
         indices: Uint8Array | Uint16Array | Uint32Array,
         indexType: number,
         drawMode: number,
-        aabb: AABB
+        aabb: AABB,
+        invBindPoseMatrices: Float32Array
     }[]
 }
 export type PrefabAsset = {

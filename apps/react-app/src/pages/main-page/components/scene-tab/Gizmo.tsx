@@ -154,26 +154,28 @@ export function rayPick(
     if(!modelMat4) continue;
     const localRay = Ray.TransformSpace(viewRay, modelMat4);
 
-    for(const { aabb, indices, attribute } of meshAsset.primitives){
+    for(const { type, aabb, indices, attribute } of meshAsset.primitives){
+      const interleaveArray = new Float32Array(attribute.interleaveArray.buffer);
       if(!localRay.aabbIntersect(aabb)){
         continue;
       }
       for(let i = 0; i < indices.length; i += 3){
-        const v0_index = indices[i] * 11; // (3 verter, 3 normal, 2 uv, 3 tangent)
-        const v1_index = indices[i + 1] * 11;
-        const v2_index = indices[i + 2] * 11;
+        const amountFloat = type === "static" ? 11 : 16;
+        const v0_index = indices[i] * amountFloat; // (3 verter, 3 normal, 2 uv, 3 tangent)
+        const v1_index = indices[i + 1] * amountFloat;
+        const v2_index = indices[i + 2] * amountFloat;
         const v0 = new Vec3();
-        v0.x = attribute.interleaveArray[v0_index];
-        v0.y = attribute.interleaveArray[v0_index + 1];
-        v0.z = attribute.interleaveArray[v0_index + 2];
+        v0.x = interleaveArray[v0_index];
+        v0.y = interleaveArray[v0_index + 1];
+        v0.z = interleaveArray[v0_index + 2];
         const v1 = new Vec3();
-        v1.x = attribute.interleaveArray[v1_index];
-        v1.y = attribute.interleaveArray[v1_index + 1];
-        v1.z = attribute.interleaveArray[v1_index + 2];
+        v1.x = interleaveArray[v1_index];
+        v1.y = interleaveArray[v1_index + 1];
+        v1.z = interleaveArray[v1_index + 2];
         const v2 = new Vec3();
-        v2.x = attribute.interleaveArray[v2_index];
-        v2.y = attribute.interleaveArray[v2_index + 1];
-        v2.z = attribute.interleaveArray[v2_index + 2];
+        v2.x = interleaveArray[v2_index];
+        v2.y = interleaveArray[v2_index + 1];
+        v2.z = interleaveArray[v2_index + 2];
         const distance = localRay.trigIntersect(v0, v1, v2);
         if(distance === false) continue;
 

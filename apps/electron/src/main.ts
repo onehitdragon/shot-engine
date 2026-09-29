@@ -313,25 +313,25 @@ app.whenReady()
     ipcMain.handle(
         "resource:saveMesh",
         async (e, destPath: string, mesh: Resource.Mesh) => {
-            await saveMeshToBuffer(destPath, mesh);
+            // await saveMeshToBuffer(destPath, mesh);
         }
     );
     ipcMain.handle(
         "resource:loadMesh",
         async (e, destPath: string) => {
-            return await readMeshBinary(destPath);
+            // return await readMeshBinary(destPath);
         }
     );
     ipcMain.handle(
         "resource:saveImage",
         async (e, destPath: string, imagePath: string) => {
-            await saveImageToBuffer(destPath, imagePath);
+            // await saveImageToBuffer(destPath, imagePath);
         }
     );
     ipcMain.handle(
         "resource:loadImage",
         async (e, destPath: string) => {
-            return await readImageBinary(destPath);
+            // return await readImageBinary(destPath);
         }
     );
 

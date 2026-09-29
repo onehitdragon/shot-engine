@@ -1,13 +1,14 @@
-import type { AssetManager, Component, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, SkyBox, SpotLight, Transform } from "@shot-engine/types";
+import type { AssetManager, Component, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, Skeleton, SkyBox, SpotLight, Transform } from "@shot-engine/types";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { selectComponents } from "../../../../global-state/slices/inspector-components-slice";
 import { cloneDeep } from "lodash";
 import { componentUpdatedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
-import { ThreeValueRow, RGBValueRow, CheckBox, OneValueRow, Selection, TextRow, ImageOrColorSelection, ImageOrValueSelection, OptionalImageSelection } from "./components";
+import { ThreeValueRow, RGBValueRow, CheckBox, OneValueRow, Selection, TextRow, ImageOrColorSelection, ImageOrValueSelection, OptionalImageSelection, TextRowErr } from "./components";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { quat } from "gl-matrix";
 import { getNormalizeColor, getDenormalizeColor } from "../../helpers/utils/utils";
+import { selectNodeRecord } from "../../../../global-state/slices/go-tree-slice";
 
 
 export function ComponentsInspector(){
@@ -34,6 +35,9 @@ export function ComponentsInspector(){
                     }
                     else if(component.type === "SkyBox"){
                         return <SkyBoxSection key={component.id} skyBox={component}/>
+                    }
+                    else if(component.type === "Skeleton"){
+                        return <SkeletonSection key={component.id} skeleton={component}/>
                     }
                 })
             }
@@ -563,6 +567,22 @@ function SkyBoxSection(props: { skyBox: SkyBox }){
                     update();
                 }}
             />
+        </div>
+    );
+}
+function SkeletonSection(props: { skeleton: Skeleton }){
+    const { skeleton } = props;
+    const nodeRecord = useAppSelector(selectNodeRecord);
+    const rootJoint = nodeRecord[skeleton.rootJointId];
+
+    return (
+        <div className="flex flex-col">
+            <Header label="Skeleton" component={skeleton}/>
+            {
+                rootJoint ? 
+                <TextRow label="root joint" content={`${rootJoint.name} (${skeleton.rootJointId})`}/>:
+                <TextRowErr label="root joint" content={`None (${skeleton.rootJointId})`}/>
+            }
         </div>
     );
 }

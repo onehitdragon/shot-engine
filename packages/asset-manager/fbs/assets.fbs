@@ -9,7 +9,7 @@ table ImageAsset{
 }
 
 table PrimitiveAttribute{
-    interleaveArray: [float];
+    interleaveArray: [uint8];
 }
 
 enum IndexType : uint {
@@ -24,12 +24,20 @@ table AABB{
     max: Vec3;
 }
 
+enum PrimitiveType : uint {
+    NONE = 0,
+    STATIC = 1,
+    SKIN = 2
+}
+
 table Primitive{
+    type: PrimitiveType;
     attribute: PrimitiveAttribute;
     indices: [ubyte];
     index_type: IndexType;
     drawMode: int;
     aabb: AABB;
+    invBindPoseMatrices: [float];
 }
 
 table MeshAsset{

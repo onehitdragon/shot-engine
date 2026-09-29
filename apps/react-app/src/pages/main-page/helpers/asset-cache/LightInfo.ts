@@ -23,6 +23,7 @@ export class LightInfo{
     private _pointLightInfos: { light: PointLight, pos: Vec3, forward: Vec3 }[] = [];
     private _spotLightInfos: { light: SpotLight, pos: Vec3, forward: Vec3 }[] = [];
     private _directinalShadowWebgl: {
+        mapSize?: number,
         texture?: WebGLTexture,
         fbo?: WebGLFramebuffer
     };
@@ -141,6 +142,14 @@ export class LightInfo{
         const nCas = 4;
         const lamda = 0.8;
         const [cascadeFars, cascadeVPs] = this.cascadeVPs(forward, mapSize, nCas, lamda);
+        // delete prev texture
+        if(
+            this._directinalShadowWebgl.texture &&
+            this._directinalShadowWebgl.mapSize !== mapSize
+        ){
+            gl.deleteTexture(this._directinalShadowWebgl.texture);
+            this._directinalShadowWebgl.texture = undefined;
+        }
         // create texture
         let depthMapTexture = this._directinalShadowWebgl.texture;
         if(!depthMapTexture){
@@ -156,6 +165,7 @@ export class LightInfo{
             gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT);
             gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
             this._directinalShadowWebgl.texture = depthMapTexture;
+            this._directinalShadowWebgl.mapSize = mapSize;
         }
         // create fbo
         let depthMapFBO = this._directinalShadowWebgl.fbo;

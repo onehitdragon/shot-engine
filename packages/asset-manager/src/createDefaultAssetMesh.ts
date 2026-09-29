@@ -37,20 +37,23 @@ export function createDefaultCubeAssetMesh(){
             20, 21, 22, 20, 22, 23, // back
         ]
     );
+    const interleaveArrayWithTangent = ShotEngineType.MeshHelper.InterleaveArrayTangent(
+        interleaveArray,
+        indices
+    );
     const cubeAssetMesh: ShotEngineType.MeshAsset = {
         primitives: [{
+            type: "static",
             attribute: {
-                interleaveArray: ShotEngineType.MeshHelper.InterleaveArrayTangent(
-                    interleaveArray,
-                    indices
-                )
+                interleaveArray: new Uint8Array(interleaveArrayWithTangent.buffer)
             },
             indices,
             indexType: 5121,
             drawMode: 4,
             aabb: ShotEngineType.AABB.FromVertices(
                 [...v0, ...v1, ...v2, ...v3, ...v4, ...v5, ...v6, ...v7]
-            )
+            ),
+            invBindPoseMatrices: new Float32Array()
         }]
     }
 
@@ -118,13 +121,15 @@ export function createDefaultSphereAssetMesh(){
 
     const interleaveArray = new Float32Array(vertices);
     const indicesOut = new Uint16Array(indices);
+    const interleaveArrayWithTangent = ShotEngineType.MeshHelper.InterleaveArrayTangent(
+        interleaveArray,
+        indices
+    );
     const sphereAssetMesh: ShotEngineType.MeshAsset = {
         primitives: [{
+            type: "static",
             attribute: {
-                interleaveArray: ShotEngineType.MeshHelper.InterleaveArrayTangent(
-                    interleaveArray,
-                    indicesOut
-                ),
+                interleaveArray: new Uint8Array(interleaveArrayWithTangent.buffer),
             },
 
             // ~2400 indices => Uint16
@@ -136,7 +141,9 @@ export function createDefaultSphereAssetMesh(){
             // gl.TRIANGLES
             drawMode: 4,
 
-            aabb: ShotEngineType.AABB.FromVertices(positions)
+            aabb: ShotEngineType.AABB.FromVertices(positions),
+
+            invBindPoseMatrices: new Float32Array()
         }]
     };
 
@@ -247,13 +254,15 @@ export function createDefaultCylinderAssetMesh(){
 
     const interleaveArray = new Float32Array(interleave);
     const indicesOut = new Uint16Array(indicies);
+    const interleaveArrayWithTangent = ShotEngineType.MeshHelper.InterleaveArrayTangent(
+        interleaveArray,
+        indicesOut
+    );
     const assetMesh: ShotEngineType.MeshAsset = {
         primitives: [{
+            type: "static",
             attribute: {
-                interleaveArray: ShotEngineType.MeshHelper.InterleaveArrayTangent(
-                    interleaveArray,
-                    indicesOut
-                ),
+                interleaveArray: new Uint8Array(interleaveArrayWithTangent.buffer),
             },
 
             // indices => Uint16
@@ -265,7 +274,9 @@ export function createDefaultCylinderAssetMesh(){
             // gl.TRIANGLES
             drawMode: 4,
 
-            aabb: ShotEngineType.AABB.FromVertices([...vertices, ...topVertices, ...botVertices])
+            aabb: ShotEngineType.AABB.FromVertices([...vertices, ...topVertices, ...botVertices]),
+
+            invBindPoseMatrices: new Float32Array()
         }]
     };
     return assetMesh;
@@ -357,13 +368,15 @@ export function createDefaultConeAssetMesh(){
 
     const interleaveArray = new Float32Array(interleave);
     const indicesOut = new Uint16Array(indicies);
+    const interleaveArrayWithTangent = ShotEngineType.MeshHelper.InterleaveArrayTangent(
+        interleaveArray,
+        indicesOut
+    );
     const assetMesh: ShotEngineType.MeshAsset = {
         primitives: [{
+            type: "static",
             attribute: {
-                interleaveArray: ShotEngineType.MeshHelper.InterleaveArrayTangent(
-                    interleaveArray,
-                    indicesOut
-                ),
+                interleaveArray: new Uint8Array(interleaveArrayWithTangent.buffer),
             },
 
             // indices => Uint16
@@ -375,7 +388,9 @@ export function createDefaultConeAssetMesh(){
             // gl.TRIANGLES
             drawMode: 4,
 
-            aabb: ShotEngineType.AABB.FromVertices([...vertices, ...botVertices])
+            aabb: ShotEngineType.AABB.FromVertices([...vertices, ...botVertices]),
+
+            invBindPoseMatrices: new Float32Array()
         }]
     };
     return assetMesh;

@@ -113,6 +113,11 @@ table SkyBox{
     hdrRef: string;
 }
 
+table Skeleton{
+    id: string;
+    rootJointId: string;
+}
+
 union Component{
     Transform,
     Mesh,
@@ -122,5 +127,6 @@ union Component{
     PointLight,
     DirectionalLight,
     SpotLight,
-    SkyBox
+    SkyBox,
+    Skeleton
 }

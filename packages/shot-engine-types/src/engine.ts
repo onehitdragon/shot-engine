@@ -619,7 +619,12 @@ export type SkyBox = {
     id: string,
     hdrRef: string,
 }
-export type Component = Transform | GizmoTransform | Mesh | Shading | Light | SkyBox;
+export type Skeleton = {
+    type: "Skeleton",
+    id: string,
+    rootJointId: string,
+}
+export type Component = Transform | GizmoTransform | Mesh | Shading | Light | SkyBox | Skeleton;
 export class ComponentHelper{
     public static FindComponentByType<T extends Component["type"]>(
         components: Component[],

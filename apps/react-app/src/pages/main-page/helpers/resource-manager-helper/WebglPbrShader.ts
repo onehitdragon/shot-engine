@@ -59,7 +59,8 @@ export class WebglPbrShader{
             dir: WebGLUniformLocation, // other
             hasShadow: WebGLUniformLocation,
             bias: WebGLUniformLocation,
-            normalBias: WebGLUniformLocation
+            normalBias: WebGLUniformLocation,
+            softShadow: WebGLUniformLocation
         }[],
         u_viewMat4: WebGLUniformLocation,
         u_cascadeCount: WebGLUniformLocation,
@@ -148,6 +149,7 @@ export class WebglPbrShader{
                 hasShadow: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].hasShadow`),
                 bias: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].bias`),
                 normalBias: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].normalBias`),
+                softShadow: WebglHelper.getUniformLocation(gl, program, `u_directionalLights[${i}].softShadow`),
             });
             this._programLoc.u_pointLights.push({
                 color: WebglHelper.getUniformLocation(gl, program, `u_pointLights[${i}].color`),
@@ -245,6 +247,7 @@ export class WebglPbrShader{
                 gl.uniform1i(this._programLoc.u_directionalLights[i].hasShadow, 1);
                 gl.uniform1f(this._programLoc.u_directionalLights[i].bias, light.shadow.bias);
                 gl.uniform1f(this._programLoc.u_directionalLights[i].normalBias, light.shadow.normalBias);
+                gl.uniform1i(this._programLoc.u_directionalLights[i].softShadow, light.shadow.softShadow === "hard" ? 0 : 1);
 
                 const { cascadeFars, cascadeVPs, cascadeShadowMap } = cascadeShadow;
                 const cascadeCount = cascadeFars.length;

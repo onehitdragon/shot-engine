@@ -15,7 +15,8 @@ import {
     OptionalImage,
     None,
     Emissive,
-    LightShadow
+    LightShadow,
+    Skeleton
 } from "../fbs-gen/fbsengine";
 import { Builder, Offset } from "flatbuffers";
 
@@ -336,6 +337,15 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             componentOffset = SkyBox.endSkyBox(builder);
             componentTypeOffsets.push(Component.SkyBox);
         }
+        else if(component.type === "Skeleton"){
+            const idOffset = builder.createString(component.id);
+            const rootJointIdOffset = builder.createString(component.rootJointId);
+            Skeleton.startSkeleton(builder);
+            Skeleton.addId(builder, idOffset);
+            Skeleton.addRootJointId(builder, rootJointIdOffset);
+            componentOffset = Skeleton.endSkeleton(builder);
+            componentTypeOffsets.push(Component.Skeleton);
+        }
         if(componentOffset !== undefined){
             componentOffsets.push(componentOffset);
         }
@@ -632,6 +642,14 @@ export function readGameObject(gameObject: GameObject){
                 type: "SkyBox",
                 id: skyBox.id() ?? "",
                 hdrRef: skyBox.hdrRef() ?? ""
+            });
+        }
+        if(componentType === Component.Skeleton){
+            const skeleton = gameObject.components(i, new Skeleton()) as Skeleton;
+            gameObjectResult.components.push({
+                type: "Skeleton",
+                id: skeleton.id() ?? "",
+                rootJointId: skeleton.rootJointId() ?? ""
             });
         }
     }

@@ -30,7 +30,9 @@ export class WebglRenderer{
         modelMat4: Mat4,
         viewMat4: Mat4,
         normalMat3: Mat3,
-        camPos: Vec3
+        camPos: Vec3,
+        vpMat4: Mat4,
+        jointMatrices: Float32Array
     ){
         const { shaderType, culling } = shadingComponent;
         this.culling(culling);
@@ -40,7 +42,7 @@ export class WebglRenderer{
             return;
         }
         if(shaderType === "simple"){
-            webglMeshs.forEach(e => e.renderWithSimpleShader(mvpMat4, shadingComponent.color));
+            webglMeshs.forEach(e => e.renderWithSimpleShader(mvpMat4, vpMat4, jointMatrices, shadingComponent.color));
         }
         else if(shaderType === "phong"){
             webglMeshs.forEach(

@@ -11,13 +11,17 @@ export class WebglMesh{
     private _gl: WebGL2RenderingContext;
     private _meshVBOs: WebglMeshVBOs;
     private _meshVAOMap: Map<Shading["shaderType"] | "shadowMap", WebGLVertexArrayObject>;
+    private type: MeshAsset["primitives"][0]["type"];
     constructor(gl: WebGL2RenderingContext, primitive: MeshAsset["primitives"][0]){
         this._gl = gl;
+        this.type = primitive.type;
         this._meshVBOs = new WebglMeshVBOs(gl, primitive);
         this._meshVAOMap = new Map();
         this._meshVAOMap.set(
             "simple",
-            WebglSimpleShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
+            this.type === "skin" ?
+            WebglSimpleShader.getInstance(gl).createSkinMeshVAOs(this._meshVBOs, primitive.invBindPoseMatrices):
+            WebglSimpleShader.getInstance(gl).createStaticMeshVAOs(this._meshVBOs)
         );
         this._meshVAOMap.set(
             "phong",
@@ -36,10 +40,18 @@ export class WebglMesh{
             WebglShadowMapShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
         );
     }
-    renderWithSimpleShader(mvpMat4: Mat4, color?: Vec3){
+    renderWithSimpleShader(mvpMat4: Mat4, vpMat4: Mat4, jointMatrices: Float32Array, color?: Vec3){
         const gl = this._gl;
         const vao = this._meshVAOMap.get("simple")!;
-        WebglSimpleShader.getInstance(gl).renderMesh(this._meshVBOs, vao, mvpMat4, color);
+        if(this.type === "skin"){
+            WebglSimpleShader.getInstance(gl).renderSkinMesh(
+                this._meshVBOs, vao, vpMat4, jointMatrices, color
+            );
+        }
+        else{
+            WebglSimpleShader.getInstance(gl).renderStaticMesh(this._meshVBOs, vao, mvpMat4, color);
+        }
+        
     }
     renderWithPhongShader(
         mvpMat4: Mat4,

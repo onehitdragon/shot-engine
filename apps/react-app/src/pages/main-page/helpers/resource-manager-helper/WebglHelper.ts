@@ -36,7 +36,7 @@ export class WebglHelper{
     };
     static createVertexBuffer(
         gl: WebGL2RenderingContext,
-        data: Float32Array
+        data: AllowSharedBufferSource | null
     ){
         const buffer = gl.createBuffer();
         this.bindVertexBuffer(gl, buffer);
