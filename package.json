@@ -8,6 +8,7 @@
   "scripts": {
     "build-types": "npm run build -w @shot-engine/types",
     "build-asset-manager": "npm run build -w @shot-engine/asset-manager",
+    "build-math": "npm run build -w @shot-engine/math",
     "editor": "npm run dev -w @shot-engine/electron",
     "rebuild": "npx @electron/rebuild -v 41.7.1 -w better-sqlite3"
   }
