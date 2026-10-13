@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"
 import type { AppDispatch, RootState } from "../store"
 import { showInspector } from "../slices/inspector-slice"
-import type { AssetManager, HdrAsset, HdrCube, ImageAsset, MeshAsset, OtherAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
+import type { AssetManager, FontAsset, FontAssetBakeSetting, HdrAsset, HdrCube, ImageAsset, MeshAsset, OtherAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
 import { mat4 } from "gl-matrix";
 import { WebglHelper } from "../../pages/main-page/helpers/resource-manager-helper/WebglHelper";
 import { getCubeMeshData } from "../../pages/main-page/helpers/scene-manager-helper/mesh-datas";
@@ -85,6 +85,15 @@ export const inspectAssetThunk = createAsyncThunk
                     type: "hdr",
                     assetInfo,
                     hdrAsset: asset as HdrAsset
+                } }));
+                return;
+            }
+            if(assetInfo.type === "font"){
+                const asset = await window.api.assetManager.getAssetFromUuid(assetInfo.uuid, "font");
+                dispatch(showInspector({ inspector: {
+                    type: "font",
+                    assetInfo,
+                    fontAsset: asset as FontAsset
                 } }));
                 return;
             }
@@ -556,3 +565,30 @@ function setupQuadVertextProgram(gl: WebGL2RenderingContext, program: WebGLProgr
         WebglHelper.deleteVertexBuffer(gl, vertexVBO);
     }] as const;
 }
+
+export const bakeFontFileThunk = createAsyncThunk
+<
+    void,
+    {
+        assetInfo: AssetManager.AssetInfo,
+        fontAssetBakeSetting: FontAssetBakeSetting,
+        complete?: () => void
+    },
+    {
+        dispatch: AppDispatch,
+        state: RootState
+    }
+>
+(
+    "inspector/bakeFontFileThunk",
+    async ({ assetInfo, fontAssetBakeSetting, complete }, { rejectWithValue }) => {
+        try{
+            await window.api.assetManager.bakeFontAsset(assetInfo.uuid, fontAssetBakeSetting);
+            complete?.();
+        }
+        catch(err){
+            await window.api.showError(String(err));
+            rejectWithValue(err);
+        }
+    }
+);

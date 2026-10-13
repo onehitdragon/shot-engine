@@ -8,9 +8,10 @@ import { createDBIfNotExist, FileRow, AssetRow, closeDB } from "./db";
 import * as ShotEngineType from "@shot-engine/types";
 import { AssetManager } from "@shot-engine/types";
 import { readGLBFile } from './glb';
-import { readHdrAsset, readImageAsset, readMeshAsset, readPrefabAsset, readSceneAsset, saveHdrAssetBinary, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
+import { readFontAsset, readHdrAsset, readImageAsset, readMeshAsset, readPrefabAsset, readSceneAsset, saveFontAssetBinary, saveHdrAssetBinary, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf';
 import { imageToRaw } from './imageToRaw';
 import { createDefaultConeAssetMesh, createDefaultCubeAssetMesh, createDefaultCylinderAssetMesh, createDefaultSphereAssetMesh } from './createDefaultAssetMesh';
+import * as assetBakers from './assetBakers';
 
 let configed = false;
 let ASSET_DIR = "";
@@ -106,6 +107,9 @@ export function query(){
         if(type === "hdr"){
             return readHdrAsset(filePath);
         }
+        if(type === "font"){
+            return readFontAsset(filePath);
+        }
     }
     function updateAssetPropertyByUuid(uuid: string, property: string){
         assetsQuery.updateProperty.run(property, uuid);
@@ -124,6 +128,14 @@ export function query(){
         if(!assetRow || assetRow.type !== "hdr") return;
         genHdrAsset(assetRow, hdrAsset);
     }
+    async function bakeFontAsset(uuid: string, fontAssetBakeSetting: ShotEngineType.FontAssetBakeSetting){
+        const assetRow = assetsQuery.getById.get(uuid);
+        if(!assetRow || assetRow.type !== "font") throw "bad asset";
+        const filePath = getFilePathFromAssetId(uuid);
+        if(!filePath) throw "cant find file path"
+        const fontAsset = await assetBakers.bakeFontAsset(filePath, fontAssetBakeSetting);
+        genFontAsset(assetRow, fontAsset);
+    }
     return {
         getAssetInfosFromPath,
         getAssetInfoFromUuid,
@@ -131,20 +143,26 @@ export function query(){
         getAssetFromUuid,
         updateAssetPropertyByUuid,
         getFilePathFromAssetId,
-        addBakedHdrAsset
+        addBakedHdrAsset,
+        bakeFontAsset
     }
 }
 
 export async function rescan(){
-    // let now = performance.now();
-    // console.log(now, "ms");
-
     if(!configed) return;
     ensureDefaultFiles();
 
-    // check db first
+    /** check db first
+     * loop db files
+     * check the db path vs the real path(exist or not)
+     * if(not) remove the db path of db files -> continue
+     * if(exist) calculate real hash and save to hashCache<real path, real hash>
+     * check the db hash vs the real hash (equal or not)
+     * if(not) update db hash = real hash
+     */
     const fileRowsDB = filesQuery.gets.all();
-    const hashCache = new Map<string, string>();
+    // <the fullPath of file exists in db and real, old hash or new hash>
+    const hashCache = new Map<string, string>(); // <real path, real hash>
     for(const fileRow of fileRowsDB){
         if(!fileRow.path) continue;
         const fullPath = path.join(ASSET_DIR, fileRow.path);
@@ -163,10 +181,9 @@ export async function rescan(){
         }
     }
 
-    // console.log(performance.now() - now, "ms");
-    // now = performance.now();
-
-    // group file in db with hash
+    /** group db files with hash
+     * now fileRowsDB is (real hash, real path)
+     */
     const hashToFileRows = new Map<string, FileRow[]>();
     for(const fileRow of fileRowsDB){
         const exist = hashToFileRows.get(fileRow.hash);
@@ -174,6 +191,7 @@ export async function rescan(){
         else exist.push(fileRow);
     }
     
+    // walk through the whole asset folder
     const entries = fsWalk.walkSync(ASSET_DIR);
     for(const entry of entries){
         if(entry.dirent.isDirectory()) continue;
@@ -251,6 +269,9 @@ export async function rescan(){
             }
             else if(isHdrFile(fileRow.path)){
                 await syncNotContainer(fileRow, assetRows, "hdr");
+            }
+            else if(isFontFile(fileRow.path)){
+                await syncNotContainer(fileRow, assetRows, "font");
             }
             else{
                 await syncNotContainer(fileRow, assetRows, "other");
@@ -343,6 +364,8 @@ async function hashObject(object: Object) {
 }
 
 async function syncNotContainer(fileRow: FileRow, assetRows: AssetRow[], type: AssetRow["type"]){
+    // every db file can have many assetRows
+    // but this function keep assetRows.length is 1
     if(!fileRow.path) return;
     const fullPath = path.join(ASSET_DIR, fileRow.path);
     const isDefaultFile = fullPath.startsWith(ASSET_DEFAULT_DIR);
@@ -350,18 +373,21 @@ async function syncNotContainer(fileRow: FileRow, assetRows: AssetRow[], type: A
     for(const assetRow of assetRows){
         if(assetRow.type !== type) continue;
         usedSet.add(assetRow.uuid);
+        // check asset is dirty, needing recreate
         if(assetRow.hash !== fileRow.hash){
             assetsQuery.updateHash.run(fileRow.hash, assetRow.uuid);
             assetRow.hash = fileRow.hash;
             await genAssetWithFile(fileRow, assetRow, type);
         }
+        // update asset name if fileRow have changed path
         const name = path.basename(fullPath || "");
         if(assetRow.name !== name){
             assetsQuery.updateName.run(name, assetRow.uuid);
             assetRow.name = name;
         }
-        break;
+        break; // keep assetRows only 1 element
     }
+    // case assetRows.length === 0, create new assetRow, create new asset
     if(usedSet.size === 0){
         const uuid = isDefaultFile ? path.basename(fullPath) : uuidv4();
         const assetRow: AssetRow = {
@@ -386,9 +412,10 @@ async function syncNotContainer(fileRow: FileRow, assetRows: AssetRow[], type: A
         assetRows.push(assetRow);
         await genAssetWithFile(fileRow, assetRow, type);
     }
+    // delete all bad assetRows
     const uuids = assetRows.filter(e => !usedSet.has(e.uuid)).map(e => e.uuid);
     assetsQuery.deletesTransaction(uuids);
-    uuids.forEach(e => deleteGenAsset(e))
+    uuids.forEach(e => deleteGenAsset(e));
 }
 async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
     if(!fileRow.path) return;
@@ -558,6 +585,9 @@ function createAssetDefaultProterpty(type: AssetRow["type"]): string{
     else if(type === "hdr"){
         return schema.defaultHdrAssetJSON;
     }
+    else if(type === "font"){
+        return schema.defaultFontAssetJSON;
+    }
     else{
         return schema.defaultOtherAssetJSON;
     }
@@ -588,6 +618,10 @@ function isHdrFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return ext === ".hdr";
 }
+function isFontFile(filePath: string){
+    const ext = path.extname(filePath).toLowerCase();
+    return ext === ".ttf";
+}
 
 async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: AssetRow["type"]) {
     if(!fileRow.path) return;
@@ -612,6 +646,11 @@ async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: Asse
     }
     else if(type === "hdr"){
         // ignore
+        // only create assetRow not gen asset file
+    }
+    else if(type === "font"){
+        // ignore
+        // only create assetRow not gen asset file
     }
     else genDefaultAsset(fileRow, assetRow);
 }
@@ -651,6 +690,11 @@ function genHdrAsset(assetRow: AssetRow, hdrAsset: ShotEngineType.HdrAsset){
     fs.ensureDirSync(ASSET_GENERATED_DIR);
     const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
     saveHdrAssetBinary(hdrAsset, genAssetPath);
+}
+function genFontAsset(assetRow: AssetRow, fontAsset: ShotEngineType.FontAsset){
+    fs.ensureDirSync(ASSET_GENERATED_DIR);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    saveFontAssetBinary(fontAsset, genAssetPath);
 }
 function genTextAsset(assetRow: AssetRow, text: string){
     fs.ensureDirSync(ASSET_GENERATED_DIR);

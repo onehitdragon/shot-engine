@@ -13,7 +13,13 @@ import {
     PrefilterMap,
     AABB,
     Vec3,
-    PrimitiveType
+    PrimitiveType,
+    FontAsset,
+    AtlasTexture,
+    FontInfo,
+    FontInfoChar,
+    FontInfoCommon,
+    FontAssetBakeSetting
 } from "../fbs-gen/fbsengine";
 import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, readGameObject } from "./flatbfUtil";
 
@@ -172,6 +178,65 @@ export function saveHdrAssetBinary(hdrAsset: ShotEngineType.HdrAsset, filePath: 
     HdrAsset.addBrdfLut(builder, brdfLUTOffset);
     const hdrAssetOffset = HdrAsset.endHdrAsset(builder);
     builder.finish(hdrAssetOffset);
+
+    const bytes = builder.asUint8Array();
+    fs.writeFileSync(filePath, bytes);
+}
+export function saveFontAssetBinary(fontAsset: ShotEngineType.FontAsset, filePath: string){
+    const { bakeSetting, atlasTextures, fontInfo } = fontAsset;
+    const builder = new Builder(1024);
+
+    FontAssetBakeSetting.startFontAssetBakeSetting(builder);
+    FontAssetBakeSetting.addFieldType(builder, bakeSetting.fieldType);
+    FontAssetBakeSetting.addFontSize(builder, bakeSetting.fontSize);
+    FontAssetBakeSetting.addTextureWidth(builder, bakeSetting.textureWidth);
+    FontAssetBakeSetting.addTextureHeight(builder, bakeSetting.textureHeight);
+    const fontAssetBakeSettingOffset = FontAssetBakeSetting.endFontAssetBakeSetting(builder);
+
+    const atlasTextureOffsets: number[] = [];
+    for(const atlasTexture of atlasTextures){
+        const dataOffset = AtlasTexture.createDataVector(builder, atlasTexture);
+        AtlasTexture.startAtlasTexture(builder);
+        AtlasTexture.addData(builder, dataOffset);
+        const atlasTextureOffset = AtlasTexture.endAtlasTexture(builder);
+        atlasTextureOffsets.push(atlasTextureOffset);
+    }
+    const atlasTexturesOffset = FontAsset.createAtlasTexturesVector(builder, atlasTextureOffsets);
+
+    const charOffsets: number[] = [];
+    for(const char of fontInfo.chars){
+        const charCharOffset = builder.createString(char.char)
+        FontInfoChar.startFontInfoChar(builder);
+        FontInfoChar.addId(builder, char.id);
+        FontInfoChar.addChar(builder, charCharOffset);
+        FontInfoChar.addXoffset(builder, char.xoffset);
+        FontInfoChar.addYoffset(builder, char.yoffset);
+        FontInfoChar.addWidth(builder, char.width);
+        FontInfoChar.addHeight(builder, char.height);
+        FontInfoChar.addXadvance(builder, char.xadvance);
+        FontInfoChar.addX(builder, char.x);
+        FontInfoChar.addY(builder, char.y);
+        FontInfoChar.addPage(builder, char.page);
+        const charOffset = FontInfoChar.endFontInfoChar(builder);
+        charOffsets.push(charOffset);
+    }
+    const charsOffset = FontInfo.createCharsVector(builder, charOffsets);
+
+    FontInfoCommon.startFontInfoCommon(builder);
+    FontInfoCommon.addLineHeight(builder, fontInfo.common.lineHeight);
+    const commonOffset = FontInfoCommon.endFontInfoCommon(builder);
+
+    FontInfo.startFontInfo(builder);
+    FontInfo.addChars(builder, charsOffset);
+    FontInfo.addCommon(builder, commonOffset);
+    const fontInfoOffset = FontInfo.endFontInfo(builder);
+
+    FontAsset.startFontAsset(builder);
+    FontAsset.addFontAssetBakeSetting(builder, fontAssetBakeSettingOffset);
+    FontAsset.addAtlasTextures(builder, atlasTexturesOffset);
+    FontAsset.addFontInfo(builder, fontInfoOffset);
+    const fontAssetOffset = FontAsset.endFontAsset(builder);
+    builder.finish(fontAssetOffset);
 
     const bytes = builder.asUint8Array();
     fs.writeFileSync(filePath, bytes);
@@ -378,6 +443,60 @@ export function readHdrAsset(filePath: string){
         irradianceMap: irradianceMapOut,
         prefilterMap: prefilterMapOut,
         brdfLUT: brdfLUTOut
+    }
+
+    return asset;
+}
+export function readFontAsset(filePath: string){
+    if(!fs.existsSync(filePath)) return;
+    const bytes = new Uint8Array(fs.readFileSync(filePath));
+    const byteBuffer = new ByteBuffer(bytes);
+    const fontAsset = FontAsset.getRootAsFontAsset(byteBuffer);
+
+    const fontAssetBakeSetting = fontAsset.fontAssetBakeSetting();
+    if(!fontAssetBakeSetting) return;
+    const atlasTextures: Uint8Array[] = []
+    for(let i = 0; i < fontAsset.atlasTexturesLength(); i++){
+        atlasTextures.push(
+            getUint8Array(fontAsset.atlasTextures(i)?.dataArray())
+        );
+    }
+    const fontInfo = fontAsset.fontInfo();
+    if(!fontInfo) return;
+    const chars: ShotEngineType.FontAsset["fontInfo"]["chars"] = [];
+    for(let i = 0; i < fontInfo.charsLength(); i++){
+        const char = fontInfo.chars(i);
+        if(!char) continue;
+        chars.push({
+            id: char.id(),
+            char: char.char() || "",
+            xoffset: char.xoffset(),
+            yoffset: char.yoffset(),
+            xadvance: char.xadvance(),
+            width: char.width(),
+            height: char.height(),
+            x: char.x(),
+            y: char.y(),
+            page: char.page(),
+        });
+    }
+    const common = fontInfo.common();
+    if(!common) return;
+
+    const asset: ShotEngineType.FontAsset = {
+        bakeSetting: {
+            fieldType: fontAssetBakeSetting.fieldType(),
+            fontSize: fontAssetBakeSetting.fontSize(),
+            textureWidth: fontAssetBakeSetting.textureWidth(),
+            textureHeight: fontAssetBakeSetting.textureHeight(),
+        },
+        atlasTextures,
+        fontInfo: {
+            chars,
+            common: {
+                lineHeight: common.lineHeight()
+            }
+        },
     }
 
     return asset;

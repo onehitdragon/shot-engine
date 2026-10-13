@@ -1,9 +1,10 @@
-import type { Asset, AssetManager, AssetType, HdrAsset, ImageAsset, MeshAsset } from "@shot-engine/types";
+import type { Asset, AssetManager, AssetType, FontAsset, HdrAsset, ImageAsset, MeshAsset } from "@shot-engine/types";
 import { WebglMesh } from "../resource-manager-helper/WebglMesh";
 import { WebglTexture } from "../resource-manager-helper/WebglTexture";
 import { getSceneWebglContext } from "../resource-manager-helper/CanvasHelper";
 import { WebglTextureCube } from "../resource-manager-helper/WebglTextureCube";
 import { WebglTextureLUT } from "../resource-manager-helper/WebglTextureLUT";
+import { WebglTextureAtlas } from "../resource-manager-helper/WebglTextureAtlas";
 
 type AssetCacheItem = {
     assetInfo: AssetManager.AssetInfo,
@@ -17,6 +18,7 @@ type AssetCacheItem = {
             prefilterMap?: WebglTextureCube,
             brdfLUT?: WebglTextureLUT
         }
+        webglTextureAtlas?: WebglTextureAtlas
     }
 }
 type AssetCacheState = {
@@ -120,6 +122,11 @@ export class AssetCache{
                 hdr: this._createHdr(assetCacheItem)
             }
         }
+        if(type === "font"){
+            assetCacheItem.webglResource = {
+                webglTextureAtlas: this._createWebglTextureAtlas(assetCacheItem)
+            }
+        }
     }
     private _createWebglMeshes(assetCacheItem: AssetCacheItem){
         const meshAsset = assetCacheItem.asset as MeshAsset | undefined;
@@ -202,6 +209,12 @@ export class AssetCache{
             brdfLUT
         };
     }
+    private _createWebglTextureAtlas(assetCacheItem: AssetCacheItem){
+        const fontAsset = assetCacheItem.asset as FontAsset | undefined;
+        if(!fontAsset) return;
+        const webglTextureAtlas = new WebglTextureAtlas(this._gl, fontAsset);
+        return webglTextureAtlas;
+    }
     private _disposeWebglResoure(assetCacheItem?: AssetCacheItem){
         assetCacheItem?.webglResource?.webglMeshes?.forEach(e => e.dispose());
         assetCacheItem?.webglResource?.webglTexture?.dispose();
@@ -209,6 +222,7 @@ export class AssetCache{
         assetCacheItem?.webglResource?.hdr?.irradianceMap?.dispose();
         assetCacheItem?.webglResource?.hdr?.prefilterMap?.dispose();
         assetCacheItem?.webglResource?.hdr?.brdfLUT?.dispose();
+        assetCacheItem?.webglResource?.webglTextureAtlas?.dispose();
     }
     public getAssetCache(uuid: string){
         return this.map.get(uuid);
@@ -218,6 +232,11 @@ export class AssetCache{
         if(!asset) return;
         return asset as MeshAsset;
     }
+     public getFontAssetCache(uuid: string){
+        const asset = this.map.get(uuid)?.asset;
+        if(!asset) return;
+        return asset as FontAsset;
+    }
     public getWebglMeshes(uuid: string){
         return this.map.get(uuid)?.webglResource?.webglMeshes;
     }
@@ -226,6 +245,9 @@ export class AssetCache{
     }
     public getHdr(uuid: string){
         return this.map.get(uuid)?.webglResource?.hdr;
+    }
+    public getWebglTextureAtlas(uuid: string){
+        return this.map.get(uuid)?.webglResource?.webglTextureAtlas;
     }
     public deleteUnused(){
         const deleteKeys: string[] = [];

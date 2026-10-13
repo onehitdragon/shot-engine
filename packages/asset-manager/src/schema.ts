@@ -26,9 +26,13 @@ export const defaultSceneAsset: AssetProperty.Scene = {
 export const defaultHdrAsset: AssetProperty.Hdr = {
     type: "hdr"
 };
+export const defaultFontAsset: AssetProperty.Font = {
+    type: "font"
+};
 export const defaultOtherAssetJSON = JSON.stringify(defaultOtherAsset);
 export const defaultImageAssetJSON = JSON.stringify(defaultImageAsset);
 export const defaultMeshAssetJSON = JSON.stringify(defaultMeshAsset);
 export const defaultPrefabAssetJSON = JSON.stringify(defaultPrefabAsset);
 export const defaultSceneAssetJSON = JSON.stringify(defaultSceneAsset);
 export const defaultHdrAssetJSON = JSON.stringify(defaultHdrAsset);
+export const defaultFontAssetJSON = JSON.stringify(defaultFontAsset);

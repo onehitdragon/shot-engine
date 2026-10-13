@@ -1,6 +1,6 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
 import type { NodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { createConeNode, createCubeNode, createCylinderNode, createEmptyNode, createPbrTest, createSphereNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
+import { createConeNode, createCubeNode, createCylinderNode, createEmptyNode, createPbrTest, createSphereNode, createUIBlockElementNode, createUILayoutNode, createUITextElementNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
 import { createDirectionalLightComponent, createPbrShadingComponent, createPointLightComponent, createSimpleShadingComponent, createSkyBoxComponent, createSpotLightComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
 import { goAddedThunk, goRemovedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 import { componentAddedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
@@ -86,6 +86,27 @@ export function SceneNodeContextMenu(
         dispatch(componentAddedThunk({
             component: createSkyBoxComponent(),
             unique: true,
+        }));
+    }
+    const createUILayoutChild = () => {
+        const newNode = createUILayoutNode();
+        newNode.parent = node.id;
+        dispatch(goAddedThunk({
+            node: newNode
+        }));
+    }
+    const createUIBlockElementChild = () => {
+        const newNode = createUIBlockElementNode();
+        newNode.parent = node.id;
+        dispatch(goAddedThunk({
+            node: newNode
+        }));
+    }
+    const createUITextElementChild = () => {
+        const newNode = createUITextElementNode();
+        newNode.parent = node.id;
+        dispatch(goAddedThunk({
+            node: newNode
         }));
     }
     const createPbrTestChild = () => {
@@ -191,6 +212,24 @@ export function SceneNodeContextMenu(
                     onMouseDown={createPbrTestChild}
                 >
                     createPbrTestChild
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={createUILayoutChild}
+                >
+                    create UILayout Child
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={createUIBlockElementChild}
+                >
+                    create UIBlock Child
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={createUITextElementChild}
+                >
+                    create UIText Child
                 </li>
             </ul>
         </div>

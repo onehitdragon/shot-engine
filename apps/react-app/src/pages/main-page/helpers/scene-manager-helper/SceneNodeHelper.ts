@@ -1,4 +1,4 @@
-import type { GameObject, Mesh, PbrShading, Shading, Transform } from '@shot-engine/types';
+import type { GameObject, Mesh, PbrShading, Shading, Transform, UIBlockElement, UILayout, UITextElement } from '@shot-engine/types';
 import type { NodeState } from '../../../../global-state/slices/go-tree-slice';
 
 export function createEmptyNode(){
@@ -335,4 +335,84 @@ export function createPbrTest(){
     }
 
     return sphereChilds;
+}
+export function createUILayoutNode(){
+    const transform: Transform = {
+        type: "Transform",
+        id: "",
+        pos: { x: 0, y: 0, z: 0 },
+        rot: { x: 0, y: 0, z: 0, w: 1 },
+        scale: { x: 1, y: 1, z: 1 },
+        editor: {
+            euler: { x: 0, y: 0, z: 0}
+        }
+    }
+    const uiLayout: UILayout = {
+        id: "",
+        type: "UILayout"
+    }
+    const uiBlockElement: UIBlockElement = {
+        id: "",
+        type: "UIElement",
+        elementType: "Block"
+    }
+    const sceneNode: NodeState = {
+        name: "UILayout",
+        id: "",
+        components: [transform, uiLayout, uiBlockElement],
+        childs: [],
+    }
+
+    return sceneNode;
+}
+export function createUIBlockElementNode(){
+    const transform: Transform = {
+        type: "Transform",
+        id: "",
+        pos: { x: 0, y: 0, z: 0 },
+        rot: { x: 0, y: 0, z: 0, w: 1 },
+        scale: { x: 1, y: 1, z: 1 },
+        editor: {
+            euler: { x: 0, y: 0, z: 0}
+        }
+    }
+    const uiBlockElement: UIBlockElement = {
+        id: "",
+        type: "UIElement",
+        elementType: "Block"
+    }
+    const sceneNode: NodeState = {
+        name: "UIBlock",
+        id: "",
+        components: [transform, uiBlockElement],
+        childs: [],
+    }
+
+    return sceneNode;
+}
+export function createUITextElementNode(){
+    const transform: Transform = {
+        type: "Transform",
+        id: "",
+        pos: { x: 0, y: 0, z: 0 },
+        rot: { x: 0, y: 0, z: 0, w: 1 },
+        scale: { x: 1, y: 1, z: 1 },
+        editor: {
+            euler: { x: 0, y: 0, z: 0}
+        }
+    }
+    const uiTextElement: UITextElement = {
+        id: "",
+        type: "UIElement",
+        elementType: "Text",
+        content: ""
+    }
+    const sceneNode: NodeState = {
+        name: "UIText",
+        id: "",
+        components: [transform, uiTextElement],
+        childs: [],
+    }
+
+    return sceneNode;
 }

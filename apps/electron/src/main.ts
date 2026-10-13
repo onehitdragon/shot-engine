@@ -9,7 +9,7 @@ import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
 import { saveMeshToBuffer, readMeshBinary, saveImageToBuffer, readImageBinary } from "./importer/binary/resourceBinary";
 import * as asssetManager from "@shot-engine/asset-manager";
-import { AssetManager, AssetType, HdrAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
+import { AssetManager, AssetType, FontAsset, FontAssetBakeSetting, HdrAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
 import { readHdr } from "hdrify";
 
 const createWindow = () => {
@@ -295,6 +295,12 @@ app.whenReady()
         "assetManager:addBakedHdrAsset",
         (e, uuid: string, hdrAsset: HdrAsset) => {
             return asssetManager.query().addBakedHdrAsset(uuid, hdrAsset);
+        }
+    );
+    ipcMain.handle(
+        "assetManager:bakeFontAsset",
+        (e, uuid: string, fontAssetBakeSetting: FontAssetBakeSetting) => {
+            return asssetManager.query().bakeFontAsset(uuid, fontAssetBakeSetting);
         }
     );
     ipcMain.handle(

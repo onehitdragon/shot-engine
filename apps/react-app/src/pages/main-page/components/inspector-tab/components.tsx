@@ -506,6 +506,33 @@ export function OneValueRow(
         </div>
     );
 }
+export function OneInputRow(
+    props: {
+        label: string,
+        value: string,
+        onChange: (value: string) => void
+    }
+){
+    const { label, value, onChange } = props;
+    const [valueState, setValue] = useState(value);
+    const onBlurValue = () => {
+        setValue(valueState);
+        onChange(valueState);
+    }
+
+    return (
+        <div className="flex items-center my-0.5">
+            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
+            <div className="flex items-center w-full gap-1">
+                <input className="outline-none border text-sm px-0.5 w-1/3" value={valueState}
+                    onBlur={onBlurValue}
+                    onKeyDown={(e) => e.key === "Enter" && onBlurValue()}
+                    onChange={(e) => { setValue(e.target.value) }}
+                />
+            </div>
+        </div>
+    );
+}
 export function ButtonRow(
     props: {
         buttons: {
@@ -581,9 +608,11 @@ export function RawImage(props: { width: number, height: number, data: Uint8Arra
         </div>
     );
 }
-export function CollapsedList(props: { label: string, listGenerator: () => JSX.Element[] }){
+export function CollapsedList(props: {
+    label: string, listGenerator: () => (JSX.Element | undefined)[], collapsed?: boolean
+}){
     const { label, listGenerator } = props;
-    const [collapsed, setCollapsed] = useState(true);
+    const [collapsed, setCollapsed] = useState(props.collapsed);
 
     return (
         <div className="flex flex-col">
@@ -600,7 +629,7 @@ export function CollapsedList(props: { label: string, listGenerator: () => JSX.E
             </div>
             {
                 !collapsed &&
-                <ul className="flex flex-col">
+                <ul className="flex flex-col gap-1">
                     { listGenerator() }
                 </ul>
             }

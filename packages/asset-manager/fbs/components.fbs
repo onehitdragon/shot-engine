@@ -118,6 +118,44 @@ table Skeleton{
     rootJointId: string;
 }
 
+table UILayout{
+    id: string;
+}
+
+table LRTB{
+    left: double = null;
+    right: double = null;
+    top: double = null;
+    bottom: double = null;
+}
+
+table UIBaseElement{
+    id: string;
+    flex_direction: uint = null;
+    flex: double = null;
+    justify_content: uint = null;
+    align_items: uint = null;
+    gap: double = null;
+    width: double = null;
+    height: double = null;
+    margin: LRTB;
+    padding: LRTB;
+
+    color: Vec3;
+    background_color: Vec3;
+    font_size: double = null;
+    font_ref: string;
+}
+
+table UIBlockElement{
+    parent: UIBaseElement;
+}
+
+table UITextElement{
+    parent: UIBaseElement;
+    content: string;
+}
+
 union Component{
     Transform,
     Mesh,
@@ -128,5 +166,8 @@ union Component{
     DirectionalLight,
     SpotLight,
     SkyBox,
-    Skeleton
+    Skeleton,
+    UILayout,
+    UIBlockElement,
+    UITextElement
 }

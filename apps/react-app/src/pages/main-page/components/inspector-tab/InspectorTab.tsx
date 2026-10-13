@@ -6,6 +6,7 @@ import { ComponentsInspector } from "./ComponentsInspector";
 import { PrefabAssetInspector } from "./PrefabAssetInspector";
 import { SceneAssetInspector } from "./SceneAssetInspector";
 import { HdrAssetInspector } from "./HdrAssetInspector";
+import { FontAssetInspector } from "./FontAssetInspector";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
@@ -38,6 +39,7 @@ export function InspectorTab(){
                 inspector.type === "prefab" ? <PrefabAssetInspector inspector={inspector}/> :
                 inspector.type === "scene" ? <SceneAssetInspector inspector={inspector}/> :
                 inspector.type === "hdr" ? <HdrAssetInspector inspector={inspector}/> :
+                inspector.type === "font" ? <FontAssetInspector inspector={inspector}/> :
                 <div className="flex items-center justify-center flex-1 text-white text-sm">
                     This type is not supported in the inspector yet!
                 </div>

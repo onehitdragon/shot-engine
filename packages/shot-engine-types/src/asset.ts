@@ -47,13 +47,41 @@ export type HdrAsset = {
     },
     brdfLUT: HdrImage
 }
-export type Asset = OtherAsset | ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset;
+export type FontAssetBakeSetting = {
+    fieldType: number, // 0 "sdf" 1 "msdf",
+    fontSize: number,
+    textureWidth: number,
+    textureHeight: number,
+}
+export type FontAsset = {
+    bakeSetting: FontAssetBakeSetting
+    atlasTextures: Uint8Array[]
+    fontInfo: {
+        chars: {
+            id: number,
+            char: string,
+            xoffset: number,
+            yoffset: number,
+            width: number,
+            height: number,
+            xadvance: number,
+            x: number,
+            y: number,
+            page: number
+        }[],
+        common: {
+            lineHeight: number
+        }
+    }
+}
+export type Asset = OtherAsset | ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset | 
+    FontAsset;
 export function isPrefabAsset(asset?: Asset | null): asset is PrefabAsset{
     if(!asset) return false;
     return "root" in asset;
 }
 
-export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene" | "hdr";
+export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene" | "hdr" | "font";
 export namespace AssetProperty{
     export type Other = {
         type: "other"
@@ -95,5 +123,9 @@ export namespace AssetProperty{
         type: "hdr"
     }
 
-    export type AssetProperty = Other | Image | Mesh | Prefab | Scene | Hdr;
+    export type Font = {
+        type: "font"
+    }
+
+    export type AssetProperty = Other | Image | Mesh | Prefab | Scene | Hdr | Font;
 }

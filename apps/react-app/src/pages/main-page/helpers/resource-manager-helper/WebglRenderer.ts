@@ -4,6 +4,9 @@ import { getSceneWebglContext } from "./CanvasHelper";
 import { AssetCache } from "../asset-cache/asset-cache";
 import { WebglSkyBoxShader } from "./WebglSkyBoxShader";
 import { WebglAxisShader } from "./WebglAxisShader";
+import * as math from "@shot-engine/math";
+import { WebglUIShader } from "./WebglUIShader";
+import { WebglUITextShader } from "./WebglUITextShader";
 
 export class WebglRenderer{
     private static _instance: WebglRenderer;
@@ -15,6 +18,8 @@ export class WebglRenderer{
     private _webglSkyBoxShader: WebglSkyBoxShader;
     private _webglGridShader: WebglGridShader;
     private _webglAxisShader: WebglAxisShader;
+    private _webglUIShader: WebglUIShader;
+    private _webglUITextShader: WebglUITextShader;
     private constructor(gl: WebGL2RenderingContext){
         this._gl = gl;
         gl.enable(gl.DEPTH_TEST);
@@ -22,6 +27,8 @@ export class WebglRenderer{
         this._webglGridShader = WebglGridShader.getInstance(gl);
         this._webglSkyBoxShader = WebglSkyBoxShader.getInstance(gl);
         this._webglAxisShader = WebglAxisShader.getInstance(gl);
+        this._webglUIShader = WebglUIShader.getInstance(gl);
+        this._webglUITextShader = WebglUITextShader.getInstance(gl);
     }
     render(
         shadingComponent: Shading,
@@ -72,6 +79,12 @@ export class WebglRenderer{
     }
     renderGrid(vpMat4: Mat4){
         this._webglGridShader.render(vpMat4);
+    }
+    renderUI(projectMat3: math.Mat3, vertices: Float32Array, quadCount: number){
+        this._webglUIShader.render(projectMat3, vertices, quadCount);
+    }
+    renderUIText(projectMat3: math.Mat3, vertices: Float32Array, textCount: number, fontRef: string){
+        this._webglUITextShader.render(projectMat3, vertices, textCount, fontRef);
     }
     clear(){
         const gl = getSceneWebglContext();

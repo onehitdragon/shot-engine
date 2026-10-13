@@ -1,5 +1,5 @@
 import { FolderPlusIcon, FolderIcon, DocumentTextIcon,
-    ArrowDownOnSquareIcon, PhotoIcon,
+    ArrowDownOnSquareIcon, PhotoIcon, LanguageIcon,
     GlobeAltIcon,
     TruckIcon, XCircleIcon,
     ArrowTurnDownRightIcon, PuzzlePieceIcon,
@@ -125,6 +125,9 @@ function FileEntry(props: FileEntryProps){
         }
         else if(type === "scene"){
             return <Square3Stack3DIcon className='size-4 text-white'/>
+        }
+        else if(type === "font"){
+            return <LanguageIcon className='size-4 text-white'/>
         }
         else{
             return <DocumentTextIcon className='size-4 text-white'/>

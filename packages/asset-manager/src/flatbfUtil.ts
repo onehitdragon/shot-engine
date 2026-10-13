@@ -1,4 +1,5 @@
 import type * as ShotEngineType from "@shot-engine/types";
+import * as math from "@shot-engine/math"; 
 import {
     Vec3, Vec4,
     SceneNode, GameObject, GameObjectPrefab, Component, Transform, Mesh,
@@ -16,7 +17,12 @@ import {
     None,
     Emissive,
     LightShadow,
-    Skeleton
+    Skeleton,
+    UILayout,
+    UIBaseElement,
+    UIBlockElement,
+    UITextElement,
+    LRTB
 } from "../fbs-gen/fbsengine";
 import { Builder, Offset } from "flatbuffers";
 
@@ -346,6 +352,90 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             componentOffset = Skeleton.endSkeleton(builder);
             componentTypeOffsets.push(Component.Skeleton);
         }
+        else if(component.type === "UILayout"){
+            const idOffset = builder.createString(component.id);
+            UILayout.startUILayout(builder);
+            UILayout.addId(builder, idOffset);
+            componentOffset = UILayout.endUILayout(builder);
+            componentTypeOffsets.push(Component.UILayout);
+        }
+        else if(component.type === "UIElement"){
+            const idOffset = builder.createString(component.id);
+            const marginOffset = buildLRTB(builder, component.margin);
+            const paddingOffset = buildLRTB(builder, component.padding);
+            let colorOffset: number | undefined = undefined;
+            if(component.color){
+                colorOffset = buildVec3Array(builder, component.color.values);
+            }
+            let bgColorOffset: number | undefined = undefined;
+            if(component.backgroundColor){
+                bgColorOffset = buildVec3Array(builder, component.backgroundColor.values);
+            }
+            let fontRefOffset: number | undefined = undefined;
+            if(component.fontRef){
+                fontRefOffset = builder.createString(component.fontRef);
+            }
+
+            UIBaseElement.startUIBaseElement(builder);
+            UIBaseElement.addId(builder, idOffset);
+            if(component.flexDirection !== undefined){
+                UIBaseElement.addFlexDirection(builder, component.flexDirection);
+            }
+            if(component.flex !== undefined){
+                UIBaseElement.addFlex(builder, component.flex);
+            }
+            if(component.width !== undefined){
+                UIBaseElement.addWidth(builder, component.width);
+            }
+            if(component.height !== undefined){
+                UIBaseElement.addHeight(builder, component.height);
+            }
+            if(component.justifyContent !== undefined){
+                UIBaseElement.addJustifyContent(builder, component.justifyContent);
+            }
+            if(component.alignItems !== undefined){
+                UIBaseElement.addAlignItems(builder, component.alignItems);
+            }
+            if(component.gap !== undefined){
+                UIBaseElement.addGap(builder, component.gap);
+            }
+            if(marginOffset !== undefined){
+                UIBaseElement.addMargin(builder, marginOffset);
+            }
+            if(paddingOffset !== undefined){
+                UIBaseElement.addPadding(builder, paddingOffset);
+            }
+            if(colorOffset !== undefined){
+                UIBaseElement.addColor(builder, colorOffset);
+            }
+            if(bgColorOffset !== undefined){
+                UIBaseElement.addBackgroundColor(builder, bgColorOffset);
+            }
+            if(component.fontSize !== undefined){
+                UIBaseElement.addFontSize(builder, component.fontSize);
+            }
+            if(fontRefOffset !== undefined){
+                UIBaseElement.addFontRef(builder, fontRefOffset);
+            }
+            const uiBaseElementOffset = UIBaseElement.endUIBaseElement(builder);
+            if(component.elementType === "Block"){
+                UIBlockElement.startUIBlockElement(builder);
+                UIBlockElement.addParent(builder, uiBaseElementOffset);
+
+                componentOffset = UIBlockElement.endUIBlockElement(builder);
+                componentTypeOffsets.push(Component.UIBlockElement);
+            }
+            else if(component.elementType === "Text"){
+                const contentOffset = builder.createString(component.content);
+                UITextElement.startUITextElement(builder);
+                UITextElement.addParent(builder, uiBaseElementOffset);
+                UITextElement.addContent(builder, contentOffset);
+
+                componentOffset = UITextElement.endUITextElement(builder);
+                componentTypeOffsets.push(Component.UITextElement);
+            }
+        }
+
         if(componentOffset !== undefined){
             componentOffsets.push(componentOffset);
         }
@@ -375,6 +465,14 @@ export function buildVec3(builder: Builder, vec3: ShotEngineType.Vec3){
    return Vec3.endVec3(builder);
 }
 
+export function buildVec3Array(builder: Builder, vec3: Float32Array){
+    Vec3.startVec3(builder);
+    Vec3.addX(builder, vec3[0]);
+    Vec3.addY(builder, vec3[1]);
+    Vec3.addZ(builder, vec3[2]);
+   return Vec3.endVec3(builder);
+}
+
 function buildLightShadow(builder: Builder, shadow: ShotEngineType.LightShadow){
     const softShadowOffset = builder.createString(shadow.softShadow);
     LightShadow.startLightShadow(builder);
@@ -384,6 +482,16 @@ function buildLightShadow(builder: Builder, shadow: ShotEngineType.LightShadow){
     LightShadow.addMapSize(builder, shadow.mapSize);
     LightShadow.addSoftShadow(builder, softShadowOffset);
     return LightShadow.endLightShadow(builder);
+}
+
+function buildLRTB(builder: Builder, lrtb: ShotEngineType.UIElement["margin"]){
+    if(!lrtb) return;
+    LRTB.startLRTB(builder);
+    lrtb.left && LRTB.addLeft(builder, lrtb.left);
+    lrtb.right && LRTB.addRight(builder, lrtb.right);
+    lrtb.top && LRTB.addTop(builder, lrtb.top);
+    lrtb.bottom && LRTB.addBottom(builder, lrtb.bottom);
+    return LRTB.endLRTB(builder);
 }
 
 export function readGameObject(gameObject: GameObject){
@@ -652,6 +760,58 @@ export function readGameObject(gameObject: GameObject){
                 rootJointId: skeleton.rootJointId() ?? ""
             });
         }
+        if(componentType === Component.UILayout){
+            const uiLayout = gameObject.components(i, new UILayout()) as UILayout;
+            gameObjectResult.components.push({
+                type: "UILayout",
+                id: uiLayout.id() ?? ""
+            });
+        }
+        if(componentType === Component.UIBlockElement){
+            const uiBlockElement = gameObject.components(i, new UIBlockElement()) as UIBlockElement;
+            const parent = uiBlockElement.parent();
+            gameObjectResult.components.push({
+                type: "UIElement",
+                elementType: "Block",
+                id: parent?.id() ?? "",
+                flexDirection: getNumberOptional(parent?.flexDirection()),
+                flex: getNumberOptional(parent?.flex()),
+                justifyContent: getNumberOptional(parent?.justifyContent()),
+                alignItems: getNumberOptional(parent?.alignItems()),
+                gap: getNumberOptional(parent?.gap()),
+                width: getNumberOptional(parent?.width()),
+                height: getNumberOptional(parent?.height()),
+                margin: getLRTB(parent?.margin()),
+                padding: getLRTB(parent?.padding()),
+                color: getVec3Optional(parent?.color()),
+                backgroundColor: getVec3Optional(parent?.backgroundColor()),
+                fontSize: getNumberOptional(parent?.fontSize()),
+                fontRef: parent?.fontRef() || undefined
+            });
+        }
+        if(componentType === Component.UITextElement){
+            const uiTextElement = gameObject.components(i, new UITextElement()) as UITextElement;
+            const parent = uiTextElement.parent();
+            gameObjectResult.components.push({
+                type: "UIElement",
+                elementType: "Text",
+                id: parent?.id() ?? "",
+                flexDirection: getNumberOptional(parent?.flexDirection()),
+                flex: getNumberOptional(parent?.flex()),
+                justifyContent: getNumberOptional(parent?.justifyContent()),
+                alignItems: getNumberOptional(parent?.alignItems()),
+                gap: getNumberOptional(parent?.gap()),
+                width: getNumberOptional(parent?.width()),
+                height: getNumberOptional(parent?.height()),
+                margin: getLRTB(parent?.margin()),
+                padding: getLRTB(parent?.padding()),
+                color: getVec3Optional(parent?.color()),
+                backgroundColor: getVec3Optional(parent?.backgroundColor()),
+                fontSize: getNumberOptional(parent?.fontSize()),
+                fontRef: parent?.fontRef() || undefined,
+                content: uiTextElement.content() || ""
+            });
+        }
     }
 
     for(let i = 0; i < gameObject.childsLength(); i++){
@@ -670,6 +830,28 @@ export function readGameObject(gameObject: GameObject){
     }
 
     return gameObjectResult;
+}
+
+function getLRTB(lrtb?: LRTB | null){
+    if(!lrtb) return;
+    return {
+        left: getNumberOptional(lrtb.left()),
+        right: getNumberOptional(lrtb.right()),
+        top: getNumberOptional(lrtb.top()),
+        bottom: getNumberOptional(lrtb.bottom()),
+    };
+}
+
+function getVec3Optional(vec3?: Vec3 | null): math.Vec3 | undefined{
+    if(!vec3) return;
+    return math.Vec3.FromValues(
+        vec3.x(), vec3.y(), vec3.z()
+    );
+}
+
+function getNumberOptional(number?: number | null){
+    if(number === null) return;
+    return number;
 }
 
 type CullingType = ShotEngineType.Shading["culling"];

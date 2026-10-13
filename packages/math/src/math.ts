@@ -9,6 +9,9 @@ export const PI2 = 2 * Math.PI;
 export function round(value: number){
   return Math.sign(value) * Math.round(Math.abs(value));
 }
+export function clamp(value: number, min: number, max: number){
+  return Math.max(min, Math.min(max, value));
+}
 
 export class Vec2{
   declare private readonly __brand: 'Vec2';

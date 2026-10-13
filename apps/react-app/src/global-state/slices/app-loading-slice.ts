@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { entryDeletedThunk, fileImportedThunk, folderCreatedThunk, projectClosedThunk, projectOpenedThunk, projectRescanThunk } from "../thunks/folder-manager-thunks";
-import { bakeHdrFileThunk } from "../thunks/inspector-thunks";
+import { bakeFontFileThunk, bakeHdrFileThunk } from "../thunks/inspector-thunks";
 
 type State = {
     loading: boolean,
@@ -95,6 +95,17 @@ const slice = createSlice({
         );
         builder.addAsyncThunk(
             bakeHdrFileThunk,
+            {
+                pending: (state) => {
+                    state.loading = true;
+                },
+                settled: (state) => {
+                    state.loading = false;
+                }
+            }
+        );
+        builder.addAsyncThunk(
+            bakeFontFileThunk,
             {
                 pending: (state) => {
                     state.loading = true;
