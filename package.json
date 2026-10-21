@@ -11,6 +11,8 @@
     "build-math": "npm run build -w @shot-engine/math",
     "build-ktx-tool": "npm run build -w @shot-engine/ktx-tool",
     "editor": "npm run dev -w @shot-engine/electron",
-    "rebuild": "npx @electron/rebuild -v 41.7.1 -w better-sqlite3"
+    "rebuild": "npx @electron/rebuild -v 41.7.1 -w better-sqlite3",
+
+    "make-electron": "npm run make -w @shot-engine/electron"
   }
 }
