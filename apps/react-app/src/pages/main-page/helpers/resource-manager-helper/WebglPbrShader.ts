@@ -264,6 +264,9 @@ export class WebglPbrShader{
             else{
                 gl.uniform1i(this._programLoc.u_directionalLights[i].hasShadow, 0);
                 gl.activeTexture(gl.TEXTURE31);
+                // todo: missing emptyCascadeShadowMap
+                // err: GL_INVALID_OPERATION: glDrawElements: Two textures of different types use the same sampler location.
+                // gl.bindTexture(gl.TEXTURE_2D_ARRAY, emptyCascadeShadowMap);
                 gl.uniform1i(this._programLoc.u_cascadeShadowMap, 31);
             }
         }

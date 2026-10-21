@@ -19,10 +19,9 @@ import {
     LightShadow,
     Skeleton,
     UILayout,
-    UIBaseElement,
-    UIBlockElement,
-    UITextElement,
-    LRTB
+    TextOrString,
+    Text,
+    String,
 } from "../fbs-gen/fbsengine";
 import { Builder, Offset } from "flatbuffers";
 
@@ -354,86 +353,68 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
         }
         else if(component.type === "UILayout"){
             const idOffset = builder.createString(component.id);
+            let textOrStringOffset_html: number;
+            let textOrString_html: TextOrString;
+            if(component.html.type === "text"){
+                const textRefOffset = builder.createString(component.html.textRef);
+                Text.startText(builder);
+                Text.addTextRef(builder, textRefOffset);
+                textOrStringOffset_html = Text.endText(builder);
+                textOrString_html = TextOrString.Text;
+            }
+            else{
+                const valueOffset = builder.createString(component.html.value);
+                String.startString(builder);
+                String.addValue(builder, valueOffset);
+                textOrStringOffset_html = String.endString(builder);
+                textOrString_html = TextOrString.String;
+            }
+
+            let textOrStringOffset_css: number;
+            let textOrString_css: TextOrString;
+            if(component.css.type === "text"){
+                const textRefOffset = builder.createString(component.css.textRef);
+                Text.startText(builder);
+                Text.addTextRef(builder, textRefOffset);
+                textOrStringOffset_css = Text.endText(builder);
+                textOrString_css = TextOrString.Text;
+            }
+            else{
+                const valueOffset = builder.createString(component.css.value);
+                String.startString(builder);
+                String.addValue(builder, valueOffset);
+                textOrStringOffset_css = String.endString(builder);
+                textOrString_css = TextOrString.String;
+            }
+
+            let textOrStringOffset_js: number;
+            let textOrString_js: TextOrString;
+            if(component.js.type === "text"){
+                const textRefOffset = builder.createString(component.js.textRef);
+                Text.startText(builder);
+                Text.addTextRef(builder, textRefOffset);
+                textOrStringOffset_js = Text.endText(builder);
+                textOrString_js = TextOrString.Text;
+            }
+            else{
+                const valueOffset = builder.createString(component.js.value);
+                String.startString(builder);
+                String.addValue(builder, valueOffset);
+                textOrStringOffset_js = String.endString(builder);
+                textOrString_js = TextOrString.String;
+            }
+
             UILayout.startUILayout(builder);
             UILayout.addId(builder, idOffset);
+            UILayout.addHtml(builder, textOrStringOffset_html);
+            UILayout.addHtmlType(builder, textOrString_html);
+            UILayout.addCss(builder, textOrStringOffset_css);
+            UILayout.addCssType(builder, textOrString_css);
+            UILayout.addJs(builder, textOrStringOffset_js);
+            UILayout.addJsType(builder, textOrString_js);
+
             componentOffset = UILayout.endUILayout(builder);
             componentTypeOffsets.push(Component.UILayout);
-        }
-        else if(component.type === "UIElement"){
-            const idOffset = builder.createString(component.id);
-            const marginOffset = buildLRTB(builder, component.margin);
-            const paddingOffset = buildLRTB(builder, component.padding);
-            let colorOffset: number | undefined = undefined;
-            if(component.color){
-                colorOffset = buildVec3Array(builder, component.color.values);
-            }
-            let bgColorOffset: number | undefined = undefined;
-            if(component.backgroundColor){
-                bgColorOffset = buildVec3Array(builder, component.backgroundColor.values);
-            }
-            let fontRefOffset: number | undefined = undefined;
-            if(component.fontRef){
-                fontRefOffset = builder.createString(component.fontRef);
-            }
-
-            UIBaseElement.startUIBaseElement(builder);
-            UIBaseElement.addId(builder, idOffset);
-            if(component.flexDirection !== undefined){
-                UIBaseElement.addFlexDirection(builder, component.flexDirection);
-            }
-            if(component.flex !== undefined){
-                UIBaseElement.addFlex(builder, component.flex);
-            }
-            if(component.width !== undefined){
-                UIBaseElement.addWidth(builder, component.width);
-            }
-            if(component.height !== undefined){
-                UIBaseElement.addHeight(builder, component.height);
-            }
-            if(component.justifyContent !== undefined){
-                UIBaseElement.addJustifyContent(builder, component.justifyContent);
-            }
-            if(component.alignItems !== undefined){
-                UIBaseElement.addAlignItems(builder, component.alignItems);
-            }
-            if(component.gap !== undefined){
-                UIBaseElement.addGap(builder, component.gap);
-            }
-            if(marginOffset !== undefined){
-                UIBaseElement.addMargin(builder, marginOffset);
-            }
-            if(paddingOffset !== undefined){
-                UIBaseElement.addPadding(builder, paddingOffset);
-            }
-            if(colorOffset !== undefined){
-                UIBaseElement.addColor(builder, colorOffset);
-            }
-            if(bgColorOffset !== undefined){
-                UIBaseElement.addBackgroundColor(builder, bgColorOffset);
-            }
-            if(component.fontSize !== undefined){
-                UIBaseElement.addFontSize(builder, component.fontSize);
-            }
-            if(fontRefOffset !== undefined){
-                UIBaseElement.addFontRef(builder, fontRefOffset);
-            }
-            const uiBaseElementOffset = UIBaseElement.endUIBaseElement(builder);
-            if(component.elementType === "Block"){
-                UIBlockElement.startUIBlockElement(builder);
-                UIBlockElement.addParent(builder, uiBaseElementOffset);
-
-                componentOffset = UIBlockElement.endUIBlockElement(builder);
-                componentTypeOffsets.push(Component.UIBlockElement);
-            }
-            else if(component.elementType === "Text"){
-                const contentOffset = builder.createString(component.content);
-                UITextElement.startUITextElement(builder);
-                UITextElement.addParent(builder, uiBaseElementOffset);
-                UITextElement.addContent(builder, contentOffset);
-
-                componentOffset = UITextElement.endUITextElement(builder);
-                componentTypeOffsets.push(Component.UITextElement);
-            }
         }
 
         if(componentOffset !== undefined){
@@ -482,16 +463,6 @@ function buildLightShadow(builder: Builder, shadow: ShotEngineType.LightShadow){
     LightShadow.addMapSize(builder, shadow.mapSize);
     LightShadow.addSoftShadow(builder, softShadowOffset);
     return LightShadow.endLightShadow(builder);
-}
-
-function buildLRTB(builder: Builder, lrtb: ShotEngineType.UIElement["margin"]){
-    if(!lrtb) return;
-    LRTB.startLRTB(builder);
-    lrtb.left && LRTB.addLeft(builder, lrtb.left);
-    lrtb.right && LRTB.addRight(builder, lrtb.right);
-    lrtb.top && LRTB.addTop(builder, lrtb.top);
-    lrtb.bottom && LRTB.addBottom(builder, lrtb.bottom);
-    return LRTB.endLRTB(builder);
 }
 
 export function readGameObject(gameObject: GameObject){
@@ -762,54 +733,67 @@ export function readGameObject(gameObject: GameObject){
         }
         if(componentType === Component.UILayout){
             const uiLayout = gameObject.components(i, new UILayout()) as UILayout;
+
+            const htmlType = uiLayout.htmlType();
+            let html: Text | String;
+            let htmlOut: ShotEngineType.UILayout["html"];
+            if(htmlType === TextOrString.Text){
+                html = uiLayout.html(new Text()) as Text;
+                htmlOut = {
+                    type: "text",
+                    textRef: html.textRef() ?? ""
+                }
+            }
+            else{
+                html = uiLayout.html(new String()) as String;
+                htmlOut = {
+                    type: "string",
+                    value: html.value() ?? ""
+                }
+            }
+
+            const cssType = uiLayout.cssType();
+            let css: Text | String;
+            let cssOut: ShotEngineType.UILayout["css"];
+            if(cssType === TextOrString.Text){
+                css = uiLayout.css(new Text()) as Text;
+                cssOut = {
+                    type: "text",
+                    textRef: css.textRef() ?? ""
+                }
+            }
+            else{
+                css = uiLayout.css(new String()) as String;
+                cssOut = {
+                    type: "string",
+                    value: css.value() ?? ""
+                }
+            }
+
+            const jsType = uiLayout.jsType();
+            let js: Text | String;
+            let jsOut: ShotEngineType.UILayout["js"];
+            if(jsType === TextOrString.Text){
+                js = uiLayout.js(new Text()) as Text;
+                jsOut = {
+                    type: "text",
+                    textRef: js.textRef() ?? ""
+                }
+            }
+            else{
+                js = uiLayout.js(new String()) as String;
+                jsOut = {
+                    type: "string",
+                    value: js.value() ?? ""
+                }
+            }
+
             gameObjectResult.components.push({
                 type: "UILayout",
-                id: uiLayout.id() ?? ""
-            });
-        }
-        if(componentType === Component.UIBlockElement){
-            const uiBlockElement = gameObject.components(i, new UIBlockElement()) as UIBlockElement;
-            const parent = uiBlockElement.parent();
-            gameObjectResult.components.push({
-                type: "UIElement",
-                elementType: "Block",
-                id: parent?.id() ?? "",
-                flexDirection: getNumberOptional(parent?.flexDirection()),
-                flex: getNumberOptional(parent?.flex()),
-                justifyContent: getNumberOptional(parent?.justifyContent()),
-                alignItems: getNumberOptional(parent?.alignItems()),
-                gap: getNumberOptional(parent?.gap()),
-                width: getNumberOptional(parent?.width()),
-                height: getNumberOptional(parent?.height()),
-                margin: getLRTB(parent?.margin()),
-                padding: getLRTB(parent?.padding()),
-                color: getVec3Optional(parent?.color()),
-                backgroundColor: getVec3Optional(parent?.backgroundColor()),
-                fontSize: getNumberOptional(parent?.fontSize()),
-                fontRef: parent?.fontRef() || undefined
-            });
-        }
-        if(componentType === Component.UITextElement){
-            const uiTextElement = gameObject.components(i, new UITextElement()) as UITextElement;
-            const parent = uiTextElement.parent();
-            gameObjectResult.components.push({
-                type: "UIElement",
-                elementType: "Text",
-                id: parent?.id() ?? "",
-                flexDirection: getNumberOptional(parent?.flexDirection()),
-                flex: getNumberOptional(parent?.flex()),
-                justifyContent: getNumberOptional(parent?.justifyContent()),
-                alignItems: getNumberOptional(parent?.alignItems()),
-                gap: getNumberOptional(parent?.gap()),
-                width: getNumberOptional(parent?.width()),
-                height: getNumberOptional(parent?.height()),
-                margin: getLRTB(parent?.margin()),
-                padding: getLRTB(parent?.padding()),
-                color: getVec3Optional(parent?.color()),
-                backgroundColor: getVec3Optional(parent?.backgroundColor()),
-                fontSize: getNumberOptional(parent?.fontSize()),
-                fontRef: parent?.fontRef() || undefined,
-                content: uiTextElement.content() || ""
+                id: uiLayout.id() ?? "",
+                html: htmlOut,
+                css: cssOut,
+                js: jsOut
             });
         }
     }
@@ -830,16 +814,6 @@ export function readGameObject(gameObject: GameObject){
     }
 
     return gameObjectResult;
-}
-
-function getLRTB(lrtb?: LRTB | null){
-    if(!lrtb) return;
-    return {
-        left: getNumberOptional(lrtb.left()),
-        right: getNumberOptional(lrtb.right()),
-        top: getNumberOptional(lrtb.top()),
-        bottom: getNumberOptional(lrtb.bottom()),
-    };
 }
 
 function getVec3Optional(vec3?: Vec3 | null): math.Vec3 | undefined{

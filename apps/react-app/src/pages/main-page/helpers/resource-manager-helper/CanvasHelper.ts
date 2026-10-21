@@ -20,3 +20,11 @@ export function getSceneWebglContext(){
     glCache = gl;
     return gl;
 }
+export function getLayoutCanvas(){
+    const canvas = document.getElementById("layout-canvas");
+    if(!canvas) throw "dont find canvas with id layout-canvas";
+    if(!(canvas instanceof HTMLCanvasElement)) {
+        throw "layout-canvas is not a <canvas> element";
+    }
+    return canvas;
+}

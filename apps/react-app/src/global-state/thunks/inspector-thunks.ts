@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"
 import type { AppDispatch, RootState } from "../store"
 import { showInspector } from "../slices/inspector-slice"
-import type { AssetManager, FontAsset, FontAssetBakeSetting, HdrAsset, HdrCube, ImageAsset, MeshAsset, OtherAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
+import type { AssetManager, FontAsset, FontAssetBakeSetting, HdrAsset, HdrCube, ImageAsset, MeshAsset, OtherAsset, PrefabAsset, SceneAsset, TextAsset } from "@shot-engine/types";
 import { mat4 } from "gl-matrix";
 import { WebglHelper } from "../../pages/main-page/helpers/resource-manager-helper/WebglHelper";
 import { getCubeMeshData } from "../../pages/main-page/helpers/scene-manager-helper/mesh-datas";
@@ -34,8 +34,18 @@ export const inspectAssetThunk = createAsyncThunk
                 const asset = await window.api.assetManager.getAssetFromUuid(assetInfo.uuid, "other");
                 if(!asset) throw "asset is bad";
                 dispatch(showInspector({ inspector: {
-                    type: "text",
+                    type: "other",
                     content: (asset as OtherAsset).content
+                } }));
+                return;
+            }
+            if(assetInfo.type === "text"){
+                const asset = await window.api.assetManager.getAssetFromUuid(assetInfo.uuid, "text");
+                if(!asset) throw "asset is bad";
+                dispatch(showInspector({ inspector: {
+                    type: "text",
+                    assetInfo,
+                    textAsset: asset as TextAsset
                 } }));
                 return;
             }

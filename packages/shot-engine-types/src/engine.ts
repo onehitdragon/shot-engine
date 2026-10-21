@@ -625,48 +625,19 @@ export type Skeleton = {
     id: string,
     rootJointId: string,
 }
+export type TextOrString = { type: "text"; textRef: string } | { type: "string"; value: string };
+export type UILayoutAsset = {
+    imageRefs: string[]
+}
 export type UILayout = {
     type: "UILayout",
     id: string,
+    html: TextOrString,
+    css: TextOrString,
+    js: TextOrString
 }
-export type UIBaseElement = {
-    type: "UIElement",
-    id: string,
-    flexDirection?: number,
-    flex?: number,
-    justifyContent?: number
-    alignItems?: number,
-    gap?: number,
-    width?: number,
-    height?: number,
-    margin?: {
-        left?: number,
-        right?: number,
-        top?: number,
-        bottom?: number,
-    }
-    padding?: {
-        left?: number,
-        right?: number,
-        top?: number,
-        bottom?: number,
-    },
-
-    color?: math.Vec3,
-    backgroundColor?: math.Vec3,
-    fontSize?: number,
-    fontRef?: string
-}
-export type UIBlockElement = UIBaseElement & {
-    elementType: "Block"
-}
-export type UITextElement = UIBaseElement & {
-    elementType: "Text",
-    content: string,
-}
-export type UIElement = UIBlockElement | UITextElement;
 export type Component = Transform | GizmoTransform | Mesh | Shading | Light | SkyBox | Skeleton |
-    UILayout | UIElement;
+    UILayout;
 export class ComponentHelper{
     public static FindComponentByType<T extends Component["type"]>(
         components: Component[],

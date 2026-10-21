@@ -4,9 +4,7 @@ export type OtherAsset = {
     content: string
 }
 export type ImageAsset = {
-    width: number,
-    height: number,
-    data: Uint8Array
+    ktx2: Uint8Array
 }
 export type MeshAsset = {
     primitives: {
@@ -74,38 +72,36 @@ export type FontAsset = {
         }
     }
 }
+export type TextAsset = {
+    text: string
+}
 export type Asset = OtherAsset | ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset | 
-    FontAsset;
+    FontAsset | TextAsset;
 export function isPrefabAsset(asset?: Asset | null): asset is PrefabAsset{
     if(!asset) return false;
     return "root" in asset;
 }
 
-export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene" | "hdr" | "font";
+export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene" | "hdr" | "font" | "text";
 export namespace AssetProperty{
     export type Other = {
         type: "other"
     }
 
     export type TextureBase = {
-        type: "image"
+        type: "image",
+        generateMipmaps: boolean,
         wrapMode: "REPEAT" | "MIRROR" | "CLAMP",
         filterMode: "NONE" | "BILINEAR" | "TRILINEAR",
-        flip: boolean,
-        generateMipmaps: boolean
     }
     export type Texture = TextureBase & {
         imageType: "Texture",
-        sRGB: boolean,
-        qualityLevel: number
+        sRGB: boolean
     }
     export type NormalMap = TextureBase & {
         imageType: "NormalMap"
     }
-    export type LightMap = TextureBase & {
-        imageType: "LightMap"
-    }
-    export type Image = Texture | NormalMap | LightMap;
+    export type Image = Texture | NormalMap;
 
     export type Mesh = {
         type: "mesh"
@@ -127,5 +123,9 @@ export namespace AssetProperty{
         type: "font"
     }
 
-    export type AssetProperty = Other | Image | Mesh | Prefab | Scene | Hdr | Font;
+    export type Text = {
+        type: "text"
+    }
+
+    export type AssetProperty = Other | Image | Mesh | Prefab | Scene | Hdr | Font | Text;
 }

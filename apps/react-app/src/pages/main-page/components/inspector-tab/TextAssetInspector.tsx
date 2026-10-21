@@ -2,9 +2,10 @@ import type { TextAssetInspector } from "../../../../global-state/slices/inspect
 import { List } from "react-window";
 import { type RowComponentProps } from "react-window";
 
-export function TextAssetInspector(props: { textInspector: TextAssetInspector }){
-    const { content } = props.textInspector;
-    const lines = content.split("\n");
+export function TextAssetInspector(props: { inspector: TextAssetInspector }){
+    const { textAsset } = props.inspector;
+    const { text } = textAsset;
+    const lines = text.split("\n");
     return (
         <List rowComponent={TextRow}
             rowCount={lines.length}

@@ -7,12 +7,10 @@ export const defaultOtherAsset: AssetProperty.Other = {
 export const defaultImageAsset: AssetProperty.Image = {
     type: "image",
     imageType: "Texture",
-    wrapMode: "REPEAT",
-    filterMode: "BILINEAR",
-    flip: false,
-    generateMipmaps: true,
     sRGB: true,
-    qualityLevel: 255,
+    generateMipmaps: true,
+    wrapMode: "REPEAT",
+    filterMode: "BILINEAR"
 };
 export const defaultMeshAsset: AssetProperty.Mesh = {
     type: "mesh"
@@ -29,6 +27,9 @@ export const defaultHdrAsset: AssetProperty.Hdr = {
 export const defaultFontAsset: AssetProperty.Font = {
     type: "font"
 };
+export const defaultTextAsset: AssetProperty.Text = {
+    type: "text"
+};
 export const defaultOtherAssetJSON = JSON.stringify(defaultOtherAsset);
 export const defaultImageAssetJSON = JSON.stringify(defaultImageAsset);
 export const defaultMeshAssetJSON = JSON.stringify(defaultMeshAsset);
@@ -36,3 +37,4 @@ export const defaultPrefabAssetJSON = JSON.stringify(defaultPrefabAsset);
 export const defaultSceneAssetJSON = JSON.stringify(defaultSceneAsset);
 export const defaultHdrAssetJSON = JSON.stringify(defaultHdrAsset);
 export const defaultFontAssetJSON = JSON.stringify(defaultFontAsset);
+export const defaultTextAssetJSON = JSON.stringify(defaultTextAsset);

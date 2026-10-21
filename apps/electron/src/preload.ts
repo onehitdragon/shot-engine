@@ -52,6 +52,8 @@ contextBridge.exposeInMainWorld("api", {
         rescan: () => ipcRenderer.invoke("assetManager:rescan"),
         close: () => ipcRenderer.invoke("assetManager:close"),
         getAssetInfos: (filePath: string) => ipcRenderer.invoke("assetManager:getAssetInfos", filePath),
+        getAssetInfosFromRelativePath: (relativePath: string) => 
+            ipcRenderer.invoke("assetManager:getAssetInfosFromRelativePath", relativePath),
         getAssetFromUuid: (uuid: string, type: any) => ipcRenderer.invoke("assetManager:getAssetFromUuid", uuid, type),
         updateAssetPropertyByUuid: (uuid: string, property: string) => 
             ipcRenderer.invoke("assetManager:updateAssetPropertyByUuid", uuid, property),

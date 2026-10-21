@@ -3,9 +3,7 @@ include "engine.fbs";
 namespace FBSEngine;
 
 table ImageAsset{
-    width: uint;
-    height: uint;
-    data: [ubyte];
+    ktx2: [ubyte];
 }
 
 table PrimitiveAttribute{

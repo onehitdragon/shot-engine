@@ -1,5 +1,5 @@
 import { useAppSelector } from "../../../../global-state/hooks";
-import { TextAssetInspector } from "./TextAssetInspector";
+import { OtherAssetInspector } from "./OtherAssetInspector";
 import { ImageAssetInspector } from "./ImageAssetInspector";
 import { MeshAssetInspector } from "./MeshAssetInspector";
 import { ComponentsInspector } from "./ComponentsInspector";
@@ -7,6 +7,7 @@ import { PrefabAssetInspector } from "./PrefabAssetInspector";
 import { SceneAssetInspector } from "./SceneAssetInspector";
 import { HdrAssetInspector } from "./HdrAssetInspector";
 import { FontAssetInspector } from "./FontAssetInspector";
+import { TextAssetInspector } from "./TextAssetInspector";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
@@ -32,7 +33,7 @@ export function InspectorTab(){
                 <div className="flex items-center justify-center flex-1 text-white text-sm">
                 </div>
                 :
-                inspector.type === "text" ? <TextAssetInspector textInspector={inspector}/> :
+                inspector.type === "other" ? <OtherAssetInspector otherInspector={inspector}/> :
                 inspector.type === "image" ? <ImageAssetInspector inspector={inspector}/> :
                 inspector.type === "mesh" ? <MeshAssetInspector inspector={inspector}/> :
                 inspector.type === "components" ? <ComponentsInspector /> :
@@ -40,6 +41,7 @@ export function InspectorTab(){
                 inspector.type === "scene" ? <SceneAssetInspector inspector={inspector}/> :
                 inspector.type === "hdr" ? <HdrAssetInspector inspector={inspector}/> :
                 inspector.type === "font" ? <FontAssetInspector inspector={inspector}/> :
+                inspector.type === "text" ? <TextAssetInspector inspector={inspector}/> :
                 <div className="flex items-center justify-center flex-1 text-white text-sm">
                     This type is not supported in the inspector yet!
                 </div>

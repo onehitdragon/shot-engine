@@ -12,6 +12,7 @@ import { readFontAsset, readHdrAsset, readImageAsset, readMeshAsset, readPrefabA
 import { imageToRaw } from './imageToRaw';
 import { createDefaultConeAssetMesh, createDefaultCubeAssetMesh, createDefaultCylinderAssetMesh, createDefaultSphereAssetMesh } from './createDefaultAssetMesh';
 import * as assetBakers from './assetBakers';
+import { genKTX2 } from './helpers/gen-ktx';
 
 let configed = false;
 let ASSET_DIR = "";
@@ -41,6 +42,25 @@ export function close(){
 export function query(){
     function getAssetInfosFromPath(filePath: string){
         const relativePath = path.relative(ASSET_DIR, filePath);
+        const assetInfos: AssetManager.AssetInfo[] = [];
+        const fileRow = filesQuery.getByPath.get(relativePath);
+        if(!fileRow){
+            return assetInfos;
+        };
+        const assetRows = assetsQuery.getByFileId.all(fileRow.uuid);
+        for(const assetRow of assetRows){
+            assetInfos.push({
+                uuid: assetRow.uuid,
+                name: assetRow.name,
+                type: assetRow.type,
+                hash: assetRow.hash,
+                property: assetRow.property,
+                allowModify: assetRow.modifiable > 0
+            });
+        }
+        return assetInfos;
+    }
+    function getAssetInfosFromRelativePath(relativePath: string){
         const assetInfos: AssetManager.AssetInfo[] = [];
         const fileRow = filesQuery.getByPath.get(relativePath);
         if(!fileRow){
@@ -110,9 +130,17 @@ export function query(){
         if(type === "font"){
             return readFontAsset(filePath);
         }
+        if(type === "text"){
+            return { text: fs.readFileSync(filePath).toString() } as ShotEngineType.TextAsset;
+        }
     }
-    function updateAssetPropertyByUuid(uuid: string, property: string){
+    async function updateAssetPropertyByUuid(uuid: string, property: string){
         assetsQuery.updateProperty.run(property, uuid);
+        const assetRow = assetsQuery.getById.get(uuid);
+        if(!assetRow) throw "missing assetRow";
+        const fileRow = filesQuery.getById.get(assetRow.fileId);
+        if(!fileRow) throw "missing fileRow";
+        await genAssetWithFile(fileRow, assetRow, assetRow.type);
     }
     function getFilePathFromAssetId(uuid: string){
         const assetRow = assetsQuery.getById.get(uuid);
@@ -138,6 +166,7 @@ export function query(){
     }
     return {
         getAssetInfosFromPath,
+        getAssetInfosFromRelativePath,
         getAssetInfoFromUuid,
         getAssetInfosFromType,
         getAssetFromUuid,
@@ -273,6 +302,9 @@ export async function rescan(){
             else if(isFontFile(fileRow.path)){
                 await syncNotContainer(fileRow, assetRows, "font");
             }
+            else if(isTextFile(fileRow.path)){
+                await syncNotContainer(fileRow, assetRows, "text");
+            }
             else{
                 await syncNotContainer(fileRow, assetRows, "other");
             }
@@ -335,7 +367,7 @@ async function hashImageAsset(imageAsset: ShotEngineType.ImageAsset) {
     if(!xxHashAPI) xxHashAPI = await xxhash();
     const hash = xxHashAPI.create64();
     
-    hash.update(imageAsset.data);
+    hash.update(imageAsset.ktx2);
     return hash.digest().toString();
 }
 async function hashMeshAsset(meshAsset: ShotEngineType.MeshAsset) {
@@ -588,12 +620,16 @@ function createAssetDefaultProterpty(type: AssetRow["type"]): string{
     else if(type === "font"){
         return schema.defaultFontAssetJSON;
     }
+    else if(type === "text"){
+        return schema.defaultTextAssetJSON;
+    }
     else{
         return schema.defaultOtherAssetJSON;
     }
 }
 
 const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg"]);
+const TEXT_EXTS = new Set([".txt", ".html", ".css", ".js"]);
 function isImageFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return IMAGE_EXTS.has(ext);
@@ -622,16 +658,17 @@ function isFontFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return ext === ".ttf";
 }
+function isTextFile(filePath: string){
+    const ext = path.extname(filePath).toLowerCase();
+    return TEXT_EXTS.has(ext);
+}
 
 async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: AssetRow["type"]) {
     if(!fileRow.path) return;
     const fullPath = path.join(ASSET_DIR, fileRow.path);
     if(type === "image"){
-        const raw = await imageToRaw(fs.readFileSync(fullPath));
         const imageAsset: ShotEngineType.ImageAsset = {
-            width: raw.info.width,
-            height: raw.info.height,
-            data: raw.data
+            ktx2: await genKTX2(fullPath, JSON.parse(assetRow.property))
         }
         genImageAsset(assetRow, imageAsset);
     }
@@ -651,6 +688,9 @@ async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: Asse
     else if(type === "font"){
         // ignore
         // only create assetRow not gen asset file
+    }
+    else if(type === "text"){
+        genAssetFromFile(fileRow, assetRow);
     }
     else genDefaultAsset(fileRow, assetRow);
 }

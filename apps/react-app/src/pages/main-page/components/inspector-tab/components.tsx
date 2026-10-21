@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { type JSX } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { clamp } from "lodash";
-import type { AssetManager, ImageOrColor, ImageOrValue, OptionalImage } from "@shot-engine/types";
+import type { AssetManager, ImageAsset, ImageOrColor, ImageOrValue, OptionalImage, TextOrString } from "@shot-engine/types";
 import z from "zod";
 import { getDenormalizeColor, getNormalizeColor } from "../../helpers/utils/utils";
+import { KTXTranscoder } from "@shot-engine/ktx-tool/transcoder";
 
 const numberStringSchema = z.preprocess(
     (val) => (val === '' || val === null ? NaN : Number(val)),
@@ -161,7 +162,7 @@ export function TextRow(props: {
     return (
         <div className="flex gap-1">
             <span className="text-white text-sm select-none font-bold">{label}:</span>
-            <span className="text-white text-sm select-none">{content}</span>
+            <span className="text-white text-sm select-none line-clamp-1">{content}</span>
         </div>
     );
 }
@@ -383,6 +384,89 @@ export function ImageOrValueSelection(props: {
         }
     </>
 }
+export function TextOrStringSelection(props: {
+    label: string,
+    textOrString: TextOrString,
+    onChange: (textOrString: TextOrString) => void,
+}){
+    const { label, textOrString, onChange } = props;
+    const [textAssetInfos, setTextAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            if(textOrString.type === "string") setTextAssetInfos([]);
+            else{
+                const assetInfos = await window.api.assetManager.getAssetInfosFromType("text");
+                if(cancelled) return;
+                setTextAssetInfos(assetInfos);
+            }
+        }
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, [textOrString.type]);
+
+    return <>
+        <Selection
+            label={label}
+            options={[
+                { label: "text", value: "text" },
+                { label: "string", value: "string" },
+            ]}
+            value={textOrString.type}
+            onChange={(value) => {
+                if(value === "string"){
+                    onChange({
+                        type: "string",
+                        value: ""
+                    });
+                }
+                else{
+                    onChange({
+                        type: "text",
+                        textRef: ""
+                    });
+                }
+            }}
+        />
+        {
+            textOrString.type === "string" &&
+            <TextAreaRow
+                label={`${label} string`}
+                value={textOrString.value}
+                onChange={(value) => {
+                    onChange({
+                        type: "string",
+                        value
+                    });
+                }
+            }/>
+        }
+        {
+            textOrString.type === "text" &&
+            <Selection
+                label={`${label} text`}
+                options={
+                    textAssetInfos.map(e => {
+                        return {
+                            label: e.name,
+                            value: e.uuid
+                        }
+                    })
+                }
+                value={textOrString.textRef}
+                onChange={(value) => {
+                    onChange({
+                        type: "text",
+                        textRef: value
+                    });
+                }}
+            />
+        }
+    </>
+}
 export function OptionalImageSelection(props: {
     label: string,
     optionalImage: OptionalImage,
@@ -533,6 +617,33 @@ export function OneInputRow(
         </div>
     );
 }
+export function TextAreaRow(
+    props: {
+        label: string,
+        value: string,
+        onChange: (value: string) => void
+    }
+){
+    const { label, value, onChange } = props;
+    const [valueState, setValue] = useState(value);
+    const onBlurValue = () => {
+        setValue(valueState);
+        onChange(valueState);
+    }
+
+    return (
+        <div className="flex items-center my-0.5">
+            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
+            <div className="flex items-center w-full gap-1">
+                <textarea rows={5} className="outline-none border text-sm px-0.5 flex-1" value={valueState}
+                    onBlur={onBlurValue}
+                    onKeyDown={(e) => e.key === "Enter" && onBlurValue()}
+                    onChange={(e) => { setValue(e.target.value) }}
+                />
+            </div>
+        </div>
+    );
+}
 export function ButtonRow(
     props: {
         buttons: {
@@ -559,6 +670,23 @@ export function ButtonRow(
         </div>
     );
 }
+export function Button(
+    props: {
+        label: string,
+        onClick: () => void
+    }
+){
+    const { label, onClick } = props;
+    return (
+        <button
+            className="text-sm text-white w-12 py-1 px-2 bg-slate-600 hover:opacity-80
+                transition select-none cursor-pointer rounded"
+            onClick={onClick}
+        >
+            {label}
+        </button>
+    );
+}
 export function Image(props: { path: string }){
     const [src, setSrc] = useState("");
     useEffect(() => {
@@ -581,30 +709,66 @@ export function Image(props: { path: string }){
         </div>
     );
 }
-export function RawImage(props: { width: number, height: number, data: Uint8Array }){
-    const { width, height, data } = props;
+export function RawImage(props: { imageAsset: ImageAsset }){
+    const { imageAsset } = props;
     const ref = useRef<HTMLCanvasElement>(null);
+    const [rawImages, setRawImages] = useState<{
+        info: { origWidth: number, origHeight: number },
+        rawRGBA: Uint8Array
+    }[]>([]);
+    const [slideIndex, setSlideIndex] = useState(0);
 
     useEffect(() => {
+        let cancelled = false;
+        const task = async () => {
+            const ktxTranscoder = KTXTranscoder.getInstance();
+            await ktxTranscoder.init();
+            if(cancelled) return;
+            const rawRGBAs = await ktxTranscoder.rawRGBA(imageAsset.ktx2);
+            if(cancelled) return;
+            setRawImages(rawRGBAs);
+            setSlideIndex(0);
+        }
+        task();
+        return () => {
+            cancelled = true
+        };
+    }, [imageAsset]);
+
+    useEffect(() => {
+        if(rawImages.length === 0) return;
+        const { info, rawRGBA } = rawImages[slideIndex];
+        const { origWidth, origHeight } = info;
+
         const canvas = ref.current;
         if(!canvas) return;
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = origWidth;
+        canvas.height = origHeight;
 
         const ctx = canvas.getContext("2d");
         if(!ctx) return;
         const imageData = new ImageData(
-            new Uint8ClampedArray(data),
-            width,
-            height,
+            new Uint8ClampedArray(rawRGBA),
+            canvas.width,
+            canvas.height,
         );
         ctx.putImageData(imageData, 0, 0);
-
-    }, [width, height, data])
+    }, [rawImages, slideIndex]);
 
     return (
-        <div className="flex justify-center">
-            <canvas className="w-36" ref={ref}/>
+        <div className="flex flex-col items-center gap-1">
+            <div className="flex justify-center gap-1">
+                <span className="w-5">{slideIndex}</span>
+                <input
+                    className="cursor-pointer"
+                    type="range"
+                    min={0} max={rawImages.length - 1}
+                    value={slideIndex}
+                    onChange={(e) => { setSlideIndex(Number(e.target.value)) }}
+                />
+                <span className="">{rawImages.length - 1}</span>
+            </div>
+            <canvas className="w-40 h-auto scale-y-[-1]" ref={ref}/>
         </div>
     );
 }
@@ -634,5 +798,25 @@ export function CollapsedList(props: {
                 </ul>
             }
         </div>
+    );
+}
+export function AssetInfoRow(props: { uuid: string }){
+    const [assetInfo, setAssetInfo] = useState<AssetManager.AssetInfo>();
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            let assetInfo = await window.api.assetManager.getAssetInfoFromUuid(props.uuid);
+            if(cancelled) return;
+            setAssetInfo(assetInfo);
+        }
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, []);
+    return (
+        !assetInfo ?
+        <TextRowErr label="" content={props.uuid}/> :
+        <TextRow label={assetInfo.name} content={assetInfo.uuid}/>
     );
 }

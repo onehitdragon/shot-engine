@@ -161,6 +161,9 @@ export const goAddedThunk = createAsyncThunk
             }
             const nodeOut = cloneDeep(node);
             nodeOut.id = uuidv4();
+            for(const component of nodeOut.components){
+                component.id = uuidv4();
+            }
 
             return {
                 nodeOut

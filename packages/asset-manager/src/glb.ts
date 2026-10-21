@@ -4,6 +4,8 @@ import path from "node:path";
 import * as ShotEngineType from "@shot-engine/types";
 import { imageToRaw } from './imageToRaw';
 import { v4 as uuidv4 } from "uuid";
+import { genKTX2 } from './helpers/gen-ktx';
+import { defaultImageAsset } from './schema';
 
 type GLB = {
     textures: GLBTexture[],
@@ -95,17 +97,15 @@ export async function readGLBFile(filePath: string){
     const textureNameMap = new Map<Texture, string>();
     for(let i = 0; i < root.listTextures().length; i++){
         const texture = root.listTextures()[i];
+        const image = texture.getImage(); // png, jpg... not rgba
+        if(!image) continue;
         const textureName = "tex" + i;
         textureNameMap.set(texture, textureName);
 
-        const image = texture.getImage();
-        const raw = await imageToRaw(image ?? new Uint8Array());
         glb.textures.push({
             name: textureName,
             imageAsset: {
-                width: raw.info.width,
-                height: raw.info.height,
-                data: raw.data
+                ktx2: await genKTX2(image, defaultImageAsset)
             }
         });
     }

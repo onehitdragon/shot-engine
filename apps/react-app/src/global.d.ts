@@ -35,6 +35,7 @@ export type ApiType = {
         rescan: () => Promise<void>,
         close: () => Promise<void>,
         getAssetInfos: (filePath: string) => Promise<AssetManager.AssetInfo[]>,
+        getAssetInfosFromRelativePath: (relativePath: string) => Promise<AssetManager.AssetInfo[]>,
         getAssetFromUuid: (uuid: string, type: AssetType) => Promise<Asset | undefined>,
         updateAssetPropertyByUuid: (uuid: string, property: string) => Promise<void>,
         getAssetInfoFromUuid: (uuid: string) => Promise<AssetManager.AssetInfo | undefined>,

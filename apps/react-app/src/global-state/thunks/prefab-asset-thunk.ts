@@ -80,7 +80,7 @@ export function nodeStateToSceneNode(rootIdIn: string, record: Record<string, No
         const go: GameObject = {
             id: root.id,
             name: root.name,
-            components: root.components.map(c => { return { ...c, id: "" }; }),
+            components: root.components,
             childs
         }
         return go;

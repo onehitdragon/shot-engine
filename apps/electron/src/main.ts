@@ -7,9 +7,8 @@ import { assimpImporter } from "./importer/assimp/assimp-importer";
 import crypto from "crypto";
 import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
-import { saveMeshToBuffer, readMeshBinary, saveImageToBuffer, readImageBinary } from "./importer/binary/resourceBinary";
 import * as asssetManager from "@shot-engine/asset-manager";
-import { AssetManager, AssetType, FontAsset, FontAssetBakeSetting, HdrAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
+import { AssetManager, AssetType, FontAssetBakeSetting, HdrAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
 import { readHdr } from "hdrify";
 
 const createWindow = () => {
@@ -39,6 +38,7 @@ const createWindow = () => {
             win.webContents.send("win:onBlur");
         }
     });
+    return win;
 };
 
 app.whenReady()
@@ -250,6 +250,12 @@ app.whenReady()
         }
     );
     ipcMain.handle(
+        "assetManager:getAssetInfosFromRelativePath",
+        (e, relativePath: string) => {
+            return asssetManager.query().getAssetInfosFromRelativePath(relativePath);
+        }
+    );
+    ipcMain.handle(
         "assetManager:getAssetInfoFromUuid",
         (e, uuid: string) => {
             return asssetManager.query().getAssetInfoFromUuid(uuid);
@@ -269,8 +275,8 @@ app.whenReady()
     );
     ipcMain.handle(
         "assetManager:updateAssetPropertyByUuid",
-        (e, uuid: string, property: string) => {
-            return asssetManager.query().updateAssetPropertyByUuid(uuid, property);
+        async (e, uuid: string, property: string) => {
+            return await asssetManager.query().updateAssetPropertyByUuid(uuid, property);
         }
     );
     ipcMain.handle(
@@ -373,10 +379,13 @@ app.whenReady()
     }
 
     //
+    let win: BrowserWindow;
     app.on("activate", () => {
-        if(BrowserWindow.getAllWindows().length == 0) createWindow();
+        if(BrowserWindow.getAllWindows().length == 0) win = createWindow();
     });
-    createWindow();
+    win = createWindow();
+
+    //
 })
 .catch(err => {
     console.error(err);

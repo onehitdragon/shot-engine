@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { type ImageAssetInspector } from "../../../../global-state/slices/inspector-slice";
-import { ButtonRow, CheckBox, OneValueRow, RawImage, Selection, TextRow } from "./components";
+import { ButtonRow, CheckBox, RawImage, Selection, TextRow } from "./components";
 import type { AssetProperty } from "@shot-engine/types";
 import { cloneDeep } from "lodash";
+import { useAppDispatch } from "../../../../global-state/hooks";
+import { inspectAssetThunk } from "../../../../global-state/thunks/inspector-thunks";
 
 export function ImageAssetInspector(props: { inspector: ImageAssetInspector }){
     const { assetInfo } = props.inspector;
@@ -18,6 +20,7 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
     const property = JSON.parse(assetInfo.property) as AssetProperty.Image;
     const [imageProperty, setImageProperty] = useState(property);
     const [saving, setSaving] = useState(false);
+    const dispatch = useAppDispatch();
     const getDefaultImageProperty = (type: AssetProperty.Image["imageType"]): AssetProperty.Image => {
         if(type === "NormalMap"){
             return {
@@ -25,7 +28,6 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
                 imageType: "NormalMap",
                 wrapMode: "REPEAT",
                 filterMode: "BILINEAR",
-                flip: false,
                 generateMipmaps: false,
             };
         }
@@ -34,34 +36,37 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
             imageType: "Texture",
             wrapMode: "REPEAT",
             filterMode: "BILINEAR",
-            flip: false,
             generateMipmaps: true,
             sRGB: true,
-            qualityLevel: 255,
         };
     }
     useEffect(() => {
+        let cancelled = false;
         if(!saving) return;
         const save = async () => {
             await window.api.assetManager.updateAssetPropertyByUuid(
                 props.inspector.assetInfo.uuid,
                 JSON.stringify(imageProperty)
             );
+            if(cancelled) return;
             setSaving(false);
+            dispatch(inspectAssetThunk({ assetInfo }));
         }
         save();
+        return () => {
+            cancelled = true;
+        }
     }, [saving])
 
     return (
         <>
-            <RawImage width={imageAsset.width} height={imageAsset.height} data={imageAsset.data}/>
+            <RawImage imageAsset={imageAsset}/>
             <Selection
                 label="Image type"
                 value={imageProperty.imageType}
                 options={[
                     { label: "Texture", value: "Texture" },
                     { label: "Normal Map", value: "NormalMap" },
-                    { label: "Light Map", value: "LightMap" },
                 ]}
                 onChange={(value) => {
                     setImageProperty(getDefaultImageProperty(value));
@@ -77,7 +82,7 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
                 />
             }
             {
-                !saving &&
+                !saving ?
                 <ButtonRow buttons={[
                     {
                         label: "Apply",
@@ -85,7 +90,8 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
                             setSaving(true);
                         }
                     }
-                ]}/>
+                ]}/> :
+                <span>Saving...</span>
             }
         </>
     );
@@ -126,14 +132,6 @@ function TextureModifier(props: {
                 }}
             />
             <CheckBox
-                label="Flip Y"
-                value={textureProperty.flip}
-                onChange={(value) => {
-                    texturePropertyClone.flip = value;
-                    onChange(texturePropertyClone);
-                }}
-            />
-            <CheckBox
                 label="Generate mipmaps"
                 value={textureProperty.generateMipmaps}
                 onChange={(value) => {
@@ -146,14 +144,6 @@ function TextureModifier(props: {
                 value={textureProperty.sRGB}
                 onChange={(value) => {
                     texturePropertyClone.sRGB = value;
-                    onChange(texturePropertyClone);
-                }}
-            />
-            <OneValueRow
-                label="Quality level"
-                value={textureProperty.qualityLevel}
-                onChange={(value) => {
-                    texturePropertyClone.qualityLevel = value;
                     onChange(texturePropertyClone);
                 }}
             />

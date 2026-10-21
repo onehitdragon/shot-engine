@@ -25,11 +25,9 @@ import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, rea
 
 export function saveImageAssetBinary(imageAsset: ShotEngineType.ImageAsset, filePath: string){
     const builder = new Builder(1024);
-    const dataOffset = ImageAsset.createDataVector(builder, imageAsset.data);
+    const ktx2Offset = ImageAsset.createKtx2Vector(builder, imageAsset.ktx2);
     ImageAsset.startImageAsset(builder);
-    ImageAsset.addWidth(builder, imageAsset.width);
-    ImageAsset.addHeight(builder, imageAsset.height);
-    ImageAsset.addData(builder, dataOffset);
+    ImageAsset.addKtx2(builder, ktx2Offset);
     const offset = ImageAsset.endImageAsset(builder);
     builder.finish(offset);
 
@@ -247,9 +245,7 @@ export function readImageAsset(filePath: string): ShotEngineType.ImageAsset{
     const byteBuffer = new ByteBuffer(bytes);
     const image = ImageAsset.getRootAsImageAsset(byteBuffer);
     return {
-        width: image.width(),
-        height: image.height(),
-        data: getUint8Array(image.dataArray())
+        ktx2: getUint8Array(image.ktx2Array())
     };
 }
 export function readMeshAsset(filePath: string){

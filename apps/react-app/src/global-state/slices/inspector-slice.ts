@@ -1,9 +1,14 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { ImageAsset, AssetManager, MeshAsset, PrefabAsset, SceneAsset, HdrAsset, FontAsset } from "@shot-engine/types";
+import type { ImageAsset, AssetManager, MeshAsset, PrefabAsset, SceneAsset, HdrAsset, FontAsset, TextAsset } from "@shot-engine/types";
 
+export type OtherAssetInspector = {
+    type: "other",
+    content: string
+}
 export type TextAssetInspector = {
     type: "text",
-    content: string
+    assetInfo: AssetManager.AssetInfo,
+    textAsset: TextAsset,
 }
 export type ImageAssetInspector = {
     type: "image",
@@ -40,9 +45,9 @@ export type ComponentsInspector = {
 }
 
 type State = {
-    inspector: null | ImageAssetInspector | TextAssetInspector | PrefabAssetInspector
-    | SceneAssetInspector | MeshAssetInspector | ComponentsInspector | HdrAssetInspector
-    | FontAssetInspector
+    inspector: null | ImageAssetInspector | OtherAssetInspector | TextAssetInspector |
+    PrefabAssetInspector | SceneAssetInspector | MeshAssetInspector | ComponentsInspector |
+    HdrAssetInspector | FontAssetInspector
 };
 const initialState: State = {
     inspector: null

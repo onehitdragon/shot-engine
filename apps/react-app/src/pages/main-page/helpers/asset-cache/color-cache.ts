@@ -47,7 +47,8 @@ export class ColorCache{
                 filterMode: "NONE",
                 generateMipmaps: false,
                 qualityLevel: 0,
-                wrapMode: "REPEAT"
+                wrapMode: "REPEAT",
+                flip: false
             }
         );
         return webglTexture;
