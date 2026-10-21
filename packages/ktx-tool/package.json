@@ -1,0 +1,39 @@
+{
+  "name": "@shot-engine/ktx-tool",
+  "version": "1.0.3",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "default": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    },
+    "./encoder": {
+      "node": "./dist/src/ktx-encoder.js",
+      "types": "./dist/src/ktx-encoder.d.ts"
+    },
+    "./transcoder": {
+      "default": "./dist/src/ktx-transcoder.js",
+      "types": "./dist/src/ktx-transcoder.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "copyfiles src/basis_encoder/* dist/ & tsc",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "copyfiles": "^2.4.1",
+    "vitest": "^5.0.3"
+  },
+  "dependencies": {
+    "sharp": "^0.35.5"
+  }
+}
