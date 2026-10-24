@@ -7,9 +7,7 @@ export type ApiType = {
     showError: (reason: string) => Promise<void>,
     showConfirm: (msg: string) => Promise<boolean>,
     win: {
-        isFocused: () => Promise<boolean>,
-        onFocus: (callback: () => void) => Function,
-        onBlur: (callback: () => void) => Function,
+        
     },
     folder: {
         open: () => Promise<string | null>,

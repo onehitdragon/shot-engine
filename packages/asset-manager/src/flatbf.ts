@@ -20,8 +20,8 @@ import {
     FontInfoChar,
     FontInfoCommon,
     FontAssetBakeSetting
-} from "../fbs-gen/fbsengine";
-import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, readGameObject } from "./flatbfUtil";
+} from "../fbs-gen/fbsengine.js";
+import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, readGameObject } from "./flatbfUtil.js";
 
 export function saveImageAssetBinary(imageAsset: ShotEngineType.ImageAsset, filePath: string){
     const builder = new Builder(1024);

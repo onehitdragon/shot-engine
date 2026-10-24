@@ -2,10 +2,9 @@ import { NodeIO, Node, Texture, Mesh, Accessor } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import path from "node:path";
 import * as ShotEngineType from "@shot-engine/types";
-import { imageToRaw } from './imageToRaw';
 import { v4 as uuidv4 } from "uuid";
-import { genKTX2 } from './helpers/gen-ktx';
-import { defaultImageAsset } from './schema';
+import { genKTX2 } from './helpers/gen-ktx.js';
+import { defaultImageAsset } from './schema.js';
 
 type GLB = {
     textures: GLBTexture[],

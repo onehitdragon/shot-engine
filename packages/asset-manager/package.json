@@ -4,9 +4,15 @@
   "description": "",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
+  "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "node": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -18,18 +24,18 @@
     "@gltf-transform/extensions": "^4.3.0",
     "@gltf-transform/functions": "^4.3.0",
     "@nodelib/fs.walk": "^3.0.1",
-    "better-sqlite3": "^12.10.0",
+    "better-sqlite3": "^13.0.3",
     "flatbuffers": "^25.9.23",
     "fs-extra": "^11.3.4",
     "lodash": "^4.18.1",
     "msdf-bmfont-xml": "^2.8.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.5",
     "uuid": "^14.0.0",
     "xxhash-wasm": "^1.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/fs-extra": "^11.0.4",
     "@types/lodash": "^4.17.24",
     "@types/node": "^25.6.0"

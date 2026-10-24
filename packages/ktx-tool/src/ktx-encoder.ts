@@ -259,5 +259,5 @@ async function main2(){
   .png().toFile("./test/image-rgba-8-sRGB.png");
 }
 
-main();
+// main();
 // main2();

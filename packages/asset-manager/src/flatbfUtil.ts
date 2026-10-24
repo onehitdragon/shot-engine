@@ -22,7 +22,7 @@ import {
     TextOrString,
     Text,
     String,
-} from "../fbs-gen/fbsengine";
+} from "../fbs-gen/fbsengine.js";
 import { Builder, Offset } from "flatbuffers";
 
 export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.SceneNode): Offset{

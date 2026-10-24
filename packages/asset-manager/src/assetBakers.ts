@@ -1,6 +1,6 @@
 import { FontAsset, FontAssetBakeSetting } from "@shot-engine/types";
 import generateBMFont from 'msdf-bmfont-xml';
-import { imageToRaw } from "./imageToRaw";
+import { imageToRaw } from "./imageToRaw.js";
 
 function disableConsole(){
   const originalLog = console.log;

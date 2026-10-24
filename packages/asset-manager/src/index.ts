@@ -1,2 +1,3 @@
-export * from "./assetManager";
-export * from "./flatbf";
+export * from "./assetManager.js";
+export * from "./flatbf.js";
+export {};
