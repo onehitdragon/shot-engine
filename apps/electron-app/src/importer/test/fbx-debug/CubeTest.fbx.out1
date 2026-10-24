@@ -1,0 +1,4939 @@
+Fbx version: 7400 
+[
+  {
+    "name": "FBXHeaderExtension",
+    "properties": [],
+    "nestedList": [
+      {
+        "name": "FBXHeaderVersion",
+        "properties": [
+          {
+            "typeCode": "I",
+            "data": 1003
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "FBXVersion",
+        "properties": [
+          {
+            "typeCode": "I",
+            "data": 7400
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "EncryptionType",
+        "properties": [
+          {
+            "typeCode": "I",
+            "data": 0
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "CreationTimeStamp",
+        "properties": [],
+        "nestedList": [
+          {
+            "name": "Version",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 1000
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Year",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 2025
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Month",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 12
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Day",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 8
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Hour",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 15
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Minute",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 45
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Second",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 33
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Millisecond",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 775
+              }
+            ],
+            "nestedList": []
+          }
+        ]
+      },
+      {
+        "name": "Creator",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": "Blender (stable FBX IO) - 4.4.3 - 5.12.7"
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "SceneInfo",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": "GlobalInfoSceneInfo"
+          },
+          {
+            "typeCode": "S",
+            "data": "UserData"
+          }
+        ],
+        "nestedList": [
+          {
+            "name": "Type",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "UserData"
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Version",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 100
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "MetaData",
+            "properties": [],
+            "nestedList": [
+              {
+                "name": "Version",
+                "properties": [
+                  {
+                    "typeCode": "I",
+                    "data": 100
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Title",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Subject",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Author",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Keywords",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Revision",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Comment",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              }
+            ]
+          },
+          {
+            "name": "Properties70",
+            "properties": [],
+            "nestedList": [
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "DocumentUrl"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Url"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "/foobar.fbx"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "SrcDocumentUrl"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Url"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "/foobar.fbx"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Original"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Compound"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Original|ApplicationVendor"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Blender Foundation"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Original|ApplicationName"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Blender (stable FBX IO)"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Original|ApplicationVersion"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "4.4.3"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Original|DateTime_GMT"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "DateTime"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "01/01/1970 00:00:00.000"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Original|FileName"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "/foobar.fbx"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "LastSaved"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Compound"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "LastSaved|ApplicationVendor"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Blender Foundation"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "LastSaved|ApplicationName"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Blender (stable FBX IO)"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "LastSaved|ApplicationVersion"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "4.4.3"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "LastSaved|DateTime_GMT"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "DateTime"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "01/01/1970 00:00:00.000"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Original|ApplicationNativeFile"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "C:\\Users\\Admin\\Documents\\CubeTest.blend"
+                  }
+                ],
+                "nestedList": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "FileId",
+    "properties": [
+      {
+        "typeCode": "R",
+        "data": "(�*�$�¿Ȱ*�+��"
+      }
+    ],
+    "nestedList": []
+  },
+  {
+    "name": "CreationTime",
+    "properties": [
+      {
+        "typeCode": "S",
+        "data": "1970-01-01 10:00:00:000"
+      }
+    ],
+    "nestedList": []
+  },
+  {
+    "name": "Creator",
+    "properties": [
+      {
+        "typeCode": "S",
+        "data": "Blender (stable FBX IO) - 4.4.3 - 5.12.7"
+      }
+    ],
+    "nestedList": []
+  },
+  {
+    "name": "GlobalSettings",
+    "properties": [],
+    "nestedList": [
+      {
+        "name": "Version",
+        "properties": [
+          {
+            "typeCode": "I",
+            "data": 1000
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "Properties70",
+        "properties": [],
+        "nestedList": [
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "UpAxis"
+              },
+              {
+                "typeCode": "S",
+                "data": "int"
+              },
+              {
+                "typeCode": "S",
+                "data": "Integer"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "I",
+                "data": 1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "UpAxisSign"
+              },
+              {
+                "typeCode": "S",
+                "data": "int"
+              },
+              {
+                "typeCode": "S",
+                "data": "Integer"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "I",
+                "data": 1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "FrontAxis"
+              },
+              {
+                "typeCode": "S",
+                "data": "int"
+              },
+              {
+                "typeCode": "S",
+                "data": "Integer"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "I",
+                "data": 2
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "FrontAxisSign"
+              },
+              {
+                "typeCode": "S",
+                "data": "int"
+              },
+              {
+                "typeCode": "S",
+                "data": "Integer"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "I",
+                "data": -1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "CoordAxis"
+              },
+              {
+                "typeCode": "S",
+                "data": "int"
+              },
+              {
+                "typeCode": "S",
+                "data": "Integer"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "CoordAxisSign"
+              },
+              {
+                "typeCode": "S",
+                "data": "int"
+              },
+              {
+                "typeCode": "S",
+                "data": "Integer"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "I",
+                "data": -1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "OriginalUpAxis"
+              },
+              {
+                "typeCode": "S",
+                "data": "int"
+              },
+              {
+                "typeCode": "S",
+                "data": "Integer"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "I",
+                "data": -1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "OriginalUpAxisSign"
+              },
+              {
+                "typeCode": "S",
+                "data": "int"
+              },
+              {
+                "typeCode": "S",
+                "data": "Integer"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "I",
+                "data": 1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "UnitScaleFactor"
+              },
+              {
+                "typeCode": "S",
+                "data": "double"
+              },
+              {
+                "typeCode": "S",
+                "data": "Number"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "D",
+                "data": 1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "OriginalUnitScaleFactor"
+              },
+              {
+                "typeCode": "S",
+                "data": "double"
+              },
+              {
+                "typeCode": "S",
+                "data": "Number"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "D",
+                "data": 1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "AmbientColor"
+              },
+              {
+                "typeCode": "S",
+                "data": "ColorRGB"
+              },
+              {
+                "typeCode": "S",
+                "data": "Color"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "D",
+                "data": 0
+              },
+              {
+                "typeCode": "D",
+                "data": 0
+              },
+              {
+                "typeCode": "D",
+                "data": 0
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "DefaultCamera"
+              },
+              {
+                "typeCode": "S",
+                "data": "KString"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "S",
+                "data": "Producer Perspective"
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "TimeMode"
+              },
+              {
+                "typeCode": "S",
+                "data": "enum"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "I",
+                "data": 11
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "TimeSpanStart"
+              },
+              {
+                "typeCode": "S",
+                "data": "KTime"
+              },
+              {
+                "typeCode": "S",
+                "data": "Time"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "L",
+                "data": "0"
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "TimeSpanStop"
+              },
+              {
+                "typeCode": "S",
+                "data": "KTime"
+              },
+              {
+                "typeCode": "S",
+                "data": "Time"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "L",
+                "data": "46186158000"
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "P",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "CustomFrameRate"
+              },
+              {
+                "typeCode": "S",
+                "data": "double"
+              },
+              {
+                "typeCode": "S",
+                "data": "Number"
+              },
+              {
+                "typeCode": "S",
+                "data": ""
+              },
+              {
+                "typeCode": "D",
+                "data": 24
+              }
+            ],
+            "nestedList": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Documents",
+    "properties": [],
+    "nestedList": [
+      {
+        "name": "Count",
+        "properties": [
+          {
+            "typeCode": "I",
+            "data": 1
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "Document",
+        "properties": [
+          {
+            "typeCode": "L",
+            "data": "318649909"
+          },
+          {
+            "typeCode": "S",
+            "data": "Scene"
+          },
+          {
+            "typeCode": "S",
+            "data": "Scene"
+          }
+        ],
+        "nestedList": [
+          {
+            "name": "Properties70",
+            "properties": [],
+            "nestedList": [
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "SourceObject"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "object"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "ActiveAnimStackName"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "KString"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              }
+            ]
+          },
+          {
+            "name": "RootNode",
+            "properties": [
+              {
+                "typeCode": "L",
+                "data": "0"
+              }
+            ],
+            "nestedList": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "References",
+    "properties": [],
+    "nestedList": []
+  },
+  {
+    "name": "Definitions",
+    "properties": [],
+    "nestedList": [
+      {
+        "name": "Version",
+        "properties": [
+          {
+            "typeCode": "I",
+            "data": 100
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "Count",
+        "properties": [
+          {
+            "typeCode": "I",
+            "data": 5
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "ObjectType",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": "GlobalSettings"
+          }
+        ],
+        "nestedList": [
+          {
+            "name": "Count",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 1
+              }
+            ],
+            "nestedList": []
+          }
+        ]
+      },
+      {
+        "name": "ObjectType",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": "Geometry"
+          }
+        ],
+        "nestedList": [
+          {
+            "name": "Count",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 2
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "PropertyTemplate",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "FbxMesh"
+              }
+            ],
+            "nestedList": [
+              {
+                "name": "Properties70",
+                "properties": [],
+                "nestedList": [
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Color"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "ColorRGB"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Color"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0.8
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0.8
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0.8
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "BBoxMin"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "BBoxMax"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Primary Visibility"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Casts Shadows"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Receive Shadows"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "ObjectType",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": "Model"
+          }
+        ],
+        "nestedList": [
+          {
+            "name": "Count",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 2
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "PropertyTemplate",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "FbxNode"
+              }
+            ],
+            "nestedList": [
+              {
+                "name": "Properties70",
+                "properties": [],
+                "nestedList": [
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "QuaternionInterpolate"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "enum"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationOffset"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationPivot"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingOffset"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingPivot"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "TranslationActive"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "TranslationMin"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "TranslationMax"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "TranslationMinX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "TranslationMinY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "TranslationMinZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "TranslationMaxX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "TranslationMaxY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "TranslationMaxZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationOrder"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "enum"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationSpaceForLimitOnly"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationStiffnessX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationStiffnessY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationStiffnessZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "AxisLen"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 10
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "PreRotation"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "PostRotation"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationActive"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationMin"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationMax"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationMinX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationMinY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationMinZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationMaxX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationMaxY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "RotationMaxZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "InheritType"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "enum"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingActive"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingMin"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingMax"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingMinX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingMinY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingMinZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingMaxX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingMaxY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "ScalingMaxZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "GeometricTranslation"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "GeometricRotation"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "GeometricScaling"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector3D"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Vector"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MinDampRangeX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MinDampRangeY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MinDampRangeZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MaxDampRangeX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MaxDampRangeY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MaxDampRangeZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MinDampStrengthX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MinDampStrengthY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MinDampStrengthZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MaxDampStrengthX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MaxDampStrengthY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "MaxDampStrengthZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "PreferedAngleX"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "PreferedAngleY"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "PreferedAngleZ"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "double"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Number"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "LookAtProperty"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "object"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "UpVectorProperty"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "object"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Show"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "NegativePercentShapeSupport"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "DefaultAttributeIndex"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "int"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Integer"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": -1
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Freeze"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "LODBox"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "bool"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Lcl Translation"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Lcl Translation"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "A"
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Lcl Rotation"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Lcl Rotation"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "A"
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Lcl Scaling"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Lcl Scaling"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "A"
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Visibility"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Visibility"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "A"
+                      },
+                      {
+                        "typeCode": "D",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "P",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "Visibility Inheritance"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": "Visibility Inheritance"
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "S",
+                        "data": ""
+                      },
+                      {
+                        "typeCode": "I",
+                        "data": 1
+                      }
+                    ],
+                    "nestedList": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Objects",
+    "properties": [],
+    "nestedList": [
+      {
+        "name": "Geometry",
+        "properties": [
+          {
+            "typeCode": "L",
+            "data": "508077949"
+          },
+          {
+            "typeCode": "S",
+            "data": "Cube.002Geometry"
+          },
+          {
+            "typeCode": "S",
+            "data": "Mesh"
+          }
+        ],
+        "nestedList": [
+          {
+            "name": "Properties70",
+            "properties": [],
+            "nestedList": []
+          },
+          {
+            "name": "GeometryVersion",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 124
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Vertices",
+            "properties": [
+              {
+                "typeCode": "d",
+                "data": [
+                  -1,
+                  -1,
+                  -1,
+                  -1,
+                  -1,
+                  1,
+                  -1,
+                  1,
+                  -1,
+                  -1,
+                  1,
+                  1,
+                  1,
+                  -1,
+                  -1,
+                  1,
+                  -1,
+                  1,
+                  1,
+                  1,
+                  -1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "PolygonVertexIndex",
+            "properties": [
+              {
+                "typeCode": "i",
+                "data": [
+                  1,
+                  2,
+                  -1,
+                  3,
+                  6,
+                  -3,
+                  7,
+                  4,
+                  -7,
+                  5,
+                  0,
+                  -5,
+                  6,
+                  0,
+                  -3,
+                  3,
+                  5,
+                  -8,
+                  1,
+                  3,
+                  -3,
+                  3,
+                  7,
+                  -7,
+                  7,
+                  5,
+                  -5,
+                  5,
+                  1,
+                  -1,
+                  6,
+                  4,
+                  -1,
+                  3,
+                  1,
+                  -6
+                ]
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Edges",
+            "properties": [
+              {
+                "typeCode": "i",
+                "data": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  15,
+                  16,
+                  17,
+                  18,
+                  27
+                ]
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "LayerElementNormal",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": [
+              {
+                "name": "Version",
+                "properties": [
+                  {
+                    "typeCode": "I",
+                    "data": 101
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Name",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "MappingInformationType",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "ByPolygonVertex"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "ReferenceInformationType",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "IndexToDirect"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Normals",
+                "properties": [
+                  {
+                    "typeCode": "d",
+                    "data": [
+                      0,
+                      0,
+                      1,
+                      0,
+                      0,
+                      -1,
+                      0,
+                      1,
+                      0,
+                      0,
+                      -1,
+                      0,
+                      1,
+                      0,
+                      0,
+                      -1,
+                      0,
+                      0
+                    ]
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "NormalsIndex",
+                "properties": [
+                  {
+                    "typeCode": "i",
+                    "data": [
+                      5,
+                      5,
+                      5,
+                      2,
+                      2,
+                      2,
+                      4,
+                      4,
+                      4,
+                      3,
+                      3,
+                      3,
+                      1,
+                      1,
+                      1,
+                      0,
+                      0,
+                      0,
+                      5,
+                      5,
+                      5,
+                      2,
+                      2,
+                      2,
+                      4,
+                      4,
+                      4,
+                      3,
+                      3,
+                      3,
+                      1,
+                      1,
+                      1,
+                      0,
+                      0,
+                      0
+                    ]
+                  }
+                ],
+                "nestedList": []
+              }
+            ]
+          },
+          {
+            "name": "LayerElementUV",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": [
+              {
+                "name": "Version",
+                "properties": [
+                  {
+                    "typeCode": "I",
+                    "data": 101
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Name",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "UVMap"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "MappingInformationType",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "ByPolygonVertex"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "ReferenceInformationType",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "IndexToDirect"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "UV",
+                "properties": [
+                  {
+                    "typeCode": "d",
+                    "data": [
+                      0.375,
+                      0,
+                      0.625,
+                      0,
+                      0.375,
+                      0.25,
+                      0.625,
+                      0.25,
+                      0.125,
+                      0.5,
+                      0.375,
+                      0.5,
+                      0.625,
+                      0.5,
+                      0.875,
+                      0.5,
+                      0.125,
+                      0.75,
+                      0.375,
+                      0.75,
+                      0.625,
+                      0.75,
+                      0.875,
+                      0.75,
+                      0.375,
+                      1,
+                      0.625,
+                      1
+                    ]
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "UVIndex",
+                "properties": [
+                  {
+                    "typeCode": "i",
+                    "data": [
+                      1,
+                      2,
+                      0,
+                      3,
+                      5,
+                      2,
+                      6,
+                      9,
+                      5,
+                      10,
+                      12,
+                      9,
+                      5,
+                      8,
+                      4,
+                      7,
+                      10,
+                      6,
+                      1,
+                      3,
+                      2,
+                      3,
+                      6,
+                      5,
+                      6,
+                      10,
+                      9,
+                      10,
+                      13,
+                      12,
+                      5,
+                      9,
+                      8,
+                      7,
+                      11,
+                      10
+                    ]
+                  }
+                ],
+                "nestedList": []
+              }
+            ]
+          },
+          {
+            "name": "Layer",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": [
+              {
+                "name": "Version",
+                "properties": [
+                  {
+                    "typeCode": "I",
+                    "data": 100
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "LayerElement",
+                "properties": [],
+                "nestedList": [
+                  {
+                    "name": "Type",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "LayerElementNormal"
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "TypedIndex",
+                    "properties": [
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  }
+                ]
+              },
+              {
+                "name": "LayerElement",
+                "properties": [],
+                "nestedList": [
+                  {
+                    "name": "Type",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "LayerElementUV"
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "TypedIndex",
+                    "properties": [
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Geometry",
+        "properties": [
+          {
+            "typeCode": "L",
+            "data": "959253961"
+          },
+          {
+            "typeCode": "S",
+            "data": "Cube.003Geometry"
+          },
+          {
+            "typeCode": "S",
+            "data": "Mesh"
+          }
+        ],
+        "nestedList": [
+          {
+            "name": "Properties70",
+            "properties": [],
+            "nestedList": []
+          },
+          {
+            "name": "GeometryVersion",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 124
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Vertices",
+            "properties": [
+              {
+                "typeCode": "d",
+                "data": [
+                  -1,
+                  -1,
+                  -1,
+                  -1,
+                  -1,
+                  1,
+                  -1,
+                  1,
+                  -1,
+                  -1,
+                  1,
+                  1,
+                  1,
+                  -1,
+                  -1,
+                  1,
+                  -1,
+                  1,
+                  1,
+                  1,
+                  -1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "PolygonVertexIndex",
+            "properties": [
+              {
+                "typeCode": "i",
+                "data": [
+                  1,
+                  2,
+                  -1,
+                  3,
+                  6,
+                  -3,
+                  7,
+                  4,
+                  -7,
+                  5,
+                  0,
+                  -5,
+                  6,
+                  0,
+                  -3,
+                  3,
+                  5,
+                  -8,
+                  1,
+                  3,
+                  -3,
+                  3,
+                  7,
+                  -7,
+                  7,
+                  5,
+                  -5,
+                  5,
+                  1,
+                  -1,
+                  6,
+                  4,
+                  -1,
+                  3,
+                  1,
+                  -6
+                ]
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Edges",
+            "properties": [
+              {
+                "typeCode": "i",
+                "data": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  15,
+                  16,
+                  17,
+                  18,
+                  27
+                ]
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "LayerElementNormal",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": [
+              {
+                "name": "Version",
+                "properties": [
+                  {
+                    "typeCode": "I",
+                    "data": 101
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Name",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "MappingInformationType",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "ByVertice"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "ReferenceInformationType",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "IndexToDirect"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Normals",
+                "properties": [
+                  {
+                    "typeCode": "d",
+                    "data": [
+                      -0.5773284435272217,
+                      -0.5773611664772034,
+                      -0.5773611664772034,
+                      -0.5773720741271973,
+                      -0.5773393511772156,
+                      0.5773393511772156,
+                      -0.5773720741271973,
+                      0.5773393511772156,
+                      -0.5773393511772156,
+                      -0.5773284435272217,
+                      0.5773611664772034,
+                      0.5773611664772034,
+                      0.5773720741271973,
+                      -0.5773393511772156,
+                      -0.5773393511772156,
+                      0.5773284435272217,
+                      -0.5773611664772034,
+                      0.5773611664772034,
+                      0.5773284435272217,
+                      0.5773611664772034,
+                      -0.5773611664772034,
+                      0.5773720741271973,
+                      0.5773393511772156,
+                      0.5773393511772156
+                    ]
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "NormalsIndex",
+                "properties": [
+                  {
+                    "typeCode": "i",
+                    "data": [
+                      0,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                ],
+                "nestedList": []
+              }
+            ]
+          },
+          {
+            "name": "LayerElementUV",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": [
+              {
+                "name": "Version",
+                "properties": [
+                  {
+                    "typeCode": "I",
+                    "data": 101
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "Name",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "UVMap"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "MappingInformationType",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "ByPolygonVertex"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "ReferenceInformationType",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "IndexToDirect"
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "UV",
+                "properties": [
+                  {
+                    "typeCode": "d",
+                    "data": [
+                      0.375,
+                      0,
+                      0.625,
+                      0,
+                      0.375,
+                      0.25,
+                      0.625,
+                      0.25,
+                      0.125,
+                      0.5,
+                      0.375,
+                      0.5,
+                      0.625,
+                      0.5,
+                      0.875,
+                      0.5,
+                      0.125,
+                      0.75,
+                      0.375,
+                      0.75,
+                      0.625,
+                      0.75,
+                      0.875,
+                      0.75,
+                      0.375,
+                      1,
+                      0.625,
+                      1
+                    ]
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "UVIndex",
+                "properties": [
+                  {
+                    "typeCode": "i",
+                    "data": [
+                      1,
+                      2,
+                      0,
+                      3,
+                      5,
+                      2,
+                      6,
+                      9,
+                      5,
+                      10,
+                      12,
+                      9,
+                      5,
+                      8,
+                      4,
+                      7,
+                      10,
+                      6,
+                      1,
+                      3,
+                      2,
+                      3,
+                      6,
+                      5,
+                      6,
+                      10,
+                      9,
+                      10,
+                      13,
+                      12,
+                      5,
+                      9,
+                      8,
+                      7,
+                      11,
+                      10
+                    ]
+                  }
+                ],
+                "nestedList": []
+              }
+            ]
+          },
+          {
+            "name": "Layer",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": [
+              {
+                "name": "Version",
+                "properties": [
+                  {
+                    "typeCode": "I",
+                    "data": 100
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "LayerElement",
+                "properties": [],
+                "nestedList": [
+                  {
+                    "name": "Type",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "LayerElementNormal"
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "TypedIndex",
+                    "properties": [
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  }
+                ]
+              },
+              {
+                "name": "LayerElement",
+                "properties": [],
+                "nestedList": [
+                  {
+                    "name": "Type",
+                    "properties": [
+                      {
+                        "typeCode": "S",
+                        "data": "LayerElementUV"
+                      }
+                    ],
+                    "nestedList": []
+                  },
+                  {
+                    "name": "TypedIndex",
+                    "properties": [
+                      {
+                        "typeCode": "I",
+                        "data": 0
+                      }
+                    ],
+                    "nestedList": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Model",
+        "properties": [
+          {
+            "typeCode": "L",
+            "data": "699303215"
+          },
+          {
+            "typeCode": "S",
+            "data": "VinhCubeModel"
+          },
+          {
+            "typeCode": "S",
+            "data": "Mesh"
+          }
+        ],
+        "nestedList": [
+          {
+            "name": "Version",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 232
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Properties70",
+            "properties": [],
+            "nestedList": [
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Translation"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Translation"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "A"
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 0
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 508.99639892578125
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 0
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Rotation"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Rotation"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "A"
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 90.00000933466734
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 0
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 180.00000500895632
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Scaling"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Scaling"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "A"
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 100
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 100
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 100
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "DefaultAttributeIndex"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "int"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Integer"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "I",
+                    "data": 0
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "InheritType"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "enum"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "I",
+                    "data": 1
+                  }
+                ],
+                "nestedList": []
+              }
+            ]
+          },
+          {
+            "name": "MultiLayer",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "MultiTake",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Shading",
+            "properties": [
+              {
+                "typeCode": "C",
+                "data": 1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Culling",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "CullingOff"
+              }
+            ],
+            "nestedList": []
+          }
+        ]
+      },
+      {
+        "name": "Model",
+        "properties": [
+          {
+            "typeCode": "L",
+            "data": "623796400"
+          },
+          {
+            "typeCode": "S",
+            "data": "VinhCube2Model"
+          },
+          {
+            "typeCode": "S",
+            "data": "Mesh"
+          }
+        ],
+        "nestedList": [
+          {
+            "name": "Version",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 232
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Properties70",
+            "properties": [],
+            "nestedList": [
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Rotation"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Rotation"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "A"
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 90.00000933466734
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 0
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 180.00000500895632
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Scaling"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Lcl Scaling"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "A"
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 100
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 100
+                  },
+                  {
+                    "typeCode": "D",
+                    "data": 100
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "DefaultAttributeIndex"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "int"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "Integer"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "I",
+                    "data": 0
+                  }
+                ],
+                "nestedList": []
+              },
+              {
+                "name": "P",
+                "properties": [
+                  {
+                    "typeCode": "S",
+                    "data": "InheritType"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": "enum"
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "S",
+                    "data": ""
+                  },
+                  {
+                    "typeCode": "I",
+                    "data": 1
+                  }
+                ],
+                "nestedList": []
+              }
+            ]
+          },
+          {
+            "name": "MultiLayer",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "MultiTake",
+            "properties": [
+              {
+                "typeCode": "I",
+                "data": 0
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Shading",
+            "properties": [
+              {
+                "typeCode": "C",
+                "data": 1
+              }
+            ],
+            "nestedList": []
+          },
+          {
+            "name": "Culling",
+            "properties": [
+              {
+                "typeCode": "S",
+                "data": "CullingOff"
+              }
+            ],
+            "nestedList": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Connections",
+    "properties": [],
+    "nestedList": [
+      {
+        "name": "C",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": "OO"
+          },
+          {
+            "typeCode": "L",
+            "data": "699303215"
+          },
+          {
+            "typeCode": "L",
+            "data": "0"
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "C",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": "OO"
+          },
+          {
+            "typeCode": "L",
+            "data": "623796400"
+          },
+          {
+            "typeCode": "L",
+            "data": "0"
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "C",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": "OO"
+          },
+          {
+            "typeCode": "L",
+            "data": "508077949"
+          },
+          {
+            "typeCode": "L",
+            "data": "699303215"
+          }
+        ],
+        "nestedList": []
+      },
+      {
+        "name": "C",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": "OO"
+          },
+          {
+            "typeCode": "L",
+            "data": "959253961"
+          },
+          {
+            "typeCode": "L",
+            "data": "623796400"
+          }
+        ],
+        "nestedList": []
+      }
+    ]
+  },
+  {
+    "name": "Takes",
+    "properties": [],
+    "nestedList": [
+      {
+        "name": "Current",
+        "properties": [
+          {
+            "typeCode": "S",
+            "data": ""
+          }
+        ],
+        "nestedList": []
+      }
+    ]
+  }
+] 
