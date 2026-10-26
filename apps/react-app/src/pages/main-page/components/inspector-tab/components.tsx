@@ -6,6 +6,7 @@ import type { AssetManager, ImageAsset, ImageOrColor, ImageOrValue, OptionalImag
 import z from "zod";
 import { getDenormalizeColor, getNormalizeColor } from "../../helpers/utils/utils";
 import { KTXTranscoder } from "@shot-engine/ktx-tool/transcoder";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 const numberStringSchema = z.preprocess(
     (val) => (val === '' || val === null ? NaN : Number(val)),
@@ -54,21 +55,23 @@ export function ThreeValueRow(
 
     return (
         <div className="flex items-center my-0.5">
-            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
-            <div className="flex items-center justify-evenly w-full gap-1">
-                <input className="outline-none border text-sm px-0.5 w-1/3"
+            <div className="mr-1 w-24">
+                <span className="select-none text-sm text-white">{label}:</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <input className="outline-none border text-sm px-0.5 w-16"
                     value={localValue.x}
                     onChange={(e) => { handleChange("x", e.target.value) }}
                     onBlur={onBlur}
                     onKeyDown={(e) => e.key === "Enter" && onBlur()}
                 />
-                <input className="outline-none border text-sm px-0.5 w-1/3"
+                <input className="outline-none border text-sm px-0.5 w-16"
                     value={localValue.y}
                     onChange={(e) => { handleChange("y", e.target.value) }}
                     onBlur={onBlur}
                     onKeyDown={(e) => e.key === "Enter" && onBlur()}
                 />
-                <input className="outline-none border text-sm px-0.5 w-1/3"
+                <input className="outline-none border text-sm px-0.5 w-16"
                     value={localValue.z}
                     onChange={(e) => { handleChange("z", e.target.value) }}
                     onBlur={onBlur}
@@ -128,21 +131,23 @@ export function RGBValueRow(
 
     return (
         <div className="flex items-center my-0.5">
-            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
-            <div className="flex items-center justify-evenly w-full gap-1">
-                <input className="outline-none border text-sm px-0.5 w-1/3"
+            <div className="mr-1 w-24">
+                <span className="select-none text-sm text-white">{label}:</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <input className="outline-none border text-sm px-0.5 w-12"
                     value={localValue.x}
                     onChange={(e) => { handleChange("x", e.target.value) }}
                     onBlur={onBlur}
                     onKeyDown={(e) => e.key === "Enter" && onBlur()}
                 />
-                <input className="outline-none border text-sm px-0.5 w-1/3"
+                <input className="outline-none border text-sm px-0.5 w-12"
                     value={localValue.y}
                     onChange={(e) => { handleChange("y", e.target.value) }}
                     onBlur={onBlur}
                     onKeyDown={(e) => e.key === "Enter" && onBlur()}
                 />
-                <input className="outline-none border text-sm px-0.5 w-1/3"
+                <input className="outline-none border text-sm px-0.5 w-12"
                     value={localValue.z}
                     onChange={(e) => { handleChange("z", e.target.value) }}
                     onBlur={onBlur}
@@ -190,9 +195,11 @@ export function Selection<T extends number | string>(
     const safeValue = options.some(e => e.value === value) ? value : "";
     return (
         <div className="flex items-center my-0.5">
-            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
-            <div className="flex items-center w-full gap-1">
-                <select className="cursor-pointer outline-none text-sm border"
+            <div className="mr-1 w-24">
+                <span className="select-none text-sm text-white">{label}:</span>
+            </div>
+            <div className="flex">
+                <select className="cursor-pointer outline-none text-sm border max-w-48"
                     value={safeValue}
                     onChange={(e) => {
                         if(typeof value === "number"){
@@ -546,8 +553,10 @@ export function CheckBox(
     const { label, value, onChange } = props;
     return (
         <div className="flex items-center my-0.5">
-            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
-            <div className="flex items-center w-full gap-1">
+            <div className="mr-1 w-24">
+                <span className="select-none text-sm text-white">{label}:</span>
+            </div>
+            <div className="flex items-center">
                 <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)}
                     className="accent-black cursor-pointer size-3.5"
                 />
@@ -579,8 +588,10 @@ export function OneValueRow(
 
     return (
         <div className="flex items-center my-0.5">
-            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
-            <div className="flex items-center w-full gap-1">
+            <div className="mr-1 w-24">
+                <span className="select-none text-sm text-white">{label}:</span>
+            </div>
+            <div className="flex items-center">
                 <input className="outline-none border text-sm px-0.5 w-1/3" type="number" value={valueState}
                     onBlur={onBlurValue}
                     onKeyDown={(e) => e.key === "Enter" && onBlurValue()}
@@ -606,8 +617,10 @@ export function OneInputRow(
 
     return (
         <div className="flex items-center my-0.5">
-            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
-            <div className="flex items-center w-full gap-1">
+            <div className="mr-1 w-24">
+                <span className="select-none text-sm text-white">{label}:</span>
+            </div>
+            <div className="flex items-center">
                 <input className="outline-none border text-sm px-0.5 w-1/3" value={valueState}
                     onBlur={onBlurValue}
                     onKeyDown={(e) => e.key === "Enter" && onBlurValue()}
@@ -633,8 +646,10 @@ export function TextAreaRow(
 
     return (
         <div className="flex items-center my-0.5">
-            <span className="select-none text-sm text-white mr-1 w-24">{label}:</span>
-            <div className="flex items-center w-full gap-1">
+            <div className="mr-1 w-24">
+                <span className="select-none text-sm text-white">{label}:</span>
+            </div>
+            <div className="flex items-center">
                 <textarea rows={5} className="outline-none border text-sm px-0.5 flex-1" value={valueState}
                     onBlur={onBlurValue}
                     onKeyDown={(e) => e.key === "Enter" && onBlurValue()}
@@ -679,11 +694,47 @@ export function Button(
     const { label, onClick } = props;
     return (
         <button
-            className="text-sm text-white w-12 py-1 px-2 bg-slate-600 hover:opacity-80
+            className="text-sm text-white w-fit py-1 px-2 bg-slate-600 hover:opacity-80
                 transition select-none cursor-pointer rounded"
             onClick={onClick}
         >
             {label}
+        </button>
+    );
+}
+export function SaveButton(
+    props: {
+        label: string,
+        handle?: (cancelled: boolean) => Promise<void>
+    }
+){
+    const { label, handle } = props;
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        if(!saving) return;
+        let cancel = false;
+        const task = async () => {
+            await handle?.(cancel);
+            setSaving(false);
+        }
+        task();
+        return () => {
+            cancel = true;
+        }
+    }, [saving]);
+
+    return (
+        <button
+            className="text-sm text-white w-fit py-1 px-2 bg-slate-600 hover:opacity-80
+                transition select-none cursor-pointer rounded"
+            onClick={() => {
+                setSaving(true);
+            }}
+        >
+            {
+                !saving ? label : <ArrowPathIcon className="size-5 animate-spin"/>
+            }
         </button>
     );
 }
@@ -819,4 +870,81 @@ export function AssetInfoRow(props: { uuid: string }){
         <TextRowErr label="" content={props.uuid}/> :
         <TextRow label={assetInfo.name} content={assetInfo.uuid}/>
     );
+}
+export function AssetList(props: {
+    label: string,
+    uuids: string[],
+    type: AssetManager.AssetInfo["type"],
+    onAdd?: (uuid: string) => void,
+    onRemove?: (uuid: string, assetInfo: AssetManager.AssetInfo) => void,
+}){
+    const { label, uuids, type, onAdd, onRemove } = props;
+    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+    const [curId, setCurId] = useState("");
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            const assetInfos = await window.api.assetManager.getAssetInfosFromType(type);
+            if(cancelled) return;
+            setAssetInfos(assetInfos);
+        }
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, [uuids]);
+
+    return <div className="flex flex-col gap-1">
+        <TextRow label={label} content=""/>
+        <div className="flex gap-1">
+            <Selection
+                label="Select"
+                options={assetInfos.filter(e => !uuids.some(id => id === e.uuid)).map((e) => {
+                    return {
+                        label: e.name,
+                        value: e.uuid
+                    }
+                })}
+                value={curId}
+                onChange={(value) => {
+                    setCurId(value)
+                }}
+            />
+            {
+                curId &&
+                <button className="text-sm text-white py-1 px-2 bg-slate-600 hover:opacity-80
+                    transition select-none cursor-pointer rounded"
+                    onClick={() => {
+                        onAdd?.(curId);
+                    }}
+                >
+                    Add
+                </button>
+            }
+        </div>
+        <ul className="flex flex-col gap-1">
+            {
+                uuids.map((id) => {
+                    const assetInfo = assetInfos.find(e => e.uuid === id);
+                    if(!assetInfo){
+                        return <li key={id} className="text-yellow-500">missing: {id}</li>
+                    }
+                    return <li key={id} className="flex gap-1">
+                        <button className="text-sm text-white py-1 px-2 bg-slate-600 hover:opacity-80
+                            transition select-none cursor-pointer rounded"
+                            onClick={() => {
+                                onRemove?.(assetInfo.uuid, assetInfo);
+                            }}
+                        >
+                            Remove
+                        </button>
+                        {assetInfo.name}
+                    </li>
+                })
+            }
+            
+        </ul>
+        <div className="w-full h-0.5 bg-slate-400"></div>
+    </div>
 }

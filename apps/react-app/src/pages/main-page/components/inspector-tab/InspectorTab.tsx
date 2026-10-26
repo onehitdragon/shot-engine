@@ -8,6 +8,7 @@ import { SceneAssetInspector } from "./SceneAssetInspector";
 import { HdrAssetInspector } from "./HdrAssetInspector";
 import { FontAssetInspector } from "./FontAssetInspector";
 import { TextAssetInspector } from "./TextAssetInspector";
+import { ProjectSettingAssetInspector } from "./ProjectSettingAssetInspector";
 
 export function InspectorTab(){
     const inspector = useAppSelector((state) => state.inspector.inspector);
@@ -40,6 +41,7 @@ export function InspectorTab(){
                 inspector.type === "prefab" ? <PrefabAssetInspector inspector={inspector}/> :
                 inspector.type === "scene" ? <SceneAssetInspector inspector={inspector}/> :
                 inspector.type === "hdr" ? <HdrAssetInspector inspector={inspector}/> :
+                inspector.type === "setting" ? <ProjectSettingAssetInspector inspector={inspector}/> :
                 inspector.type === "font" ? <FontAssetInspector inspector={inspector}/> :
                 inspector.type === "text" ? <TextAssetInspector inspector={inspector}/> :
                 <div className="flex items-center justify-center flex-1 text-white text-sm">

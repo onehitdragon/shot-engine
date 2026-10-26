@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"
 import type { AppDispatch, RootState } from "../store"
 import { showInspector } from "../slices/inspector-slice"
-import type { AssetManager, FontAsset, FontAssetBakeSetting, HdrAsset, HdrCube, ImageAsset, MeshAsset, OtherAsset, PrefabAsset, SceneAsset, TextAsset } from "@shot-engine/types";
+import type { AssetManager, FontAsset, FontAssetBakeSetting, HdrAsset, HdrCube, ImageAsset, MeshAsset, OtherAsset, PrefabAsset, ProjectSettingAsset, SceneAsset, TextAsset } from "@shot-engine/types";
 import { mat4 } from "gl-matrix";
 import { WebglHelper } from "../../pages/main-page/helpers/resource-manager-helper/WebglHelper";
 import { getCubeMeshData } from "../../pages/main-page/helpers/scene-manager-helper/mesh-datas";
@@ -95,6 +95,15 @@ export const inspectAssetThunk = createAsyncThunk
                     type: "hdr",
                     assetInfo,
                     hdrAsset: asset as HdrAsset
+                } }));
+                return;
+            }
+            if(assetInfo.type === "setting"){
+                const asset = await window.api.assetManager.getAssetFromUuid(assetInfo.uuid, "setting");
+                dispatch(showInspector({ inspector: {
+                    type: "setting",
+                    assetInfo,
+                    projectSettingAsset: asset as ProjectSettingAsset
                 } }));
                 return;
             }

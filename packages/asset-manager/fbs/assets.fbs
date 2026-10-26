@@ -77,6 +77,17 @@ table HdrAsset{
     brdfLUT: HdrImage;
 }
 
+table SceneSetting{
+    mainRef: string;
+    importRefs: [string];
+}
+
+table ProjectSettingAsset{
+    scene: SceneSetting;
+}
+
+
+
 table FontAssetBakeSetting{
     field_type: ushort;
     font_size: int;

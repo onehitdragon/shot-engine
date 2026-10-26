@@ -8,7 +8,7 @@ import crypto from "crypto";
 import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
 import * as asssetManager from "@shot-engine/asset-manager";
-import { AssetManager, AssetType, FontAssetBakeSetting, HdrAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
+import { AssetManager, AssetType, FontAssetBakeSetting, HdrAsset, PrefabAsset, ProjectSettingAsset, SceneAsset } from "@shot-engine/types";
 import { readHdr } from "hdrify";
 
 export function setupIPC(){
@@ -253,6 +253,12 @@ export function setupIPC(){
     "assetManager:saveSceneAssetBinary",
     (e, sceneAsset: SceneAsset, filePath: string) => {
       asssetManager.saveSceneAssetBinary(sceneAsset, filePath);
+    }
+  );
+  ipcMain.handle(
+    "assetManager:saveProjectSettingAssetBinary",
+    (e, projectSettingAsset: ProjectSettingAsset, filePath: string) => {
+      asssetManager.saveProjectSettingAssetBinary(projectSettingAsset, filePath);
     }
   );
   ipcMain.handle(

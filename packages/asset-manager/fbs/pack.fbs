@@ -1,0 +1,20 @@
+include "assets.fbs";
+
+namespace FBSEngine;
+
+union Asset{
+  ImageAsset,
+  MeshAsset,
+  PrefabAsset,
+  SceneAsset,
+  HdrAsset
+}
+
+table AssetWrapper{
+  id: string;
+  asset: Asset;
+}
+
+table Pack{
+  entries: [AssetWrapper];
+}

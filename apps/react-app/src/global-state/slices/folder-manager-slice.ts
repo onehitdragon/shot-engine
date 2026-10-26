@@ -1,6 +1,6 @@
 import { createEntityAdapter, createSelector, createSlice, type EntityState, type PayloadAction, type WritableDraft } from "@reduxjs/toolkit"
 import type { RootState } from "../store";
-import { entryDeletedThunk, fileImportedThunk, folderCreatedThunk, prefabDuplicatedThunk, prefabFileCreatedThunk, projectClosedThunk, projectOpenedThunk, projectRescanThunk, sceneFileCreatedThunk } from "../thunks/folder-manager-thunks";
+import { entryDeletedThunk, fileImportedThunk, folderCreatedThunk, prefabDuplicatedThunk, prefabFileCreatedThunk, projectClosedThunk, projectOpenedThunk, projectRescanThunk, projectSettingFileCreatedThunk, sceneFileCreatedThunk } from "../thunks/folder-manager-thunks";
 
 export namespace FolderManager {
     export type ProjectPaths = {
@@ -90,6 +90,11 @@ const slice = createSlice({
             addEntry(state, parentPath, fileCreated);
         });
         builder.addCase(sceneFileCreatedThunk.fulfilled, (state, action) => {
+            const { parentPath } = action.meta.arg;
+            const { fileCreated } = action.payload;
+            addEntry(state, parentPath, fileCreated);
+        });
+        builder.addCase(projectSettingFileCreatedThunk.fulfilled, (state, action) => {
             const { parentPath } = action.meta.arg;
             const { fileCreated } = action.payload;
             addEntry(state, parentPath, fileCreated);

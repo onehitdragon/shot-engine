@@ -49,6 +49,8 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("assetManager:savePrefabAssetBinary", prefabAsset, filePath),
     saveSceneAssetBinary: (sceneAsset: any, filePath: string) =>
       ipcRenderer.invoke("assetManager:saveSceneAssetBinary", sceneAsset, filePath),
+    saveProjectSettingAssetBinary: (projectSettingAsset: any, filePath: string) =>
+      ipcRenderer.invoke("assetManager:saveProjectSettingAssetBinary", projectSettingAsset, filePath),
     getFilePathFromAssetId: (uuid: string) =>
       ipcRenderer.invoke("assetManager:getFilePathFromAssetId", uuid),
     addBakedHdrAsset: (uuid: string, hdrAsset: any) =>

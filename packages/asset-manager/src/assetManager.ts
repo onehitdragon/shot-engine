@@ -8,7 +8,7 @@ import { createDBIfNotExist, FileRow, AssetRow, closeDB } from "./db.js";
 import * as ShotEngineType from "@shot-engine/types";
 import { AssetManager } from "@shot-engine/types";
 import { readGLBFile } from './glb.js';
-import { readFontAsset, readHdrAsset, readImageAsset, readMeshAsset, readPrefabAsset, readSceneAsset, saveFontAssetBinary, saveHdrAssetBinary, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf.js';
+import { readFontAsset, readHdrAsset, readImageAsset, readMeshAsset, readPrefabAsset, readProjectSettingAsset, readSceneAsset, saveFontAssetBinary, saveHdrAssetBinary, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf.js';
 import { createDefaultConeAssetMesh, createDefaultCubeAssetMesh, createDefaultCylinderAssetMesh, createDefaultSphereAssetMesh } from './createDefaultAssetMesh.js';
 import * as assetBakers from './assetBakers.js';
 import { genKTX2 } from './helpers/gen-ktx.js';
@@ -125,6 +125,9 @@ export function query(){
         }
         if(type === "hdr"){
             return readHdrAsset(filePath);
+        }
+        if(type === "setting"){
+            return readProjectSettingAsset(filePath);
         }
         if(type === "font"){
             return readFontAsset(filePath);
@@ -297,6 +300,9 @@ export async function rescan(){
             }
             else if(isHdrFile(fileRow.path)){
                 await syncNotContainer(fileRow, assetRows, "hdr");
+            }
+            else if(isSettingFile(fileRow.path)){
+                await syncNotContainer(fileRow, assetRows, "setting");
             }
             else if(isFontFile(fileRow.path)){
                 await syncNotContainer(fileRow, assetRows, "font");
@@ -616,6 +622,9 @@ function createAssetDefaultProterpty(type: AssetRow["type"]): string{
     else if(type === "hdr"){
         return schema.defaultHdrAssetJSON;
     }
+    else if(type === "setting"){
+        return schema.defaultSettingAssetJSON;
+    }
     else if(type === "font"){
         return schema.defaultFontAssetJSON;
     }
@@ -653,6 +662,10 @@ function isHdrFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return ext === ".hdr";
 }
+function isSettingFile(filePath: string){
+    const ext = path.extname(filePath).toLowerCase();
+    return ext === ".setting";
+}
 function isFontFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return ext === ".ttf";
@@ -683,6 +696,9 @@ async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: Asse
     else if(type === "hdr"){
         // ignore
         // only create assetRow not gen asset file
+    }
+    else if(type === "setting"){
+        genAssetFromFile(fileRow, assetRow);
     }
     else if(type === "font"){
         // ignore

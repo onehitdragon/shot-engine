@@ -19,7 +19,9 @@ import {
     FontInfo,
     FontInfoChar,
     FontInfoCommon,
-    FontAssetBakeSetting
+    FontAssetBakeSetting,
+    ProjectSettingAsset,
+    SceneSetting
 } from "../fbs-gen/fbsengine.js";
 import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, readGameObject } from "./flatbfUtil.js";
 
@@ -176,6 +178,31 @@ export function saveHdrAssetBinary(hdrAsset: ShotEngineType.HdrAsset, filePath: 
     HdrAsset.addBrdfLut(builder, brdfLUTOffset);
     const hdrAssetOffset = HdrAsset.endHdrAsset(builder);
     builder.finish(hdrAssetOffset);
+
+    const bytes = builder.asUint8Array();
+    fs.writeFileSync(filePath, bytes);
+}
+export function saveProjectSettingAssetBinary(projectSettingAsset: ShotEngineType.ProjectSettingAsset, filePath: string){
+    const { scene } = projectSettingAsset;
+    const builder = new Builder(1024);
+
+    const mainRefOffset = builder.createString(scene.mainRef);
+    const importRefOffsets: Offset[] = [];
+    for(const importRef of scene.importRefs){
+        const importRefOffset = builder.createString(importRef);
+        importRefOffsets.push(importRefOffset);
+    }
+    const importRefsOffset = SceneSetting.createImportRefsVector(builder, importRefOffsets);
+
+    SceneSetting.startSceneSetting(builder);
+    if(scene.mainRef) SceneSetting.addMainRef(builder, mainRefOffset);
+    SceneSetting.addImportRefs(builder, importRefsOffset);
+    const sceneSettingOffset = SceneSetting.endSceneSetting(builder);
+
+    ProjectSettingAsset.startProjectSettingAsset(builder);
+    ProjectSettingAsset.addScene(builder, sceneSettingOffset);
+    const projectSettingAssetOffset = ProjectSettingAsset.endProjectSettingAsset(builder);
+    builder.finish(projectSettingAssetOffset);
 
     const bytes = builder.asUint8Array();
     fs.writeFileSync(filePath, bytes);
@@ -441,6 +468,28 @@ export function readHdrAsset(filePath: string){
         brdfLUT: brdfLUTOut
     }
 
+    return asset;
+}
+export function readProjectSettingAsset(filePath: string){
+    if(!fs.existsSync(filePath)) return;
+    const bytes = new Uint8Array(fs.readFileSync(filePath));
+    const byteBuffer = new ByteBuffer(bytes);
+    const projectSettingAsset = ProjectSettingAsset.getRootAsProjectSettingAsset(byteBuffer);
+
+    const sceneSetting = projectSettingAsset.scene();
+    if(!sceneSetting) return;
+    const importRefs: string[] = [];
+    for(let i = 0; i < sceneSetting.importRefsLength(); i++){
+        const importRef = sceneSetting.importRefs(i);
+        importRefs.push(importRef);
+    }
+    
+    const asset: ShotEngineType.ProjectSettingAsset = {
+        scene: {
+            mainRef: sceneSetting.mainRef() || undefined,
+            importRefs
+        }
+    }
     return asset;
 }
 export function readFontAsset(filePath: string){

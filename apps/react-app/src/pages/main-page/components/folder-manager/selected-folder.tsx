@@ -3,14 +3,14 @@ import { FolderPlusIcon, FolderIcon, DocumentTextIcon,
     GlobeAltIcon,
     TruckIcon, XCircleIcon,
     ArrowTurnDownRightIcon, PuzzlePieceIcon,
-    Square3Stack3DIcon
+    Square3Stack3DIcon, AdjustmentsVerticalIcon
  } from "@heroicons/react/24/solid";
 import { chooseEntry, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, focusEntry, type FolderManager, selectEntryByPath, selectSelectedEntry } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { useEffect, useRef, useState } from "react";
 import { showDialog } from "../../../../global-state/slices/app-confirm-dialog-slice";
-import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk, prefabFileCreatedThunk, sceneFileCreatedThunk } from "../../../../global-state/thunks/folder-manager-thunks";
+import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk, prefabFileCreatedThunk, sceneFileCreatedThunk, projectSettingFileCreatedThunk } from "../../../../global-state/thunks/folder-manager-thunks";
 import { inspectAssetThunk } from "../../../../global-state/thunks/inspector-thunks";
 import type { AssetManager, AssetType } from "@shot-engine/types";
 import { getBaseName } from "../../helpers/utils/utils";
@@ -260,6 +260,7 @@ function ButtonBar(props: ButtonBarProps){
             <ul className='flex-1 flex justify-end items-center'>
                 <CreateSceneButton selectedDirectory={selectedDirectory}/>
                 <CreatePrefabButton selectedDirectory={selectedDirectory}/>
+                <CreateProjectSettingButton selectedDirectory={selectedDirectory}/>
             </ul>
         </div>
     );
@@ -339,6 +340,34 @@ function CreateSceneButton(props: { selectedDirectory: FolderManager.DirectorySt
         :
         <EntryNameInput
             extension=".scene"
+            children={selectedDirectory.children.map(e => getBaseName(e))}
+            create={create}
+            close={close}
+            className="mr-1"
+        />
+    );
+}
+function CreateProjectSettingButton(props: { selectedDirectory: FolderManager.DirectoryState }){
+    const { selectedDirectory } = props;
+    const [enteringName, setEnteringName] = useState(false);
+    const dispatch = useAppDispatch();
+    const create = async (name: string) => {
+        dispatch(projectSettingFileCreatedThunk({ parentPath: selectedDirectory.path, name }));
+    }
+    const close = () => {
+        setEnteringName(false);
+    }
+
+    return (
+        !enteringName ?
+        <button className='size-8 hover:cursor-pointer hover:opacity-50 transition-opacity flex items-center'
+            onClick={() => { setEnteringName(true); }}>
+            <AdjustmentsVerticalIcon className='size-4 text-white'/>
+            <span className='text-xs text-white select-none'>+</span>
+        </button>
+        :
+        <EntryNameInput
+            extension=".setting"
             children={selectedDirectory.children.map(e => getBaseName(e))}
             create={create}
             close={close}

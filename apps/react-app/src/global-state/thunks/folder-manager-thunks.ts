@@ -393,3 +393,50 @@ export const sceneFileCreatedThunk = createAsyncThunk
         }
     }
 );
+export const projectSettingFileCreatedThunk = createAsyncThunk
+<
+    {
+        fileCreated: DirectoryTree.File
+    },
+    { parentPath: string, name: string },
+    {
+        dispatch: AppDispatch,
+        state: RootState
+    }
+>
+(
+    "folder-manager/projectSettingFileCreated",
+    async ({ parentPath, name }, { getState, rejectWithValue }) => {
+        try{
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "no project has been opened yet";
+            
+            if(parentPath.startsWith(projectPaths.assetDefault)) throw "Dont create inside default";
+            if(!parentPath.startsWith(projectPaths.asset)) throw "Dont create outside asset folder";
+
+            const path = await window.fsPath.join(parentPath, name);
+            await window.api.assetManager.saveProjectSettingAssetBinary(
+                {
+                    scene: {
+                        importRefs: []
+                    }
+                },
+                path
+            );
+
+            await window.api.assetManager.rescan();
+
+            return {
+                fileCreated: {
+                    type: "File",
+                    name,
+                    path
+                }
+            }
+        }
+        catch(err){
+            await window.api.showError(String(err));
+            return rejectWithValue(err);
+        }
+    }
+);
