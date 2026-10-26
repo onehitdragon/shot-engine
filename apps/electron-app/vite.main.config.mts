@@ -4,7 +4,11 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   build: {
     rollupOptions: {
-      external: ["better-sqlite3", "sharp"]
+      external: [
+        "better-sqlite3",
+        "sharp",
+        "@shot-engine/ktx-tool/encoder"
+      ]
     }
   }
 });

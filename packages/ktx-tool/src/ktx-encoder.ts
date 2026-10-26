@@ -1,6 +1,21 @@
 import BASIS, { type BasisModule } from "./basis_encoder/basis_encoder.js";
 import fs from "fs/promises";
 import sharp from "sharp";
+import { type Addon } from "./addon-type.js";
+
+importAddon();
+
+async function importAddon(){
+  let plat = "";
+  if(process.platform === "win32") plat = "windows";
+  if(process.platform === "linux") plat = "linux";
+  if(process.platform === "darwin") plat = "macosx";
+  const arch = process.arch;
+  const suffix = `${plat}-${arch}`;
+
+  const addon = await import(`./prebuilds/ktx-encoder-${suffix}.node`);
+  return addon.default as Addon;
+}
 
 /** nodejs only */
 export class KTXEncoder{
@@ -12,13 +27,13 @@ export class KTXEncoder{
     return this._instance;
   }
   private _inited: boolean;
-  private _basisModule?: BasisModule;
+  private _addon?: Addon;
   private constructor(){
     this._inited = false;
   }
   public async init(){
     if(this._inited) return;
-    this._basisModule = await BASIS();
+    this._addon = await importAddon();
     this._inited = true;
   }
   /**
@@ -32,7 +47,7 @@ export class KTXEncoder{
     genMipmap: boolean
   ){
     if(!this._inited) throw "call init() before call this function";
-    if(!this._basisModule) throw "fail to init this._basisModule";
+    if(!this._addon) throw "fail to init this._addon";
     
     const imageSharp = sharp(imagePath);
     const { width, height } = await imageSharp.metadata();
@@ -40,48 +55,23 @@ export class KTXEncoder{
     // any number of channel alway ensure 4 channels(rgba)
     const imageRawBuffer = await imageSharp.ensureAlpha().raw().toBuffer();
 
-    const basisModule = this._basisModule;
-    const { initializeBasis, BasisEncoder, ldr_image_type, basis_tex_format } = basisModule;
-    initializeBasis();
-    const encoder = new BasisEncoder();
-    // encoder.setDebug(true);
-    encoder.setCreateKTX2File(true);
-    encoder.setFormatModeAndQualityEffort(basis_tex_format.cETC1S.value, 50, 1, true);
-
-    // --sRGB config
-    if(sRGB) encoder.setSRGBPreset();
-    else encoder.setLinearPreset();
-
-    // --mipmap config
-    if(genMipmap){
-      encoder.setMipGen(true);
-      // encoder.setMipScale(1); // ignore
-      // encoder.setMipFilter(1);
-      // encoder.setMipRenormalize(false);
-      // encoder.setMipWrapping();
-      // encoder.setMipSmallestDimension(1); // ignore
-    }
-    else{
-      encoder.setMipGen(false);
-    }
-
-    // --other config
-    encoder.setYFlip(true); // true for webgl
-    
-    // --in
-    const imageType = ldr_image_type.cRGBA32.value;
-    const success = encoder.setSliceSourceImage(0, imageRawBuffer, width, height, imageType);
-    if(!success) throw "error: setSliceSourceImage";
-
-    // --encode
-    const safeSize = Math.max(width * height * 4 * 2, 1024 * 1024 * 4); // minimum: 4mb or higher
-    const outBuffer = new Uint8Array(safeSize);
-    const size = encoder.encode(outBuffer);
-    if(size === 0) throw "error: encode";
-
-    // --out
-    return outBuffer.subarray(0, size);
+    const outBuffer = this._addon.encodeLdrImage(
+      {
+        data: imageRawBuffer,
+        width,
+        height
+      },
+      {
+        quality: 50,
+        effort: 1,
+        srgb: sRGB,
+        mipmapGen: genMipmap,
+        yFlip: true
+      }
+    )
+    return outBuffer;
   }
+
   /**
    * 
    * @param imagePath full path of image
@@ -92,7 +82,7 @@ export class KTXEncoder{
     genMipmap: boolean
   ){
     if(!this._inited) throw "call init() before call this function";
-    if(!this._basisModule) throw "fail to init this._basisModule";
+    if(!this._addon) throw "fail to init this._basisModule";
     
     const imageSharp = sharp(imagePath);
     const { width, height } = await imageSharp.metadata();
@@ -100,106 +90,45 @@ export class KTXEncoder{
     // any number of channel alway ensure 4 channels(rgba)
     const imageRawBuffer = await imageSharp.ensureAlpha().raw().toBuffer();
 
-    const basisModule = this._basisModule;
-    const { initializeBasis, BasisEncoder, ldr_image_type, basis_tex_format } = basisModule;
-    initializeBasis();
-    const encoder = new BasisEncoder();
-    // encoder.setDebug(true);
-    encoder.setCreateKTX2File(true);
-    encoder.setFormatModeAndQualityEffort(basis_tex_format.cETC1S.value, 50, 1, true);
-
-    // --sRGB config
-    encoder.setNormalMapPreset();
-
-    // --mipmap config
-    if(genMipmap){
-      encoder.setMipGen(true);
-      // encoder.setMipScale(1); // ignore
-      // encoder.setMipFilter(1);
-      encoder.setMipRenormalize(true);
-      // encoder.setMipWrapping();
-      // encoder.setMipSmallestDimension(1); // ignore
-    }
-    else{
-      encoder.setMipGen(false);
-    }
-
-    // --other config
-    encoder.setYFlip(true); // true for webgl
-    
-    // --in
-    const imageType = ldr_image_type.cRGBA32.value;
-    const success = encoder.setSliceSourceImage(0, imageRawBuffer, width, height, imageType);
-    if(!success) throw "error: setSliceSourceImage";
-
-    // --encode
-    const safeSize = Math.max(width * height * 4 * 2, 1024 * 1024 * 4); // minimum: 4mb or higher
-    const outBuffer = new Uint8Array(safeSize);
-    const size = encoder.encode(outBuffer);
-    if(size === 0) throw "error: encode";
-
-    // --out
-    return outBuffer.subarray(0, size);
+    const outBuffer = this._addon.encodeLdrImage(
+      {
+        data: imageRawBuffer,
+        width,
+        height
+      },
+      {
+        quality: 50,
+        effort: 1,
+        normal: true,
+        mipmapGen: genMipmap,
+        yFlip: true
+      }
+    )
+    return outBuffer;
   }
 }
 
 async function main(){
-  const imagePath = "./test/4096x4096 Texel Density Texture 1.png";
-  const ktx2Path = "./test/4096x4096 Texel Density Texture 1.ktx2";
+  const imagePath = "./test/image-rgba-8-sRGB.png";
+  const ktx2Path = "./test/image-rgba-8-sRGB.ktx2";
 
   const imageSharp = sharp(imagePath);
   const { width, height } = await imageSharp.metadata();
-  const imageRawBuffer = await imageSharp.toBuffer();
+  const imageRawBuffer = await imageSharp.ensureAlpha().raw().toBuffer();
 
-  console.log(imageRawBuffer.length);
-
-  const basisModule = await BASIS();
-  const { initializeBasis, BasisEncoder, ldr_image_type, basis_tex_format } = basisModule;
-  initializeBasis();
-
-  const encoder = new BasisEncoder();
-  encoder.setDebug(true);
-  encoder.setCreateKTX2File(true);
-  encoder.setFormatModeAndQualityEffort(basis_tex_format.cETC1S.value, 50, 1, true);
-
-  // --sRGB config
-  encoder.setSRGBPreset();
-  // encoder.setLinearPreset();
-  // encoder.setNormalMapPreset();
-
-  // --mipmap config
-  encoder.setMipGen(true);
-  // encoder.setMipScale(1); // ignore
-  // encoder.setMipFilter(1);
-  // encoder.setMipRenormalize(false);
-  // encoder.setMipWrapping();
-  // encoder.setMipSmallestDimension(1); // ignore
-
-  // --other
-  encoder.setYFlip(true); // true for webgl
-
-  //
-  const imageType = ldr_image_type.cPNGImage.value;
-  if(
-    !encoder.setSliceSourceImage(0, imageRawBuffer, width, height, imageType)
-  ){
-    console.error("error: setSliceSourceImage");
-    return;
-  }
-
-  //
-  const safeSize = Math.max(width * height * 4 * 2, 1024 * 1024 * 4); // minimum: 4mb or higher
-  const outBuffer = new Uint8Array(safeSize);
-  const size = encoder.encode(outBuffer);
-  if(size === 0){
-    console.error("error: encode");
-    return;
-  }
-  await fs.writeFile(ktx2Path, outBuffer.subarray(0, size));
-
-  // console.log(basisModule.basis_texture_type.cBASISTexTypeCubemapArray.value);
-  // console.log(Object.getPrototypeOf(encoder));
-  console.log(size);
+  const addon = await importAddon();
+  const outBuffer = addon.encodeLdrImage(
+    // imagePath
+    {
+      data: imageRawBuffer,
+      width,
+      height
+    },
+    {
+      mipmapGen: true
+    }
+  )
+  await fs.writeFile(ktx2Path, outBuffer);
 }
 
 async function main2(){
@@ -226,7 +155,7 @@ async function main2(){
   console.log("isSRGB", ktx2File.isSRGB());
 
   // --get size
-  const levelIdx = 5;
+  const levelIdx = 3;
   const layerIdx = 0;
   const faceIdx = 0;
   // cTFETC2_EAC_R11 cTFETC2_EAC_RG11 cTFETC1_RGB cTFETC2_RGBA

@@ -4,7 +4,7 @@ import { AssetProperty } from "@shot-engine/types";
 export async function genKTX2(imagePath: string | Uint8Array, property: AssetProperty.Image){
   const { imageType } = property;
   const ktxEncoder = KTXEncoder.getInstance();
-  await ktxEncoder.init();
+  await ktxEncoder.init(); 
   let ktx2Out: Uint8Array;
   if(imageType === "Texture"){
     const { sRGB, generateMipmaps } = property;

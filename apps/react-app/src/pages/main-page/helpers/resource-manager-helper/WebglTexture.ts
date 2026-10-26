@@ -1,5 +1,6 @@
 import type { AssetProperty, ImageAsset } from "@shot-engine/types";
 import type { Assets } from "../../../../engine-zod";
+import { KTXTranscoder } from "@shot-engine/ktx-tool/transcoder";
 
 export class WebglTexture{
     private _gl: WebGL2RenderingContext;
@@ -7,29 +8,65 @@ export class WebglTexture{
     get webglTexture(){
         return this._webglTexture;
     }
-    constructor(gl: WebGL2RenderingContext, imageAsset: ImageAsset, property: AssetProperty.Image){
+    private constructor(gl: WebGL2RenderingContext){
         this._gl = gl;
+        this._webglTexture = gl.createTexture();
+    }
+    public static async Create(
+        gl: WebGL2RenderingContext, imageAsset: ImageAsset, property: AssetProperty.Image
+    ){
+        const instance = new WebglTexture(gl);
+        const webglTexture = instance._webglTexture;
+
         const { ktx2 } = imageAsset;
+        const ktxTranscoder = KTXTranscoder.getInstance();
+        await ktxTranscoder.init();
+        const bc3RGBAs = await ktxTranscoder.bc3RGBA(ktx2);
+
         const { imageType, wrapMode, filterMode, generateMipmaps } = property;
-        const webglTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, webglTexture);
-        this.setWrapMode(wrapMode);
-        this.setFilterMode(generateMipmaps, filterMode);
-        if(imageType === "Texture"){
-            const { sRGB } = property;
-            const internalformat = sRGB ? gl.SRGB8_ALPHA8 : gl.RGBA8;
-            // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip); // flip y before update to gpu
-            // gl.texImage2D(gl.TEXTURE_2D, 0, internalformat, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-            // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); // reset
-            if(generateMipmaps) gl.generateMipmap(gl.TEXTURE_2D);
+
+        // get format
+        const extS3TC = gl.getExtension("WEBGL_compressed_texture_s3tc");
+        if(!extS3TC) throw "dont support WEBGL_compressed_texture_s3tc";
+        let format: number = extS3TC.COMPRESSED_RGBA_S3TC_DXT5_EXT; // for normal or texture no sRGB
+        if(imageType === "Texture" && property.sRGB){
+            const extS3TC_srgb = gl.getExtension("WEBGL_compressed_texture_s3tc_srgb");
+            if(!extS3TC_srgb) throw "dont support WEBGL_compressed_texture_s3tc_srgb"
+            format = extS3TC_srgb.COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
         }
-        else if(imageType === "NormalMap"){
-            // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip); // flip y before update to gpu
-            // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-            // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); // reset
+
+        // upload to gpu
+        for(const { info, bc3RGBA } of bc3RGBAs){
+            const { origWidth: width, origHeight: height, levelIndex } = info;
+            gl.compressedTexImage2D(
+                gl.TEXTURE_2D, levelIndex, format, width, height, 0, bc3RGBA
+            );
         }
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, bc3RGBAs.length - 1);
+        
+        // other
+        instance.setWrapMode(wrapMode);
+        instance.setFilterMode(generateMipmaps, filterMode);
         gl.bindTexture(gl.TEXTURE_2D, null);
-        this._webglTexture = webglTexture;
+        return instance;
+    }
+    /**
+     * @param colorData RGBA
+     */
+    public static CreateWithColor(gl: WebGL2RenderingContext, colorData: Uint8Array){
+        const instance = new WebglTexture(gl);
+        const webglTexture = instance._webglTexture;
+
+        gl.bindTexture(gl.TEXTURE_2D, webglTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, colorData);
+
+        instance.setWrapMode("CLAMP");
+        instance.setFilterMode(false, "NONE");
+        gl.bindTexture(gl.TEXTURE_2D, null);
+
+        return instance;
     }
     public dispose(){
         const gl = this._gl;

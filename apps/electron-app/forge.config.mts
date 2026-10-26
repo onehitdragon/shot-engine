@@ -13,7 +13,7 @@ import * as fsWalk from "@nodelib/fs.walk";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: {
-      unpackDir: "node_modules/{better-sqlite3,@img/sharp-*}"
+      unpackDir: "node_modules/{better-sqlite3,@img/sharp-*,@shot-engine/ktx-tool}"
     },
   },
   hooks: {
@@ -76,6 +76,7 @@ function copyNativeModule(buildPath: string){
   const requiredNativePackages = [
     "better-sqlite3", // "better-sqlite3"
     "sharp", "@img", "detect-libc", "semver", // sharp
+    "@shot-engine/ktx-tool"
   ];
 
   const projectPath = path.resolve("..", "..");
@@ -99,9 +100,12 @@ function copyNativeModule(buildPath: string){
 
   const destPath = path.join(buildPath, "node_modules");
   for(const packageName of requiredNativePackages){
-    const sourcePackagePath = findSourcePackagePath(packageName);
+    let sourcePackagePath = findSourcePackagePath(packageName);
     const destPackagePath = path.join(destPath, packageName);
-
+    if(fsExtra.lstatSync(sourcePackagePath).isSymbolicLink()){
+      sourcePackagePath = fsExtra.readlinkSync(sourcePackagePath);
+    }
+    
     console.log("copy native module", sourcePackagePath, "->", destPackagePath);
     fsExtra.mkdirSync(destPackagePath, { recursive: true });
     fsExtra.copySync(sourcePackagePath, destPackagePath);

@@ -35,21 +35,8 @@ export class ColorCache{
     }
     private _createWebglColorTexture(color: Vec3){
         color = getDenormalizeColor(color);
-        const webglTexture = new WebglTexture(
-            this._gl,
-            {
-                width: 1, height: 1, data: new Uint8Array([color.x, color.y, color.z, 255])
-            },
-            {
-                type: "image",
-                imageType: "Texture",
-                sRGB: false,
-                filterMode: "NONE",
-                generateMipmaps: false,
-                qualityLevel: 0,
-                wrapMode: "REPEAT",
-                flip: false
-            }
+        const webglTexture = WebglTexture.CreateWithColor(
+            this._gl, new Uint8Array([color.x, color.y, color.z, 255])
         );
         return webglTexture;
     }

@@ -11,7 +11,7 @@ import * as asssetManager from "@shot-engine/asset-manager";
 import { AssetManager, AssetType, FontAssetBakeSetting, HdrAsset, PrefabAsset, SceneAsset } from "@shot-engine/types";
 import { readHdr } from "hdrify";
 
-export function setupIPC() {
+export function setupIPC(){
   ipcMain.on("window:close", (e) => {
     const win = BrowserWindow.fromWebContents(e.sender);
     if (win == null) return;

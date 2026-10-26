@@ -25,7 +25,7 @@
     }
   },
   "scripts": {
-    "build": "copyfiles src/basis_encoder/* dist/ & tsc",
+    "build": "copyfiles src/basis_encoder/* dist/ & copyfiles src/prebuilds/* dist/ & tsc",
     "test": "vitest run"
   },
   "devDependencies": {

@@ -92,12 +92,12 @@ export class AssetCache{
             return curAssetCache;
         }
         if(state.state === "new"){
-            this._createWebglResoure(state.newAssetCache);
+            await this._createWebglResoure(state.newAssetCache);
             return state.newAssetCache;
         }
         if(state.state === "updated"){
             this._disposeWebglResoure(state.updatedAssetCache);
-            this._createWebglResoure(state.updatedAssetCache);
+            await this._createWebglResoure(state.updatedAssetCache);
             return state.updatedAssetCache;
         }
         if(state.state === "deleted"){
@@ -105,7 +105,7 @@ export class AssetCache{
             return;
         }
     }
-    private _createWebglResoure(assetCacheItem: AssetCacheItem){
+    private async _createWebglResoure(assetCacheItem: AssetCacheItem){
         const type = assetCacheItem.assetInfo.type;
         if(type === "mesh"){
             assetCacheItem.webglResource = {
@@ -114,7 +114,7 @@ export class AssetCache{
         }
         if(type === "image"){
             assetCacheItem.webglResource = {
-                webglTexture: this._createWebglTexture(assetCacheItem)
+                webglTexture: await this._createWebglTexture(assetCacheItem)
             }
         }
         if(type === "hdr"){
@@ -137,11 +137,11 @@ export class AssetCache{
         }
         return webglMeshes;
     }
-    private _createWebglTexture(assetCacheItem: AssetCacheItem){
+    private async _createWebglTexture(assetCacheItem: AssetCacheItem){
         const imageAsset = assetCacheItem.asset as ImageAsset | undefined;
         if(!imageAsset) return;
         const assetInfo = assetCacheItem.assetInfo;
-        const webglTexture = new WebglTexture(
+        const webglTexture = await WebglTexture.Create(
             this._gl, imageAsset, JSON.parse(assetInfo.property)
         );
         return webglTexture;
