@@ -61,6 +61,10 @@ export function ProjectSettingAssetInspector(props: { inspector: ProjectSettingA
         }}
       />
       <SaveButton label="Apply" handle={update}/>
+      <SaveButton label="Pack" handle={async () => {
+        await window.api.assetManager.pack({ scene });
+        console.log("xxxxx");
+      }}/>
     </div>
   );
 }

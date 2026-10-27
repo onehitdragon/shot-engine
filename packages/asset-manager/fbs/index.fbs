@@ -1,3 +1,2 @@
 include "engine.fbs";
 include "assets.fbs";
-include "pack.fbs";

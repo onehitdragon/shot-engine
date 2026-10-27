@@ -37,7 +37,8 @@ export const projectOpenedThunk = createAsyncThunk
                 asset: await window.fsPath.join(path, "Assets"),
                 assetDefault: await window.fsPath.join(path, "Assets", ".default"),
                 resource: await window.fsPath.join(path, "Engine", "Resource"),
-                assetDBFile: await window.fsPath.join(path, "Engine", "sqlite3.db")
+                assetDBFile: await window.fsPath.join(path, "Engine", "sqlite3.db"),
+                buildDir: await window.fsPath.join(path, "Build")
             }
             await window.api.folder.create(projectPaths.asset);
             await window.api.folder.create(projectPaths.assetDefault);
@@ -48,7 +49,8 @@ export const projectOpenedThunk = createAsyncThunk
                 assetDir: projectPaths.asset,
                 assetDefaultDir: projectPaths.assetDefault,
                 assetGenerateDir: projectPaths.resource,
-                dbFilePath: projectPaths.assetDBFile
+                dbFilePath: projectPaths.assetDBFile,
+                buildDir: projectPaths.buildDir
             });
             await window.api.assetManager.rescan();
             const entries = await window.api.folder.load(projectPaths.project);

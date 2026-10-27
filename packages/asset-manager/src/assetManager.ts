@@ -17,6 +17,7 @@ let configed = false;
 let ASSET_DIR = "";
 let ASSET_DEFAULT_DIR = "";
 let ASSET_GENERATED_DIR = "";
+let BUILD_DIR = "";
 
 let filesQuery: ReturnType<typeof createDBIfNotExist>["filesQuery"] = {} as any;
 let assetsQuery: ReturnType<typeof createDBIfNotExist>["assetsQuery"] = {} as any; 
@@ -28,10 +29,17 @@ export function config(config: AssetManager.Config){
     ASSET_DIR = config.assetDir; // "Assets"
     ASSET_DEFAULT_DIR = config.assetDefaultDir; // "Assets/.default"
     ASSET_GENERATED_DIR = config.assetGenerateDir; // "Engine/Resource"
+    BUILD_DIR = config.buildDir;
     const { filesQuery: filesQ, assetsQuery: assetsQ } = createDBIfNotExist(config.dbFilePath); // "Engine/sqlite3.db"
     filesQuery = filesQ;
     assetsQuery = assetsQ;
     configed = true;
+}
+
+export function getConfig(){
+    return {
+        ASSET_DIR, ASSET_DEFAULT_DIR, ASSET_GENERATED_DIR, BUILD_DIR
+    }
 }
 
 export function close(){

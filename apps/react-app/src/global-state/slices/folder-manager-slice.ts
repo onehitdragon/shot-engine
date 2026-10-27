@@ -8,7 +8,8 @@ export namespace FolderManager {
         asset: string,
         assetDefault: string,
         resource: string,
-        assetDBFile: string
+        assetDBFile: string,
+        buildDir: string
     }
     export type DirectoryState = DirectoryTree.Directory & {
         expanding?: boolean

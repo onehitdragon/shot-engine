@@ -44,6 +44,7 @@ export type ApiType = {
         getFilePathFromAssetId: (uuid: string) => Promise<string | undefined>,
         addBakedHdrAsset: (uuid: string, hdrAsset: HdrAsset) => Promise<void>,
         bakeFontAsset: (uuid: string, fontAssetBakeSetting: FontAssetBakeSetting) => Promise<void>,
+        pack: (projectSettingAsset: ProjectSettingAsset) => Promise<void>,
     },
     hdr: {
         read: (filePath: string) => Promise<{ width: number, height: number, data: Float32Array }>

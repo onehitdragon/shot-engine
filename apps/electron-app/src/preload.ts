@@ -57,6 +57,8 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("assetManager:addBakedHdrAsset", uuid, hdrAsset),
     bakeFontAsset: (uuid: string, fontAssetBakeSetting: any) =>
       ipcRenderer.invoke("assetManager:bakeFontAsset", uuid, fontAssetBakeSetting),
+    pack: (projectSettingAsset: any) =>
+      ipcRenderer.invoke("assetManager:pack", projectSettingAsset),
   },
   hdr: {
     read: (filePath: string) => ipcRenderer.invoke("hdr:read", filePath),

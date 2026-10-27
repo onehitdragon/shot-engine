@@ -280,6 +280,12 @@ export function setupIPC(){
     }
   );
   ipcMain.handle(
+    "assetManager:pack",
+    async (e, projectSettingAsset: ProjectSettingAsset) => {
+      await asssetManager.pack(projectSettingAsset);
+    }
+  );
+  ipcMain.handle(
     "hdr:read",
     (e, filePath: string) => {
       const buffer = fs.readFileSync(filePath);

@@ -6,6 +6,7 @@ export namespace AssetManager{
         assetDefaultDir: string,
         assetGenerateDir: string,
         dbFilePath: string,
+        buildDir: string
     }
     export type AssetInfo = {
         uuid: string,
