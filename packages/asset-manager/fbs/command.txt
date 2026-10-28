@@ -1,1 +1,3 @@
 flatc --ts --gen-all -o fbs-gen ./fbs/index.fbs
+
+

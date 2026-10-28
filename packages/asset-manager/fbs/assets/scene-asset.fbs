@@ -1,0 +1,9 @@
+include "../engine.fbs";
+
+namespace FBSAsset;
+
+table SceneAsset{
+  scene: FBSEngine.Scene;
+}
+
+root_type SceneAsset;

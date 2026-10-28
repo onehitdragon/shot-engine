@@ -1,0 +1,14 @@
+include "../engine.fbs";
+
+namespace FBSAsset;
+
+table SceneSetting{
+  mainRef: string;
+  importRefs: [string];
+}
+
+table ProjectSettingAsset{
+  scene: SceneSetting;
+}
+
+root_type ProjectSettingAsset;

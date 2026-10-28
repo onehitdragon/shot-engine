@@ -1,0 +1,44 @@
+include "../engine.fbs";
+
+namespace FBSAsset;
+
+table FontAssetBakeSetting{
+  field_type: ushort;
+  font_size: int;
+  texture_width: int;
+  texture_height: int;
+}
+
+table FontInfoChar{
+  id: int;
+  char: string;
+  xoffset: int;
+  yoffset: int;
+  width: int;
+  height: int;
+  xadvance: int;
+  x: int;
+  y: int;
+  page: int;
+}
+
+table FontInfoCommon{
+  lineHeight: int;
+}
+
+table FontInfo{
+  chars: [FontInfoChar];
+  common: FontInfoCommon;
+}
+
+table AtlasTexture{
+  data: [ubyte];
+}
+
+table FontAsset{
+  font_asset_bake_setting: FontAssetBakeSetting;
+  atlas_textures: [AtlasTexture];
+  font_info: FontInfo;
+}
+
+root_type FontAsset;

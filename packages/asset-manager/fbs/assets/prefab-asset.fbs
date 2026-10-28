@@ -1,0 +1,9 @@
+include "../engine.fbs";
+
+namespace FBSAsset;
+
+table PrefabAsset{
+  root: FBSEngine.GameObject;
+}
+
+root_type PrefabAsset;

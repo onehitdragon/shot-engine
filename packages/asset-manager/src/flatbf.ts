@@ -2,17 +2,17 @@ import { Builder, Offset, ByteBuffer } from "flatbuffers";
 import * as ShotEngineType from "@shot-engine/types";
 import fs from "fs-extra";
 import {
-    ImageAsset, PrimitiveAttribute, Primitive, MeshAsset, PrefabAsset, 
-    SceneNode, GameObject, GameObjectPrefab,
+    SceneNode, GameObject, GameObjectPrefab, Scene, Vec3,
+} from "../fbs-gen/fbsengine.js";
+import {
+    ImageAsset, PrimitiveAttribute, Primitive, MeshAsset, PrefabAsset,
     SceneAsset,
-    Scene,
     IndexType,
     HdrImage,
     HdrCube,
     HdrAsset,
     PrefilterMap,
     AABB,
-    Vec3,
     PrimitiveType,
     FontAsset,
     AtlasTexture,
@@ -22,7 +22,7 @@ import {
     FontAssetBakeSetting,
     ProjectSettingAsset,
     SceneSetting
-} from "../fbs-gen/fbsengine.js";
+} from "../fbs-gen/fbsasset.js";
 import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, readGameObject } from "./flatbfUtil.js";
 
 export function saveImageAssetBinary(imageAsset: ShotEngineType.ImageAsset, filePath: string){

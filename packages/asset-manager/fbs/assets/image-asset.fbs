@@ -1,0 +1,9 @@
+include "../engine.fbs";
+
+namespace FBSAsset;
+
+table ImageAsset{
+  ktx2: [ubyte];
+}
+
+root_type ImageAsset;

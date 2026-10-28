@@ -4,3 +4,4 @@ dist
 fbs-gen
 db-gen
 /.assets
+fbs-gen-cpp
