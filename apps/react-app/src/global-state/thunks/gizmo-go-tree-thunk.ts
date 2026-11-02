@@ -3,7 +3,7 @@ import type { AppStartListening } from "../listenerMiddleware";
 import { componentsChangedThunk } from "./inspector-components-thunks";
 import { nodeFocusedThunk, NodesInfo } from "./go-tree-thunks";
 import { updateGizmoToolPosRot } from "../slices/gizmo-go-tree-slice";
-import { Mat4 } from "@shot-engine/types";
+import { Mat4, Quat, Vec3 } from "@shot-engine/math";
 
 export function gizmoGoTreeListener(startListening: AppStartListening){
   startListening({
@@ -23,8 +23,8 @@ export function gizmoGoTreeListener(startListening: AppStartListening){
       const nodeWorld = NodesInfo.getInstance().nodeInfos.get(nodeId)?.worldMatrix;
       if(!nodeWorld) return;
       dispatch(updateGizmoToolPosRot({
-        pos: Mat4.GetTranslation(nodeWorld),
-        rot: Mat4.GetRotation(nodeWorld),
+        pos: Mat4.GetTranslation(new Vec3(), nodeWorld),
+        rot: Mat4.GetRotation(new Quat(), nodeWorld),
       }));
 
       // light

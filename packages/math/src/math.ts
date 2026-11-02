@@ -26,6 +26,14 @@ export class Vec2{
     outValues[1] = y;
     return out;
   }
+  public static Sub(out: Vec2, a: Vec2, b: Vec2){
+    const outValues = out.values;
+    const aValues = a.values;
+    const bValues = b.values;
+    outValues[0] = aValues[0] - bValues[0];
+    outValues[1] = aValues[1] - bValues[1];
+    return out;
+  }
 }
 // missing forEach, bezier, hermite
 export class Vec3{
@@ -33,6 +41,11 @@ export class Vec3{
   public values: Float32Array;
   constructor(){
     this.values = new Float32Array(3);
+  }
+  public static FromAxis(axis: "x" | "y" | "z"){
+    if(axis === "x") return Vec3.FromValues(1, 0, 0);
+    if(axis === "y") return Vec3.FromValues(0, 1, 0);
+    return Vec3.FromValues(0, 0, 1);
   }
   public static FromValues(x: number, y: number, z: number){
     const out = new Vec3();
@@ -51,9 +64,6 @@ export class Vec3{
     outValues[2] = aValues[2] + bValues[2];
     return out;
   }
-  public add(b: Vec3){
-    return Vec3.Add(this, this, b);
-  }
   /** angle between a and b, using dot, 0 -> pi/2 */
   public static Angle(a: Vec3, b: Vec3){
     const aValues = a.values;
@@ -69,10 +79,6 @@ export class Vec3{
     const cos = (ax * bx + ay * by + az * bz) / length;
     return Math.acos(Math.max(-1, Math.min(1, cos)));
   }
-  /** angle between a and b, using dot, 0 -> pi/2 */
-  public angle(b: Vec3){
-    return Vec3.Angle(this, b);
-  }
   public static Ceil(out: Vec3, a: Vec3){
     const aValues = a.values;
     const outValues = out.values;
@@ -80,9 +86,6 @@ export class Vec3{
     outValues[1] = Math.ceil(aValues[1]);
     outValues[2] = Math.ceil(aValues[2]);
     return out;
-  }
-  public ceil(){
-    return Vec3.Ceil(this, this);
   }
   public static Clone(a: Vec3){
     const aValues = a.values;
@@ -93,9 +96,6 @@ export class Vec3{
     outValues[2] = aValues[2];
     return out;
   }
-  public clone(){
-    return Vec3.Clone(this);
-  }
   public static Copy(out: Vec3, a: Vec3){
     const aValues = a.values;
     const outValues = out.values;
@@ -103,9 +103,6 @@ export class Vec3{
     outValues[1] = aValues[1];
     outValues[2] = aValues[2];
     return out;
-  }
-  public copy(a: Vec3){
-    return Vec3.Copy(this, a);
   }
   public static Create(){
     const out = new Vec3();
@@ -126,10 +123,6 @@ export class Vec3{
     outValues[2] = ax * by - ay * bx;
     return out;
   }
-  /** a = a x b */
-  public cross(b: Vec3){
-    return Vec3.Cross(this, this, b);
-  }
   public static Distance(a: Vec3, b: Vec3){
     const aValues = a.values;
     const bValues = b.values;
@@ -137,9 +130,6 @@ export class Vec3{
     const y = bValues[1] - aValues[1];
     const z = bValues[2] - aValues[2];
     return Math.sqrt(x * x + y * y + z * z);
-  }
-  public distance(b: Vec3){
-    return Vec3.Distance(this, b);
   }
   public static Div(out: Vec3, a: Vec3, b: Vec3){
     const aValues = a.values;
@@ -150,17 +140,10 @@ export class Vec3{
     outValues[2] = aValues[2] / bValues[2];
     return out;
   }
-  /** a = a / b */
-  public div(b: Vec3){
-    return Vec3.Div(this, this, b);
-  }
   public static Dot(a: Vec3, b: Vec3){
     const aValues = a.values;
     const bValues = b.values;
     return aValues[0] * bValues[0] + aValues[1] * bValues[1] + aValues[2] * bValues[2];
-  }
-  public dot(b: Vec3){
-    return Vec3.Dot(this, b);
   }
   /** approximately equal */
   public static Equals(a: Vec3, b: Vec3){
@@ -170,19 +153,12 @@ export class Vec3{
       Math.abs(aValues[1] - bValues[1]) < EPSILON &&
       Math.abs(aValues[2] - bValues[2]) < EPSILON;
   }
-  /** approximately equal */
-  public equals(b: Vec3){
-    return Vec3.Equals(this, b);
-  }
   public static ExactEquals(a: Vec3, b: Vec3){
     const aValues = a.values;
     const bValues = b.values;
     return aValues[0] === bValues[0] &&
       aValues[1] === bValues[1] &&
       aValues[2] === bValues[2];
-  }
-  public exactEquals(b: Vec3){
-    return Vec3.ExactEquals(this, b);
   }
   public static Inverse(out: Vec3, a: Vec3){
     const aValues = a.values;
@@ -192,18 +168,12 @@ export class Vec3{
     outValue[2] = 1 / aValues[2];
     return out;
   }
-  public inverse(){
-    return Vec3.Inverse(this, this);
-  }
   public static Length(a: Vec3){
     const aValues = a.values;
     const ax = aValues[0];
     const ay = aValues[1];
     const az = aValues[2];
     return Math.sqrt(ax * ax + ay * ay + az * az);
-  }
-  public length(){
-    return Vec3.Length(this);
   }
   /** out = tb + (1 - t)a
    * @param t [0,1] -> [a, b]
@@ -247,9 +217,6 @@ export class Vec3{
     outValues[2] = aValues[2] * bValues[2];
     return out;
   }
-  public multiply(b: Vec3){
-    return Vec3.Multiply(this, this, b);
-  }
   public static Negate(out: Vec3, a: Vec3){
     const aValues = a.values;
     const outValues = out.values;
@@ -257,9 +224,6 @@ export class Vec3{
     outValues[1] = -aValues[1];
     outValues[2] = -aValues[2];
     return out;
-  }
-  public negate(){
-    return Vec3.Negate(this, this);
   }
   public static Normalize(out: Vec3, a: Vec3){
     const aValues = a.values;
@@ -275,9 +239,6 @@ export class Vec3{
     outValues[1] = ay * length;
     outValues[2] = az * length;
     return out;
-  }
-  public normalize(){
-    return Vec3.Normalize(this, this);
   }
   /** random a vector its length = scale, all vector lay on sphere r = scale */
   public static Random(out: Vec3, scale = 1){
@@ -364,10 +325,6 @@ export class Vec3{
     outValues[2] = round(aValues[2]);
     return out;
   }
-  /** symetric round */
-  public round(){
-    return Vec3.Round(this, this);
-  }
   public static Scale(out: Vec3, a: Vec3, c: number){
     const aValues = a.values;
     const outValues = out.values;
@@ -375,9 +332,6 @@ export class Vec3{
     outValues[1] = aValues[1] * c;
     outValues[2] = aValues[2] * c;
     return out;
-  }
-  public scale(c: number){
-    return Vec3.Scale(this, this, c);
   }
   /** out = a + b * c */
   public static ScaleAndAdd(out: Vec3, a: Vec3, b: Vec3, c: number){
@@ -389,19 +343,12 @@ export class Vec3{
     outValues[2] = aValues[2] + bValues[2] * c;
     return out;
   }
-  /** a = a + b * c */
-  public scaleAndAdd(b: Vec3, c: number){
-    return Vec3.ScaleAndAdd(this, this, b, c);
-  }
   public static Set(out: Vec3, x: number, y: number, z: number){
     const outValues = out.values;
     outValues[0] = x;
     outValues[1] = y;
     outValues[2] = z;
     return out;
-  }
-  public set(x: number, y: number, z: number){
-    return Vec3.Set(this, x, y, z);
   }
   /** a, b should be unit vector 
    * @param t [0,1] -> [a, b]
@@ -432,18 +379,12 @@ export class Vec3{
     const z = bValues[2] - aValues[2];
     return x * x + y * y + z * z;
   }
-  public squaredDistance(b: Vec3){
-    return Vec3.SquaredDistance(this, b);
-  }
   public static SquaredLength(a: Vec3){
     const aValues = a.values;
     const ax = aValues[0];
     const ay = aValues[1];
     const az = aValues[2];
     return ax * ax + ay * ay + az * az;
-  }
-  public squaredLength(){
-    return Vec3.SquaredLength(this);
   }
   public static String(a: Vec3){
     const aValues = a.values;
@@ -453,9 +394,6 @@ export class Vec3{
     + aValues[2]
     + ")";
   }
-  public string(){
-    return Vec3.String(this);
-  }
   public static Sub(out: Vec3, a: Vec3, b: Vec3){
     const outValues = out.values;
     const aValues = a.values;
@@ -464,9 +402,6 @@ export class Vec3{
     outValues[1] = aValues[1] - bValues[1];
     outValues[2] = aValues[2] - bValues[2];
     return out;
-  }
-  public sub(b: Vec3){
-    return Vec3.Sub(this, this, b);
   }
   public static TransformMat3(out: Vec3, a: Vec3, mat3: Mat3){
     const aValues = a.values;
@@ -479,9 +414,6 @@ export class Vec3{
     outValues[1] = x * matValues[1] + y * matValues[4] + z * matValues[7];
     outValues[2] = x * matValues[2] + y * matValues[5] + z * matValues[8];
     return out;
-  }
-  public transformMat3(mat3: Mat3){
-    return Vec3.TransformMat3(this, this, mat3);
   }
   /** assume a.z = 1, divive w after multiply */
   public static TransformMat4(out: Vec3, a: Vec3, mat4: Mat4){
@@ -496,10 +428,6 @@ export class Vec3{
     outValues[1] = (x * matValues[1] + y * matValues[5] + z * matValues[9] + matValues[13]) / w;
     outValues[2] = (x * matValues[2] + y * matValues[6] + z * matValues[10] + matValues[14]) / w;
     return out;
-  }
-  /** assume a.z = 1, divive w after multiply */
-  public transformMat4(mat4: Mat4){
-    return Vec3.TransformMat4(this, this, mat4);
   }
   /** out = qvq* */
   public static TransformQuat(out: Vec3, a: Vec3, quat: Quat){
@@ -523,10 +451,6 @@ export class Vec3{
     outValues[2] = az + qw * gz + (qx * gy - qy * gx);
     return out;
   }
-  /** v = qvq* */
-  public transformQuat(quat: Quat){
-    return Vec3.TransformQuat(this, this, quat);
-  }
   /** set to zero */
   public static Zero(a: Vec3){
     const aValues = a.values;
@@ -535,9 +459,6 @@ export class Vec3{
     aValues[2] = 0;
     return a;
   }
-  public zero(){
-    return Vec3.Zero(this);
-  }
   public static Floor(out: Vec3, a: Vec3){
     const aValues = a.values;
     const outValues = out.values;
@@ -545,9 +466,6 @@ export class Vec3{
     outValues[1] = Math.floor(aValues[1]);
     outValues[2] = Math.floor(aValues[2]);
     return out;
-  }
-  public floor(){
-    return Vec3.Floor(this, this);
   }
 }
 export class Vec4{
@@ -575,9 +493,6 @@ export class Vec4{
     outValues[3] = aValues[3] + bValues[3];
     return out;
   }
-  public add(b: Vec4){
-    return Vec4.Add(this, this, b);
-  }
   public static Ceil(out: Vec4, a: Vec4){
     const aValues = a.values;
     const outValues = out.values;
@@ -586,9 +501,6 @@ export class Vec4{
     outValues[2] = Math.ceil(aValues[2]);
     outValues[3] = Math.ceil(aValues[3]);
     return out;
-  }
-  public ceil(){
-    return Vec4.Ceil(this, this);
   }
   public static Clone(a: Vec4){
     const aValues = a.values;
@@ -600,9 +512,6 @@ export class Vec4{
     outValues[3] = aValues[3];
     return out;
   }
-  public clone(){
-    return Vec4.Clone(this);
-  }
   public static Copy(out: Vec4, a: Vec4){
     const aValues = a.values;
     const outValues = out.values;
@@ -611,9 +520,6 @@ export class Vec4{
     outValues[2] = aValues[2];
     outValues[3] = aValues[3];
     return out;
-  }
-  public copy(a: Vec4){
-    return Vec4.Copy(this, a);
   }
   public static Create(){
     const out = new Vec4();
@@ -655,10 +561,6 @@ export class Vec4{
     outValues[3] = -u1 * C + u2 * E - u3 * F;
     return out;
   }
-  /** a = a x b */
-  public cross(v: Vec4, w: Vec4){
-    return Vec4.Cross(this, this, v, w);
-  }
   public static Distance(a: Vec4, b: Vec4){
     const aValues = a.values;
     const bValues = b.values;
@@ -667,9 +569,6 @@ export class Vec4{
     const z = bValues[2] - aValues[2];
     const w = bValues[3] - aValues[3];
     return Math.sqrt(x * x + y * y + z * z + w * w);
-  }
-  public distance(b: Vec4){
-    return Vec4.Distance(this, b);
   }
   public static Div(out: Vec4, a: Vec4, b: Vec4){
     const aValues = a.values;
@@ -681,18 +580,11 @@ export class Vec4{
     outValues[3] = aValues[3] / bValues[3];
     return out;
   }
-  /** a = a / b */
-  public div(b: Vec4){
-    return Vec4.Div(this, this, b);
-  }
   public static Dot(a: Vec4, b: Vec4){
     const aValues = a.values;
     const bValues = b.values;
     return aValues[0] * bValues[0] + aValues[1] * bValues[1] + aValues[2] * bValues[2]
      + aValues[3] * bValues[3];
-  }
-  public dot(b: Vec4){
-    return Vec4.Dot(this, b);
   }
   /** approximately equal */
   public static Equals(a: Vec4, b: Vec4){
@@ -703,10 +595,6 @@ export class Vec4{
       Math.abs(aValues[2] - bValues[2]) < EPSILON &&
       Math.abs(aValues[3] - bValues[3]) < EPSILON;
   }
-  /** approximately equal */
-  public equals(b: Vec4){
-    return Vec4.Equals(this, b);
-  }
   public static ExactEquals(a: Vec4, b: Vec4){
     const aValues = a.values;
     const bValues = b.values;
@@ -714,9 +602,6 @@ export class Vec4{
       aValues[1] === bValues[1] &&
       aValues[2] === bValues[2] &&
       aValues[3] === bValues[3];
-  }
-  public exactEquals(b: Vec4){
-    return Vec4.ExactEquals(this, b);
   }
   public static Floor(out: Vec4, a: Vec4){
     const aValues = a.values;
@@ -727,9 +612,6 @@ export class Vec4{
     outValues[3] = Math.floor(aValues[3]);
     return out;
   }
-  public floor(){
-    return Vec4.Floor(this, this);
-  }
   public static Inverse(out: Vec4, a: Vec4){
     const aValues = a.values;
     const outValue = out.values;
@@ -739,9 +621,6 @@ export class Vec4{
     outValue[3] = 1 / aValues[3];
     return out;
   }
-  public inverse(){
-    return Vec4.Inverse(this, this);
-  }
   public static Length(a: Vec4){
     const aValues = a.values;
     const ax = aValues[0];
@@ -749,9 +628,6 @@ export class Vec4{
     const az = aValues[2];
     const aw = aValues[3];
     return Math.sqrt(ax * ax + ay * ay + az * az + aw * aw);
-  }
-  public length(){
-    return Vec4.Length(this);
   }
   /** out = tb + (1 - t)a
    * @param t [0,1] -> [a, b]
@@ -800,9 +676,6 @@ export class Vec4{
     outValues[3] = aValues[3] * bValues[3];
     return out;
   }
-  public multiply(b: Vec4){
-    return Vec4.Multiply(this, this, b);
-  }
   public static Negate(out: Vec4, a: Vec4){
     const aValues = a.values;
     const outValues = out.values;
@@ -811,9 +684,6 @@ export class Vec4{
     outValues[2] = -aValues[2];
     outValues[3] = -aValues[3];
     return out;
-  }
-  public negate(){
-    return Vec4.Negate(this, this);
   }
   public static Normalize(out: Vec4, a: Vec4){
     const aValues = a.values;
@@ -831,9 +701,6 @@ export class Vec4{
     outValues[2] = az * length;
     outValues[3] = aw * length;
     return out;
-  }
-  public normalize(){
-    return Vec4.Normalize(this, this);
   }
   /** random a vector its length = scale, all vector lay on hypersphere r = scale */
   public static Random(out: Vec4, scale = 1){
@@ -877,9 +744,6 @@ export class Vec4{
     outValues[3] = round(aValues[3]);
     return out;
   }
-  public round(){
-    return Vec4.Round(this, this);
-  }
   public static Scale(out: Vec4, a: Vec4, c: number){
     const aValues = a.values;
     const outValues = out.values;
@@ -888,9 +752,6 @@ export class Vec4{
     outValues[2] = aValues[2] * c;
     outValues[3] = aValues[3] * c;
     return out;
-  }
-  public scale(c: number){
-    return Vec4.Scale(this, this, c);
   }
   /** out = a + b * c */
   public static ScaleAndAdd(out: Vec4, a: Vec4, b: Vec4, c: number){
@@ -903,10 +764,6 @@ export class Vec4{
     outValues[3] = aValues[3] + bValues[3] * c;
     return out;
   }
-  /** a = a + b * c */
-  public scaleAndAdd(b: Vec4, c: number){
-    return Vec4.ScaleAndAdd(this, this, b, c);
-  }
   public static Set(out: Vec4, x: number, y: number, z: number, w: number){
     const outValues = out.values;
     outValues[0] = x;
@@ -914,9 +771,6 @@ export class Vec4{
     outValues[2] = z;
     outValues[3] = w;
     return out;
-  }
-  public set(x: number, y: number, z: number, w: number){
-    return Vec4.Set(this, x, y, z, w);
   }
   public static SquaredDistance(a: Vec4, b: Vec4){
     const aValues = a.values;
@@ -927,9 +781,6 @@ export class Vec4{
     const w = bValues[3] - aValues[3];
     return x * x + y * y + z * z + w * w;
   }
-  public squaredDistance(b: Vec4){
-    return Vec4.SquaredDistance(this, b);
-  }
   public static SquaredLength(a: Vec4){
     const aValues = a.values;
     const ax = aValues[0];
@@ -937,9 +788,6 @@ export class Vec4{
     const az = aValues[2];
     const aw = aValues[3];
     return ax * ax + ay * ay + az * az + aw * aw;
-  }
-  public squaredLength(){
-    return Vec4.SquaredLength(this);
   }
   public static String(a: Vec4){
     const aValues = a.values;
@@ -950,9 +798,6 @@ export class Vec4{
     + aValues[3]
     + ")";
   }
-  public string(){
-    return Vec4.String(this);
-  }
   public static Sub(out: Vec4, a: Vec4, b: Vec4){
     const outValues = out.values;
     const aValues = a.values;
@@ -962,9 +807,6 @@ export class Vec4{
     outValues[2] = aValues[2] - bValues[2];
     outValues[3] = aValues[3] - bValues[3];
     return out;
-  }
-  public sub(b: Vec4){
-    return Vec4.Sub(this, this, b);
   }
   public static TransformMat4(out: Vec4, a: Vec4, mat4: Mat4){
     const aValues = a.values;
@@ -979,9 +821,6 @@ export class Vec4{
     outValues[2] = x * matValues[2] + y * matValues[6] + z * matValues[10] + w * matValues[14];
     outValues[3] = x * matValues[3] + y * matValues[7] + z * matValues[11] + w * matValues[15];
     return out;
-  }
-  public transformMat4(mat4: Mat4){
-    return Vec4.TransformMat4(this, this, mat4);
   }
   /** out = qvq* */
   public static TransformQuat(out: Vec4, a: Vec4, quat: Quat){
@@ -1006,10 +845,6 @@ export class Vec4{
     outValues[3] = aValues[3];
     return out;
   }
-  /** v = qv(xyz)q* */
-  public transformQuat(quat: Quat){
-    return Vec4.TransformQuat(this, this, quat);
-  }
   /** set to zero */
   public static Zero(a: Vec4){
     const aValues = a.values;
@@ -1018,9 +853,6 @@ export class Vec4{
     aValues[2] = 0;
     aValues[3] = 0;
     return a;
-  }
-  public zero(){
-    return Vec4.Zero(this);
   }
 }
 export class Quat{
@@ -1048,9 +880,6 @@ export class Quat{
     outValues[3] = aValues[3] + bValues[3];
     return out;
   }
-  public add(b: Quat){
-    return Quat.Add(this, this, b);
-  }
   /** calculate w from xyz */
   public static CalculateW(out: Quat, a: Quat){
     const aValues = a.values;
@@ -1064,10 +893,6 @@ export class Quat{
     outValues[3] = Math.sqrt(Math.max(0, 1 - x * x - y * y - z * z));
     return out;
   }
-  /** calculate w from xyz */
-  public calculateW(){
-    return Quat.CalculateW(this, this);
-  }
   public static Clone(a: Quat){
     const aValues = a.values;
     const out = new Quat();
@@ -1078,9 +903,6 @@ export class Quat{
     outValues[3] = aValues[3];
     return out;
   }
-  public clone(){
-    return Quat.Clone(this);
-  }
   public static Conjugate(out: Quat, a: Quat){
     const aValues = a.values;
     const outValues = out.values;
@@ -1090,9 +912,6 @@ export class Quat{
     outValues[3] = aValues[3];
     return out;
   }
-  public conjugate(){
-    return Quat.Conjugate(this, this);
-  }
   public static Copy(out: Quat, a: Quat){
     const aValues = a.values;
     const outValues = out.values;
@@ -1101,9 +920,6 @@ export class Quat{
     outValues[2] = aValues[2];
     outValues[3] = aValues[3];
     return out;
-  }
-  public copy(a: Quat){
-    return Quat.Copy(this, a);
   }
   /** create identity quat */
   public static Create(){
@@ -1121,9 +937,6 @@ export class Quat{
     return aValues[0] * bValues[0] + aValues[1] * bValues[1] + aValues[2] * bValues[2]
      + aValues[3] * bValues[3];
   }
-  public dot(b: Quat){
-    return Quat.Dot(this, b);
-  }
   /** approximately equal */
   public static Equals(a: Quat, b: Quat){
     const aValues = a.values;
@@ -1133,10 +946,6 @@ export class Quat{
       Math.abs(aValues[2] - bValues[2]) < EPSILON &&
       Math.abs(aValues[3] - bValues[3]) < EPSILON;
   }
-  /** approximately equal */
-  public equals(b: Quat){
-    return Quat.Equals(this, b);
-  }
   public static ExactEquals(a: Quat, b: Quat){
     const aValues = a.values;
     const bValues = b.values;
@@ -1144,9 +953,6 @@ export class Quat{
       aValues[1] === bValues[1] &&
       aValues[2] === bValues[2] &&
       aValues[3] === bValues[3];
-  }
-  public exactEquals(b: Quat){
-    return Quat.ExactEquals(this, b);
   }
   /** out = exp(a), if a.w = 0 then the out is unit quat */
   public static Exp(out: Quat, a: Quat){
@@ -1170,10 +976,6 @@ export class Quat{
     outValues[2] = z * norm;
     outValues[3] = Math.cos(alpha) * ew; // w
     return out;
-  }
-  /** out = exp(a), if a.w = 0 then the out is unit quat */
-  public exp(){
-    return Quat.Exp(this, this);
   }
   /** default xyz, out = qx * qy * qz  
    * @param x in degree
@@ -1311,13 +1113,6 @@ export class Quat{
     const dw = Math.abs(Quat.Dot(a, b)); // avoid -dw
     return dw > 1 ? 0 : 2 * Math.acos(dw);
   }
-  /** get smallest angle [0, pi] between a and b
-   * @param b unit quaternion
-   * @returns angle in radian
-   */
-  public getAngle(b: Quat){
-    return Quat.GetAngle(this, b);
-  }
   /**
    * @param out axis of rotation
    * @returns angle of a [0, 2pi]
@@ -1338,13 +1133,6 @@ export class Quat{
     }
     return Math.acos(w) * 2;
   }
-  /**
-   * @param out axis of rotation
-   * @returns angle of a [0, 2pi]
-   */
-  public getAxisAngle(out: Vec3){
-    return Quat.GetAxisAngle(out, this);
-  }
   /** set to identity */
   public static Identity(out: Quat){
     const outValues = out.values;
@@ -1353,10 +1141,6 @@ export class Quat{
     outValues[2] = 0;
     outValues[3] = 1;
     return out;
-  }
-  /** set to identity */
-  public identity(){
-    return Quat.Identity(this);
   }
   /** if quat is unit or rotation, using conjugate */
   public static Invert(out: Quat, a: Quat){
@@ -1384,9 +1168,6 @@ export class Quat{
     }
     return out;
   }
-  public invert(){
-    return Quat.Invert(this, this);
-  }
   public static Length(a: Quat){
     const aValues = a.values;
     const ax = aValues[0];
@@ -1394,9 +1175,6 @@ export class Quat{
     const az = aValues[2];
     const aw = aValues[3];
     return Math.sqrt(ax * ax + ay * ay + az * az + aw * aw);
-  }
-  public length(){
-    return Quat.Length(this);
   }
   /** out = tb + (1 - t)a
    * @param t [0,1] -> [a, b]
@@ -1453,10 +1231,6 @@ export class Quat{
     outValues[2] = z * bw - y * bx + x * by + w * bz;
     return out;
   }
-  /** a = a * b */
-  public multiply(b: Quat){
-    return Quat.Multiply(this, this, b);
-  }
   public static Normalize(out: Quat, a: Quat){
     const aValues = a.values;
     const ax = aValues[0];
@@ -1474,17 +1248,11 @@ export class Quat{
     outValues[3] = aw * length;
     return out;
   }
-  public normalize(){
-    return Quat.Normalize(this, this);
-  }
   public static Pow(out: Quat, a: Quat, b: number){
     Quat.Ln(out, a);
     Quat.Scale(out, out, b);
     Quat.Exp(out, out);
     return out;
-  }
-  public pow(b: number){
-    return Quat.Pow(this, this, b);
   }
   /** random unit quaternion */
   public static Random(out: Quat){
@@ -1540,12 +1308,6 @@ export class Quat{
     outValues[3] = w * cosx - x * sinx;
     return out;
   }
-  /** a = a * qx, world rotation
-   * @param angle in radian
-   */
-  public rotateX(angle: number){
-    return Quat.RotateX(this, this, angle);
-  }
   /** out = a * qy, world rotation
    * @param angle in radian
    */
@@ -1566,12 +1328,6 @@ export class Quat{
     outValues[2] = z * cosx + x * sinx;
     outValues[3] = w * cosx - y * sinx;
     return out;
-  }
-  /** a = a * qy, world rotation
-   * @param angle in radian
-   */
-  public rotateY(angle: number){
-    return Quat.RotateY(this, this, angle);
   }
   /** out = a * qz, world rotation
    * @param angle in radian
@@ -1594,12 +1350,6 @@ export class Quat{
     outValues[3] = w * cosx - z * sinx;
     return out;
   }
-  /** a = a * qz, world rotation
-   * @param angle in radian
-   */
-  public rotateZ(angle: number){
-    return Quat.RotateZ(this, this, angle);
-  }
   public static Scale(out: Quat, a: Quat, c: number){
     const aValues = a.values;
     const outValues = out.values;
@@ -1609,9 +1359,6 @@ export class Quat{
     outValues[3] = aValues[3] * c;
     return out;
   }
-  public scale(c: number){
-    return Quat.Scale(this, this, c);
-  }
   public static Set(out: Quat, x: number, y: number, z: number, w: number){
     const outValues = out.values;
     outValues[0] = x;
@@ -1619,9 +1366,6 @@ export class Quat{
     outValues[2] = z;
     outValues[3] = w;
     return out;
-  }
-  public set(x: number, y: number, z: number, w: number){
-    return Quat.Set(this, x, y, z, w);
   }
   /** quat from axis and angle
    * @param axis should be a unit vector
@@ -1637,13 +1381,6 @@ export class Quat{
     outValues[2] = s * axisValues[2];
     outValues[3] = Math.cos(angle);
     return out;
-  }
-  /** quat from axis and angle
-   * @param axis should be a unit vector
-   * @param angle in radian
-   */
-  public setAxisAngle(axis: Vec3, angle: number){
-    return Quat.SetAxisAngle(this, axis, angle);
   }
   /** a, b should be unit quat 
    * @param t [0,1] -> [a, b]
@@ -1693,9 +1430,6 @@ export class Quat{
     const aw = aValues[3];
     return ax * ax + ay * ay + az * az + aw * aw;
   }
-  public squaredLength(){
-    return Quat.SquaredLength(this);
-  }
   public static String(a: Quat){
     const aValues = a.values;
     return "quat("
@@ -1704,9 +1438,6 @@ export class Quat{
     + aValues[2] + ", "
     + aValues[3]
     + ")";
-  }
-  public string(){
-    return Quat.String(this);
   }
 }
 export class Mat3{
@@ -1787,9 +1518,6 @@ export class Mat3{
     outValues[8] = aValues[8] + bValues[8];
     return out;
   }
-  public add(b: Mat3){
-    return Mat3.Add(this, this, b);
-  }
   public static Clone(mat3: Mat3){
     const out = new Mat4();
     const outValues = out.values;
@@ -1805,9 +1533,6 @@ export class Mat3{
     outValues[8] = values[8];
     return out;
   }
-  public clone(){
-    return Mat3.Clone(this);
-  }
   public static Copy(out: Mat3, mat4: Mat3){
     const outValues = out.values;
     const values = mat4.values;
@@ -1822,9 +1547,6 @@ export class Mat3{
     outValues[8] = values[8];
     return out;
   }
-  public copy(mat4: Mat3){
-    return Mat3.Copy(this, mat4);
-  }
   public static Det(mat3: Mat3){
     const values = mat3.values;
     const v0 = values[0],   v3 = values[3],   v6 = values[6];
@@ -1834,9 +1556,6 @@ export class Mat3{
     return v0 * (v4 * v8 - v7 * v5)
       - v3 * (v1 * v8 - v7 * v2)
       + v6 * (v1 * v5 - v4 * v2);
-  }
-  public det(){
-    return Mat3.Det(this);
   }
   public static ExactEquals(a: Mat3, b: Mat3){
     const aValues = a.values;
@@ -1852,9 +1571,6 @@ export class Mat3{
       aValues[7] === bValues[7] &&
       aValues[8] === bValues[8];
     return result;
-  }
-  public exactEquals(b: Mat3){
-    return Mat3.ExactEquals(this, b);
   }
   /** copy 3x3 top-left from mat4 */
   public static FromMat4(out: Mat3, a: Mat4){
@@ -1964,11 +1680,7 @@ export class Mat3{
     outValues[8] = 1;
     return out;
   }
-  /** set to identity */
-  public identity(){
-    return Mat3.Identity(this);
-  }
-  public static Invert(mat3: Mat3){
+  public static Invert(out: Mat3, mat3: Mat3){
     const values = mat3.values;
     const v0 = values[0],   v3 = values[3],   v6 = values[6];
     const v1 = values[1],   v4 = values[4],   v7 = values[7];
@@ -1983,18 +1695,17 @@ export class Mat3{
     }
     det = 1 / det;
 
-    values[0] = b0 * det;
-    values[1] = b3 * det;
-    values[2] = b6 * det;
-    values[3] = (-v3 * v8 + v6 * v5) * det;
-    values[4] = (v0 * v8 - v6 * v2) * det;
-    values[5] = (-v0 * v5 + v3 * v2) * det;
-    values[6] = (v3 * v7 - v6 * v4) * det;
-    values[7] = (-v0 * v7 + v6 * v1) * det;
-    values[8] = (v0 * v4 - v3 * v1) * det;
-  }
-  public invert(){
-    Mat3.Invert(this);
+    const outValues = out.values;
+    outValues[0] = b0 * det;
+    outValues[1] = b3 * det;
+    outValues[2] = b6 * det;
+    outValues[3] = (-v3 * v8 + v6 * v5) * det;
+    outValues[4] = (v0 * v8 - v6 * v2) * det;
+    outValues[5] = (-v0 * v5 + v3 * v2) * det;
+    outValues[6] = (v3 * v7 - v6 * v4) * det;
+    outValues[7] = (-v0 * v7 + v6 * v1) * det;
+    outValues[8] = (v0 * v4 - v3 * v1) * det;
+    return out;
   }
   /** A * B */
   public static Multiply(out: Mat3, a: Mat3, b: Mat3){
@@ -2034,10 +1745,6 @@ export class Mat3{
 
     return out;
   }
-  /** A = A * B */
-  public multiply(b: Mat3){
-    return Mat3.Multiply(this, this, b);
-  }
   /** A * c */
   public static MultiplyScalar(out: Mat3, a: Mat3, c: number){
     const aValues = a.values;
@@ -2053,10 +1760,6 @@ export class Mat3{
     outValues[8] = aValues[8] * c;
     outValues[9] = aValues[9] * c;
     return out;
-  }
-  /** A = A * c */
-  public multiplyScalar(c: number){
-    return Mat3.MultiplyScalar(this, this, c);
   }
   /** A + (B * c) */
   public static MultiplyScalarAndAdd(out: Mat3, a: Mat3, b: Mat3, c: number){
@@ -2076,10 +1779,6 @@ export class Mat3{
     outValues[9] = aValues[9] + bValues[9] * c;
 
     return out;
-  }
-  /** A = A + (B * c) */
-  public multiplyScalarAndAdd(b: Mat3, c: number){
-    return Mat3.MultiplyScalarAndAdd(this, this, b, c);
   }
   /** out = transpose(invert(mat4))
    * @param mat4 can contain (rotation, translation, non-uniform scale)
@@ -2149,10 +1848,6 @@ export class Mat3{
     outValues[8] = aValues[8];
     return out;
   }
-  /** A = A(2x2) * R(rad) */
-  public rotate(rad: number){
-    return Mat3.Rotate(this, this, rad);
-  }
   public static Scale(out: Mat3, a: Mat3, scale: Vec2){
     const scaleValues = scale.values;
     const x = scaleValues[0];
@@ -2170,9 +1865,6 @@ export class Mat3{
     outValues[7] = aValues[7];
     outValues[8] = aValues[8];
     return out;
-  }
-  public scale(scale: Vec2){
-    return Mat3.Scale(this, this, scale);
   }
   public static Set(
     out: Mat3,
@@ -2193,18 +1885,6 @@ export class Mat3{
     valuesOut[8] = v8;
     return out;
   }
-  public set(
-    v0: number, v1: number, v2: number,
-    v3: number, v4: number, v5: number,
-    v6: number, v7: number, v8: number
-  ){
-    return Mat3.Set(
-      this,
-      v0, v1, v2,
-      v3, v4, v5,
-      v6, v7, v8
-    );
-  }
   public static String(a: Mat3){
     const aValues = a.values;
     return "mat3("
@@ -2218,9 +1898,6 @@ export class Mat3{
     + aValues[7] + ", "
     + aValues[8]
     + ")";
-  }
-  public string(){
-    return Mat3.String(this);
   }
   public static Sub(out: Mat3, a: Mat3, b: Mat3){
     const aValues = a.values;
@@ -2236,9 +1913,6 @@ export class Mat3{
     outValues[7] = aValues[7] - bValues[7];
     outValues[8] = aValues[8] - bValues[8];
     return out;
-  }
-  public sub(b: Mat3){
-    return Mat3.Sub(this, this, b);
   }
   /** out = A * T */
   public static Translate(out: Mat3, a: Mat3, translate: Vec2){
@@ -2269,10 +1943,6 @@ export class Mat3{
     outValues[8] = x * v2 + y * v5 + v8;
     return out;
   }
-  /** A = A * T */
-  public translate(translate: Vec2){
-    return Mat3.Translate(this, this, translate);
-  }
   public static Transpose(out: Mat3, a: Mat3){
     const aValues = a.values;
     const outValues = out.values;
@@ -2297,9 +1967,6 @@ export class Mat3{
       outValues[8] = aValues[8]; //
     }
   }
-  public transpose(){
-    return Mat3.Transpose(this, this);
-  }
 }
 // missing adjoint, decompose, frob, fromQuat2, fromRotationTranslationScaleOrigin
 // orthoZO, perpectiveZO
@@ -2308,6 +1975,18 @@ export class Mat4{
   public values: Float32Array;
   constructor(){
     this.values = new Float32Array(16);
+  }
+  public static GetAxis(mat4: Mat4, axis: "x" | "y" | "z"){
+    const values = mat4.values;
+    if(axis === "x"){
+      return Vec3.FromValues(values[0], values[1], values[2]);
+    }
+    else if(axis === "y"){
+      return Vec3.FromValues(values[4], values[5], values[6]);
+    }
+    else{
+      return Vec3.FromValues(values[8], values[9], values[10]);
+    }
   }
   /** create identity matrix */
   public static Create(){
@@ -2425,20 +2104,6 @@ export class Mat4{
     
     return out;
   }
-  public set(
-    v0: number, v1: number, v2: number, v3: number,
-    v4: number, v5: number, v6: number, v7: number,
-    v8: number, v9: number, v10: number, v11: number,
-    v12: number, v13: number, v14: number, v15: number,
-  ){
-    return Mat4.Set(
-      this,
-      v0, v1, v2, v3,
-      v4, v5, v6, v7,
-      v8, v9, v10, v11,
-      v12, v13, v14, v15
-    );
-  }
   public static SetRow(
     out: Mat4,
     v0: number, v4: number, v8: number, v12: number,
@@ -2469,20 +2134,6 @@ export class Mat4{
     valuesOut[15] = v15;
     
     return out;
-  }
-  public setRow(
-    v0: number, v4: number, v8: number, v12: number,
-    v1: number, v5: number, v9: number, v13: number,
-    v2: number, v6: number, v10: number, v14: number,
-    v3: number, v7: number, v11: number, v15: number
-  ){
-    return Mat4.SetRow(
-      this,
-      v0, v4, v8, v12,
-      v1, v5, v9, v13,
-      v2, v6, v10, v14,
-      v3, v7, v11, v15
-    );
   }
   /** quat to matrix */
   public static FromQuat(out: Mat4, quat: Quat){
@@ -2880,10 +2531,6 @@ export class Mat4{
     outValues[14] = 0;
     return out;
   }
-  /** set to identity */
-  public identity(){
-    return Mat4.Identity(this);
-  }
   /** view matrix
    * @param eye camera position
    * @param center focal point or looking point
@@ -3014,10 +2661,6 @@ export class Mat4{
 
     return out;
   }
-  /** A = A * B */
-  public multiply(b: Mat4){
-    return Mat4.Multiply(this, this, b);
-  }
   /** A * c */
   public static MultiplyScalar(out: Mat4, a: Mat4, c: number){
     const aValues = a.values;
@@ -3039,10 +2682,6 @@ export class Mat4{
     outValues[14] = aValues[14] * c;
     outValues[15] = aValues[15] * c;
     return out;
-  }
-  /** A = A * c */
-  public multiplyScalar(c: number){
-    return Mat4.MultiplyScalar(this, this, c);
   }
   /** A + (B * c) */
   public static MultiplyScalarAndAdd(out: Mat4, a: Mat4, b: Mat4, c: number){
@@ -3068,10 +2707,6 @@ export class Mat4{
     outValues[15] = aValues[15] + bValues[15] * c;
 
     return out;
-  }
-  /** A = A + (B * c) */
-  public multiplyScalarAndAdd(b: Mat4, c: number){
-    return Mat4.MultiplyScalarAndAdd(this, this, b, c);
   }
   /** orthogonal projection matrix with negative -> one [-1, 1] */
   public static Ortho(out: Mat4, left: number, right: number, bottom: number, top: number, near: number, far: number){
@@ -3198,12 +2833,6 @@ export class Mat4{
 
     return out;
   }
-  /** rotate matrix A around axis with Rodrigue, A(3x3) * R(rad, axis),
-   * the matrix should contain only rotation, uniform-scale, translate 
-   */
-  public rotate(rad: number, axis: Vec3){
-    return Mat4.Rotate(this, this, rad, axis);
-  }
   /** rotate matrix A around X axis, A(3x3) * R,
    * the matrix should contain only rotation, uniform-scale, translate 
    */
@@ -3242,12 +2871,6 @@ export class Mat4{
       outValues[15] = aValues[15];
     }
     return out;
-  }
-  /** rotate matrix A around X axis, A(3x3) * R,
-   * the matrix should contain only rotation, uniform-scale, translate 
-   */
-  public rotateX(rad: number){
-    return Mat4.RotateX(this, this, rad);
   }
   /** rotate matrix A around Y axis, A(3x3) * R,
    * the matrix should contain only rotation, uniform-scale, translate 
@@ -3289,12 +2912,6 @@ export class Mat4{
     }
     return out;
   }
-  /** rotate matrix A around Y axis, A(3x3) * R,
-   * the matrix should contain only rotation, uniform-scale, translate 
-   */
-  public rotateY(rad: number){
-    return Mat4.RotateY(this, this, rad);
-  }
   /** rotate matrix A around Z axis, A(3x3) * R,
    * the matrix should contain only rotation, uniform-scale, translate 
    */
@@ -3334,12 +2951,6 @@ export class Mat4{
     }
     return out;
   }
-  /** rotate matrix A around Z axis, A(3x3) * R,
-   * the matrix should contain only rotation, uniform-scale, translate 
-   */
-  public rotateZ(rad: number){
-    return Mat4.RotateZ(this, this, rad);
-  }
   /** scale matrix A, A(3x3) * S */
   public static Scale(out: Mat4, a: Mat4, scaler: Vec3){
     const scaleValues = scaler.values;
@@ -3373,10 +2984,6 @@ export class Mat4{
     }
     return out;
   }
-  /** scale matrix A, A(3x3) * S */
-  public scale(scaler: Vec3){
-    return Mat4.Scale(this, this, scaler);
-  }
   public static String(a: Mat4){
     const aValues = a.values;
     return "mat4("
@@ -3397,9 +3004,6 @@ export class Mat4{
     + aValues[14] + ", "
     + aValues[15]
     + ")";
-  }
-  public string(){
-    return Mat4.String(this);
   }
   /** create matrix look target(center) with -z forward */
   public static TargetTo(out: Mat4, eye: Vec3, center: Vec3, up: Vec3){
@@ -3507,10 +3111,6 @@ export class Mat4{
 
     return out;
   }
-  /** A = A * T */
-  public translate(translate: Vec3){
-    return Mat4.Translate(this, this, translate);
-  }
 
   public static ExactEquals(a: Mat4, b: Mat4){
     const aValues = a.values;
@@ -3534,9 +3134,6 @@ export class Mat4{
       aValues[15] === bValues[15];
     return result;
   }
-  public exactEquals(b: Mat4){
-    return Mat4.ExactEquals(this, b);
-  }
   public static Add(out: Mat4, a: Mat4, b: Mat4){
     const aValues = a.values;
     const bValues = b.values;
@@ -3558,9 +3155,6 @@ export class Mat4{
     outValues[14] = aValues[14] + bValues[14];
     outValues[15] = aValues[15] + bValues[15];
     return out;
-  }
-  public add(b: Mat4){
-    return Mat4.Add(this, this, b);
   }
   public static Sub(out: Mat4, a: Mat4, b: Mat4){
     const aValues = a.values;
@@ -3584,9 +3178,6 @@ export class Mat4{
     outValues[15] = aValues[15] - bValues[15];
     return out;
   }
-  public sub(b: Mat4){
-    return Mat4.Sub(this, this, b);
-  }
   public static Clone(mat4: Mat4){
     const out = new Mat4();
     const outValues = out.values;
@@ -3609,9 +3200,6 @@ export class Mat4{
     outValues[15] = values[15];
     return out;
   }
-  public clone(){
-    return Mat4.Clone(this);
-  }
   public static Copy(out: Mat4, mat4: Mat4){
     const outValues = out.values;
     const values = mat4.values;
@@ -3632,9 +3220,6 @@ export class Mat4{
     outValues[14] = values[14];
     outValues[15] = values[15];
     return out;
-  }
-  public copy(mat4: Mat4){
-    return Mat4.Copy(this, mat4);
   }
 
   public static Det(mat4: Mat4){
@@ -3657,10 +3242,7 @@ export class Mat4{
 
     return v0 * C11 - v4 * C12 + v8 * C13 - v12 * C14;
   }
-  public det(){
-    return Mat4.Det(this);
-  }
-  public static Invert(mat4: Mat4){
+  public static Invert(out: Mat4, mat4: Mat4){
     const values = mat4.values;
     const v0 = values[0],   v1 = values[1],   v2 = values[2],   v3 = values[3];
     const v4 = values[4],   v5 = values[5],   v6 = values[6],   v7 = values[7];
@@ -3688,25 +3270,24 @@ export class Mat4{
     if(Math.abs(det) < 1e-6) return;
     const invDet = 1 / det;
 
-    values[0] = invDet * C11;
-    values[1] = invDet * C12;
-    values[2] = invDet * C13;
-    values[3] = invDet * C14;
-    values[4] = invDet * (-v4 * L + v8 * K - v12 * J);
-    values[5] = invDet * (v0 * L - v8 * I + v12 * H);
-    values[6] = invDet * (-v0 * K + v4 * I - v12 * G);
-    values[7] = invDet * (v0 * J - v4 * H + v8 * G);
-    values[8] = invDet * (v7 * F - v11 * E + v15 * D);
-    values[9] = invDet * (-v3 * F + v11 * C - v15 * B);
-    values[10] = invDet * (v3 * E - v7 * C + v15 * A);
-    values[11] = invDet * (-v3 * D + v7 * B - v11 * A);
-    values[12] = invDet * (-v6 * F + v10 * E - v14 * D);
-    values[13] = invDet * (v2 * F - v10 * C + v14 * B);
-    values[14] = invDet * (-v2 * E + v6 * C - v14 * A);
-    values[15] = invDet * (v2 * D - v6 * B + v10 * A);
-  }
-  public invert(){
-    Mat4.Invert(this);
+    const outValues = out.values;
+    outValues[0] = invDet * C11;
+    outValues[1] = invDet * C12;
+    outValues[2] = invDet * C13;
+    outValues[3] = invDet * C14;
+    outValues[4] = invDet * (-v4 * L + v8 * K - v12 * J);
+    outValues[5] = invDet * (v0 * L - v8 * I + v12 * H);
+    outValues[6] = invDet * (-v0 * K + v4 * I - v12 * G);
+    outValues[7] = invDet * (v0 * J - v4 * H + v8 * G);
+    outValues[8] = invDet * (v7 * F - v11 * E + v15 * D);
+    outValues[9] = invDet * (-v3 * F + v11 * C - v15 * B);
+    outValues[10] = invDet * (v3 * E - v7 * C + v15 * A);
+    outValues[11] = invDet * (-v3 * D + v7 * B - v11 * A);
+    outValues[12] = invDet * (-v6 * F + v10 * E - v14 * D);
+    outValues[13] = invDet * (v2 * F - v10 * C + v14 * B);
+    outValues[14] = invDet * (-v2 * E + v6 * C - v14 * A);
+    outValues[15] = invDet * (v2 * D - v6 * B + v10 * A);
+    return out;
   }
   public static Transpose(out: Mat4, a: Mat4){
     const aValues = a.values;
@@ -3746,8 +3327,5 @@ export class Mat4{
       outValues[15] = aValues[15]; //
     }
     return out;
-  }
-  public transpose(){
-    return Mat4.Transpose(this, this);
   }
 }

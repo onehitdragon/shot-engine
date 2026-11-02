@@ -2,11 +2,12 @@ import { WebglHelper } from "./WebglHelper";
 import phongShadingVShaderSource from "../shaders/phong-shader/vshader.glsl?raw";
 import phongShadingFShaderSource from "../shaders/phong-shader/fshader.glsl?raw";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
-import type { Mat3, Mat4, PhongShading, Vec3 } from "@shot-engine/types";
+import type { PhongShading } from "@shot-engine/types";
 import { LightInfo } from "../asset-cache/LightInfo";
 import { AssetCache } from "../asset-cache/asset-cache";
 import { ColorCache } from "../asset-cache/color-cache";
 import { SkyBoxInfo } from "../asset-cache/SkyBoxInfo";
+import type { Mat3, Mat4, Vec3 } from "@shot-engine/math";
 
 export class WebglPhongShader{
     private static _instance: WebglPhongShader;
@@ -124,8 +125,8 @@ export class WebglPhongShader{
         gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4.values);
         gl.uniformMatrix4fv(this._u_ModelMatrixLoc, false, modelMat4.values);
         gl.uniformMatrix3fv(this._u_NormalMatrixLoc, false, normalMat3.values);
-        gl.uniform3fv(this._u_CamWorldPosLoc, [camPos.x, camPos.y, camPos.z]);
-        gl.uniform3fv(this._u_specularLoc, [specular.x, specular.y, specular.z]);
+        gl.uniform3fv(this._u_CamWorldPosLoc, camPos.values);
+        gl.uniform3fv(this._u_specularLoc, specular.values);
         gl.uniform1f(this._u_shininessLoc, shininess);
         gl.uniform1i(this._u_PointLightSizeLoc, pointLightInfos.length);
         gl.uniform1i(this._u_DirectionalLightSizeLoc, directionalInfos.length);

@@ -2,10 +2,11 @@ import { WebglMeshVBOs } from "./WebglMeshVBOs";
 import { WebglSimpleShader } from "./WebglSimpleShader";
 import { WebglHelper } from "./WebglHelper";
 import { WebglPhongShader } from "./WebglPhongShader";
-import type { GizmoShading, Mat3, Mat4, MeshAsset, PbrShading, PhongShading, Shading, Vec3 } from "@shot-engine/types";
+import type { GizmoShading, MeshAsset, PbrShading, PhongShading, Shading, SimpleShading } from "@shot-engine/types";
 import { WebglPbrShader } from "./WebglPbrShader";
 import { WebglGizmoShader } from "./WebglGizmoShader";
 import { WebglShadowMapShader } from "./WebglShadowMapShader";
+import { Mat3, Mat4, Vec3 } from "@shot-engine/math";
 
 export class WebglMesh{
     private _gl: WebGL2RenderingContext;
@@ -40,16 +41,16 @@ export class WebglMesh{
             WebglShadowMapShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
         );
     }
-    renderWithSimpleShader(mvpMat4: Mat4, vpMat4: Mat4, jointMatrices: Float32Array, color?: Vec3){
+    renderWithSimpleShader(mvpMat4: Mat4, vpMat4: Mat4, jointMatrices: Float32Array, simpleShading: SimpleShading){
         const gl = this._gl;
         const vao = this._meshVAOMap.get("simple")!;
         if(this.type === "skin"){
             WebglSimpleShader.getInstance(gl).renderSkinMesh(
-                this._meshVBOs, vao, vpMat4, jointMatrices, color
+                this._meshVBOs, vao, vpMat4, jointMatrices, simpleShading
             );
         }
         else{
-            WebglSimpleShader.getInstance(gl).renderStaticMesh(this._meshVBOs, vao, mvpMat4, color);
+            WebglSimpleShader.getInstance(gl).renderStaticMesh(this._meshVBOs, vao, mvpMat4, simpleShading);
         }
         
     }

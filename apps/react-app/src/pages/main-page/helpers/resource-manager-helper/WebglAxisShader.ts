@@ -1,7 +1,7 @@
 import { WebglHelper } from "./WebglHelper";
 import gridShadingVShaderSource from "../shaders/axis-shader/vshader.glsl?raw";
 import gridShadingFShaderSource from "../shaders/axis-shader/fshader.glsl?raw";
-import type { Mat4 } from "@shot-engine/types";
+import { Mat4 } from "@shot-engine/math";
 
 export class WebglAxisShader{
   private static _instance: WebglAxisShader;

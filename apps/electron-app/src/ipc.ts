@@ -281,8 +281,8 @@ export function setupIPC(){
   );
   ipcMain.handle(
     "assetManager:pack",
-    async (e, projectSettingAsset: ProjectSettingAsset) => {
-      await asssetManager.pack(projectSettingAsset);
+    async (e, projectSettingAssetUuid: string) => {
+      await asssetManager.pack(projectSettingAssetUuid);
     }
   );
   ipcMain.handle(

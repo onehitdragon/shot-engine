@@ -6,13 +6,6 @@ table PrimitiveAttribute{
   interleaveArray: [uint8];
 }
 
-enum IndexType : uint {
-  NONE = 0,
-  UNSIGNED_BYTE = 5121,
-  UNSIGNED_SHORT = 5123,
-  UNSIGNED_INT = 5125
-}
-
 table AABB{
   min: FBSEngine.Vec3;
   max: FBSEngine.Vec3;
@@ -28,7 +21,6 @@ table Primitive{
   type: PrimitiveType;
   attribute: PrimitiveAttribute;
   indices: [ubyte];
-  index_type: IndexType;
   drawMode: int;
   aabb: AABB;
   invBindPoseMatrices: [float];

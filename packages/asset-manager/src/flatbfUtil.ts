@@ -1,5 +1,5 @@
 import type * as ShotEngineType from "@shot-engine/types";
-import * as math from "@shot-engine/math"; 
+import * as math from "@shot-engine/math";
 import {
     Vec3, Vec4,
     SceneNode, GameObject, GameObjectPrefab, Component, Transform, Mesh,
@@ -22,6 +22,7 @@ import {
     TextOrString,
     Text,
     String,
+    Camera,
 } from "../fbs-gen/fbsengine.js";
 import { Builder, Offset } from "flatbuffers";
 
@@ -54,28 +55,10 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
     for(const component of go.components){
         let componentOffset: number | undefined;
         if(component.type === "Transform"){
-            Vec3.startVec3(builder);
-            Vec3.addX(builder, component.pos.x);
-            Vec3.addY(builder, component.pos.y);
-            Vec3.addZ(builder, component.pos.z);
-            const posOffset = Vec3.endVec3(builder);
-            Vec4.startVec4(builder);
-            Vec4.addX(builder, component.rot.x);
-            Vec4.addY(builder, component.rot.y);
-            Vec4.addZ(builder, component.rot.z);
-            Vec4.addW(builder, component.rot.w);
-            const rotOffset = Vec4.endVec4(builder);
-            Vec3.startVec3(builder);
-            Vec3.addX(builder, component.scale.x);
-            Vec3.addY(builder, component.scale.y);
-            Vec3.addZ(builder, component.scale.z);
-            const scaleOffset = Vec3.endVec3(builder);
-
-            Vec3.startVec3(builder);
-            Vec3.addX(builder, component.editor.euler.x);
-            Vec3.addY(builder, component.editor.euler.y);
-            Vec3.addZ(builder, component.editor.euler.z);
-            const eulerOffset = Vec3.endVec3(builder);
+            const posOffset = buildVec3(builder, component.pos);
+            const rotOffset = buildVec4(builder, component.rot);
+            const scaleOffset = buildVec3(builder, component.scale);
+            const eulerOffset = buildVec3(builder, component.editor.euler);
             TransformEditor.startTransformEditor(builder);
             TransformEditor.addEuler(builder, eulerOffset);
             const editorOffset = TransformEditor.endTransformEditor(builder);
@@ -101,15 +84,10 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
         }
         else if(component.type === "Shading" && component.shaderType === "simple"){
             const idOffset = builder.createString(component.id);
-            const cullingOffset = builder.createString(component.culling);
-            Vec3.startVec3(builder);
-            Vec3.addX(builder, component.color.x);
-            Vec3.addY(builder, component.color.y);
-            Vec3.addZ(builder, component.color.z);
-            const colorOffset = Vec3.endVec3(builder);
+            const colorOffset = buildVec4(builder, component.color);
             SimpleShading.startSimpleShading(builder);
             SimpleShading.addId(builder, idOffset);
-            SimpleShading.addCulling(builder, cullingOffset);
+            SimpleShading.addCulling(builder, cullingToNum(component.culling));
             SimpleShading.addTransparent(builder, component.transparent);
             SimpleShading.addColor(builder, colorOffset);
             componentOffset = SimpleShading.endSimpleShading(builder);
@@ -117,7 +95,6 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
         }
         else if(component.type === "Shading" && component.shaderType === "phong"){
             const idOffset = builder.createString(component.id);
-            const cullingOffset = builder.createString(component.culling);
             let imageOrColorOffset: number;
             let imageOrColor: ImageOrColor;
             if(component.diffuse.type === "image"){
@@ -128,24 +105,16 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
                 imageOrColor = ImageOrColor.Image;
             }
             else{
-                Vec3.startVec3(builder);
-                Vec3.addX(builder, component.diffuse.color.x);
-                Vec3.addY(builder, component.diffuse.color.y);
-                Vec3.addZ(builder, component.diffuse.color.z);
-                const colorOffset = Vec3.endVec3(builder);
+                const colorOffset = buildVec3(builder, component.diffuse.color);
                 Color.startColor(builder);
                 Color.addColor(builder, colorOffset);
                 imageOrColorOffset = Color.endColor(builder);
                 imageOrColor = ImageOrColor.Color;
             }
-            Vec3.startVec3(builder);
-            Vec3.addX(builder, component.specular.x);
-            Vec3.addY(builder, component.specular.y);
-            Vec3.addZ(builder, component.specular.z);
-            const specularOffset = Vec3.endVec3(builder);
+            const specularOffset = buildVec3(builder, component.specular);
             PhongShading.startPhongShading(builder);
             PhongShading.addId(builder, idOffset);
-            PhongShading.addCulling(builder, cullingOffset);
+            PhongShading.addCulling(builder, cullingToNum(component.culling));
             PhongShading.addTransparent(builder, component.transparent);
             PhongShading.addDiffuse(builder, imageOrColorOffset);
             PhongShading.addDiffuseType(builder, imageOrColor);
@@ -156,7 +125,6 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
         }
         else if(component.type === "Shading" && component.shaderType === "pbr"){
             const idOffset = builder.createString(component.id);
-            const cullingOffset = builder.createString(component.culling);
             let imageOrColorOffset: number;
             let imageOrColor: ImageOrColor;
             if(component.diffuse.type === "image"){
@@ -167,11 +135,7 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
                 imageOrColor = ImageOrColor.Image;
             }
             else{
-                Vec3.startVec3(builder);
-                Vec3.addX(builder, component.diffuse.color.x);
-                Vec3.addY(builder, component.diffuse.color.y);
-                Vec3.addZ(builder, component.diffuse.color.z);
-                const colorOffset = Vec3.endVec3(builder);
+                const colorOffset = buildVec3(builder, component.diffuse.color);
                 Color.startColor(builder);
                 Color.addColor(builder, colorOffset);
                 imageOrColorOffset = Color.endColor(builder);
@@ -218,11 +182,7 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
                 imageOrColor_emissive = ImageOrColor.Image;
             }
             else{
-                Vec3.startVec3(builder);
-                Vec3.addX(builder, component.emissive.color.color.x);
-                Vec3.addY(builder, component.emissive.color.color.y);
-                Vec3.addZ(builder, component.emissive.color.color.z);
-                const colorOffset = Vec3.endVec3(builder);
+                const colorOffset = buildVec3(builder, component.emissive.color.color);
                 Color.startColor(builder);
                 Color.addColor(builder, colorOffset);
                 imageOrColorOffset_emissive = Color.endColor(builder);
@@ -264,7 +224,7 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             }
             PbrShading.startPbrShading(builder);
             PbrShading.addId(builder, idOffset);
-            PbrShading.addCulling(builder, cullingOffset);
+            PbrShading.addCulling(builder, cullingToNum(component.culling));
             PbrShading.addTransparent(builder, component.transparent);
             PbrShading.addDiffuse(builder, imageOrColorOffset);
             PbrShading.addDiffuseType(builder, imageOrColor);
@@ -283,11 +243,7 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
         }
         else if(component.type === "Light" && component.lightType === "DirectionalLight"){
             const idOffset = builder.createString(component.id);
-            Vec3.startVec3(builder);
-            Vec3.addX(builder, component.color.x);
-            Vec3.addY(builder, component.color.y);
-            Vec3.addZ(builder, component.color.z);
-            const colorOffset = Vec3.endVec3(builder);
+            const colorOffset = buildVec3(builder, component.color);
             const lightShadowOffset = buildLightShadow(builder, component.shadow);
             DirectionalLight.startDirectionalLight(builder);
             DirectionalLight.addId(builder, idOffset);
@@ -299,11 +255,7 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
         }
         else if(component.type === "Light" && component.lightType === "PointLight"){
             const idOffset = builder.createString(component.id);
-            Vec3.startVec3(builder);
-            Vec3.addX(builder, component.color.x);
-            Vec3.addY(builder, component.color.y);
-            Vec3.addZ(builder, component.color.z);
-            const colorOffset = Vec3.endVec3(builder);
+            const colorOffset = buildVec3(builder, component.color);
             const lightShadowOffset = buildLightShadow(builder, component.shadow);
             PointLight.startPointLight(builder);
             PointLight.addId(builder, idOffset);
@@ -316,11 +268,7 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
         }
         else if(component.type === "Light" && component.lightType === "SpotLight"){
             const idOffset = builder.createString(component.id);
-            Vec3.startVec3(builder);
-            Vec3.addX(builder, component.color.x);
-            Vec3.addY(builder, component.color.y);
-            Vec3.addZ(builder, component.color.z);
-            const colorOffset = Vec3.endVec3(builder);
+            const colorOffset = buildVec3(builder, component.color);
             const lightShadowOffset = buildLightShadow(builder, component.shadow);
             SpotLight.startSpotLight(builder);
             SpotLight.addId(builder, idOffset);
@@ -332,6 +280,14 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             SpotLight.addShadow(builder, lightShadowOffset);
             componentOffset = SpotLight.endSpotLight(builder);
             componentTypeOffsets.push(Component.SpotLight);
+        }
+        else if(component.type === "Camera"){
+            const idOffset = builder.createString(component.id);
+            Camera.startCamera(builder);
+            Camera.addId(builder, idOffset);
+            Camera.addFovy(builder, component.fovy);
+            componentOffset = Camera.endCamera(builder);
+            componentTypeOffsets.push(Component.Camera);
         }
         else if(component.type === "SkyBox"){
             const idOffset = builder.createString(component.id);
@@ -438,20 +394,17 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
     return goOffset;
 }
 
-export function buildVec3(builder: Builder, vec3: ShotEngineType.Vec3){
-    Vec3.startVec3(builder);
-    Vec3.addX(builder, vec3.x);
-    Vec3.addY(builder, vec3.y);
-    Vec3.addZ(builder, vec3.z);
-   return Vec3.endVec3(builder);
+function cullingToNum(culling: ShotEngineType.ShadingBase["culling"]){
+    if(culling === "none") return 0;
+    if(culling === "back") return 1;
+    if(culling === "front") return 2;
+    return 0;
 }
-
-export function buildVec3Array(builder: Builder, vec3: Float32Array){
-    Vec3.startVec3(builder);
-    Vec3.addX(builder, vec3[0]);
-    Vec3.addY(builder, vec3[1]);
-    Vec3.addZ(builder, vec3[2]);
-   return Vec3.endVec3(builder);
+function numToCulling(num: number): ShotEngineType.ShadingBase["culling"]{
+    if(num === 0) return "none";
+    if(num === 1) return "back";
+    if(num === 2) return "front";
+    return "none";
 }
 
 function buildLightShadow(builder: Builder, shadow: ShotEngineType.LightShadow){
@@ -477,15 +430,12 @@ export function readGameObject(gameObject: GameObject){
         const componentType = gameObject.componentsType(i);
         if(componentType === Component.Transform){
             const transform = gameObject.components(i, new Transform()) as Transform;
-            const pos = transform.pos() as Vec3;
-            const rot = transform.rot() as Vec4;
-            const scale = transform.scale() as Vec3;
             gameObjectResult.components.push({
                 type: "Transform",
                 id: transform.id() ?? "",
-                pos: { x: pos.x(), y: pos.y(), z: pos.z() },
-                rot: { x: rot.x(), y: rot.y(), z: rot.z(), w: rot.w() },
-                scale: { x: scale.x(), y: scale.y(), z: scale.z() },
+                pos: getVec3(transform.pos()),
+                rot: getQuat(transform.rot()),
+                scale: getVec3(transform.scale()),
                 editor: {
                     euler: getVec3(transform.editor()?.euler())
                 }
@@ -505,9 +455,9 @@ export function readGameObject(gameObject: GameObject){
                 type: "Shading",
                 shaderType: "simple",
                 id: simpleShading.id() ?? "",
-                culling: getCulling(simpleShading.culling()),
+                culling: numToCulling(simpleShading.culling()),
                 transparent: simpleShading.transparent(),
-                color: getVec3(simpleShading.color())
+                color: getVec4(simpleShading.color())
             });
         }
         if(componentType === Component.PhongShading){
@@ -533,7 +483,7 @@ export function readGameObject(gameObject: GameObject){
                 type: "Shading",
                 shaderType: "phong",
                 id: phongShading.id() ?? "",
-                culling: getCulling(phongShading.culling()),
+                culling: numToCulling(phongShading.culling()),
                 transparent: phongShading.transparent(),
                 diffuse: diffuseOut,
                 specular: getVec3(phongShading.specular()),
@@ -651,7 +601,7 @@ export function readGameObject(gameObject: GameObject){
                 type: "Shading",
                 shaderType: "pbr",
                 id: pbrShading.id() ?? "",
-                culling: getCulling(pbrShading.culling()),
+                culling: numToCulling(pbrShading.culling()),
                 transparent: pbrShading.transparent(),
                 diffuse: diffuseOut,
                 metallic: metalOut,
@@ -713,6 +663,14 @@ export function readGameObject(gameObject: GameObject){
                 innerAngle: spotLight.innerAngle(),
                 outerAngle: spotLight.outerAngle(),
                 shadow: readShawdowLight(shadow)
+            });
+        }
+        if(componentType === Component.Camera){
+            const camera = gameObject.components(i, new Camera()) as Camera;
+            gameObjectResult.components.push({
+                type: "Camera",
+                id: camera.id() ?? "",
+                fovy: camera.fovy()
             });
         }
         if(componentType === Component.SkyBox){
@@ -816,33 +774,34 @@ export function readGameObject(gameObject: GameObject){
     return gameObjectResult;
 }
 
-function getVec3Optional(vec3?: Vec3 | null): math.Vec3 | undefined{
-    if(!vec3) return;
-    return math.Vec3.FromValues(
-        vec3.x(), vec3.y(), vec3.z()
-    );
+/** vec3 is pure property object */
+export function buildVec3(builder: Builder, vec3: math.Vec3){
+    Vec3.startVec3(builder);
+    Vec3.addX(builder, vec3.values[0]);
+    Vec3.addY(builder, vec3.values[1]);
+    Vec3.addZ(builder, vec3.values[2]);
+   return Vec3.endVec3(builder);
 }
-
-function getNumberOptional(number?: number | null){
-    if(number === null) return;
-    return number;
+/** vec4 is pure property object */
+export function buildVec4(builder: Builder, vec4: math.Vec4 | math.Quat){
+    Vec4.startVec4(builder);
+    Vec4.addX(builder, vec4.values[0]);
+    Vec4.addY(builder, vec4.values[1]);
+    Vec4.addZ(builder, vec4.values[2]);
+    Vec4.addW(builder, vec4.values[3]);
+    return Vec4.endVec4(builder);
 }
-
-type CullingType = ShotEngineType.Shading["culling"];
-const CULLINGS = new Set<CullingType>(["none", "back", "front", "both"]);
-export function getCulling(culling?: string | null){
-    if(typeof culling === "string" && CULLINGS.has(culling as CullingType)){
-        return culling as CullingType;
-    }
-    return "none";
+export function getVec3(vec3?: Vec3 | null): math.Vec3{
+    if(!vec3) return math.Vec3.FromValues(0, 0, 0);
+    return math.Vec3.FromValues(vec3.x(), vec3.y(), vec3.z());
 }
-export function getVec3(vec3?: Vec3 | null): ShotEngineType.Vec3{
-    if(!vec3) return { x: 0, y: 0, z: 0 };
-    return {
-        x: vec3.x(),
-        y: vec3.y(),
-        z: vec3.z()
-    }
+export function getVec4(vec4?: Vec4 | null): math.Vec4{
+    if(!vec4) return math.Vec4.FromValues(0, 0, 0, 0);
+    return math.Vec4.FromValues(vec4.x(), vec4.y(), vec4.z(), vec4.w());
+}
+export function getQuat(vec4?: Vec4 | null): math.Quat{
+    if(!vec4) return math.Quat.FromValues(0, 0, 0, 1);
+    return math.Quat.FromValues(vec4.x(), vec4.y(), vec4.z(), vec4.w());
 }
 export function getUint8Array(arrayIn?: Uint8Array | null){
     // create new Uint8Array by copy arrayIn

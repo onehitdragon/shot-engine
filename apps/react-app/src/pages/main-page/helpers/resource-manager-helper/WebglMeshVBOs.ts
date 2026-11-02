@@ -27,7 +27,7 @@ export class WebglMeshVBOs{
         this._gl = gl;
         this._vertexVBO = WebglHelper.createVertexBuffer(gl, primitive.attribute.interleaveArray);
         this._indexVBO = WebglHelper.createIndexBuffer(gl, primitive.indices);
-        this._indexType = primitive.indexType;
+        this._indexType = gl.UNSIGNED_INT; // 5125
         this._indexCount = primitive.indices.length;
         this._drawMode = primitive.drawMode;
     }

@@ -1,9 +1,10 @@
 import { WebglGridShader } from "./WebglGridShader";
-import type { Mat3, Mat4, Mesh, Shading, Vec3 } from "@shot-engine/types";
+import type { Mesh, Shading } from "@shot-engine/types";
 import { getSceneWebglContext } from "./CanvasHelper";
 import { AssetCache } from "../asset-cache/asset-cache";
 import { WebglSkyBoxShader } from "./WebglSkyBoxShader";
 import { WebglAxisShader } from "./WebglAxisShader";
+import { Mat3, Mat4, Vec3 } from "@shot-engine/math";
 
 export class WebglRenderer{
     private static _instance: WebglRenderer;
@@ -42,7 +43,7 @@ export class WebglRenderer{
             return;
         }
         if(shaderType === "simple"){
-            webglMeshs.forEach(e => e.renderWithSimpleShader(mvpMat4, vpMat4, jointMatrices, shadingComponent.color));
+            webglMeshs.forEach(e => e.renderWithSimpleShader(mvpMat4, vpMat4, jointMatrices, shadingComponent));
         }
         else if(shaderType === "phong"){
             webglMeshs.forEach(
@@ -89,14 +90,16 @@ export class WebglRenderer{
     }
     private culling(culling: Shading["culling"]){
         const gl = this._gl;
-        if(culling === "none"){
-            gl.disable(gl.CULL_FACE);
+        if(culling === "back"){
+            gl.enable(gl.CULL_FACE);
+            gl.cullFace(gl.BACK);
+        }
+        else if(culling === "front"){
+            gl.enable(gl.CULL_FACE);
+            gl.cullFace(gl.FRONT);
         }
         else{
-            gl.enable(gl.CULL_FACE);
-            if(culling === "back") gl.cullFace(gl.BACK);
-            else if(culling === "front") gl.cullFace(gl.FRONT);
-            else if (culling === "both") gl.cullFace(gl.FRONT_AND_BACK);
+            gl.disable(gl.CULL_FACE);
         }
     }
 }

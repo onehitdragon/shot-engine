@@ -4,7 +4,7 @@ import skyboxFShaderSource from "../shaders/skybox-shader/fshader.glsl?raw";
 import { getCubeMeshData } from "../scene-manager-helper/mesh-datas";
 import { SkyBoxInfo } from "../asset-cache/SkyBoxInfo";
 import { AssetCache } from "../asset-cache/asset-cache";
-import { Mat3, Mat4 } from "@shot-engine/types";
+import { Mat3, Mat4 } from "@shot-engine/math";
 
 export class WebglSkyBoxShader{
     private static _instance: WebglSkyBoxShader;
@@ -55,13 +55,13 @@ export class WebglSkyBoxShader{
         const webglTextureCube = AssetCache.getInstance().getHdr(uniqueSkyBox.hdrRef)?.enviromentMap;
         if(!webglTextureCube) return;
 
-        const upperLeftMat3 = Mat3.FromMat4(viewMat4);
-        viewMat4 = Mat4.FromArray([
+        const upperLeftMat3 = Mat3.FromMat4(new Mat3(), viewMat4);
+        viewMat4 = Mat4.FromValues(
             upperLeftMat3.values[0], upperLeftMat3.values[1], upperLeftMat3.values[2], 0,
             upperLeftMat3.values[3], upperLeftMat3.values[4], upperLeftMat3.values[5], 0,
             upperLeftMat3.values[6], upperLeftMat3.values[7], upperLeftMat3.values[8], 0,
             0, 0, 0, 1,
-        ]);
+        );
 
         const gl = this._gl;
         gl.depthFunc(gl.LEQUAL);

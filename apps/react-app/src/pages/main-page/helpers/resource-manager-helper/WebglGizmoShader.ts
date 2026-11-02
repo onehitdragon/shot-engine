@@ -1,8 +1,9 @@
 import { WebglHelper } from "./WebglHelper";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
-import { Mat4, type GizmoShading } from "@shot-engine/types";
+import { type GizmoShading } from "@shot-engine/types";
 import shadingVShaderSource from "../shaders/gizmo-shader/vshader.glsl?raw";
 import shadingFShaderSource from "../shaders/gizmo-shader/fshader.glsl?raw";
+import { Mat4 } from "@shot-engine/math";
 
 export class WebglGizmoShader{
   private static _instance: WebglGizmoShader;
@@ -53,7 +54,7 @@ export class WebglGizmoShader{
     const vbos = meshVBOs;
     gl.useProgram(this._program);
     gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4.values);
-    gl.uniform3fv(this._u_color, [color.x, color.y, color.z]);
+    gl.uniform3fv(this._u_color, color.values);
 
     gl.disable(gl.DEPTH_TEST);
     gl.bindVertexArray(vao);

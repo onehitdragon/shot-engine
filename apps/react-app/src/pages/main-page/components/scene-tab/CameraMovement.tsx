@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { sphereCoordinateToCartesian } from "../../helpers/math-helpers/sphere-coordinate-helpers";
-import { Vec3 } from "@shot-engine/types";
 import { updateAspect, updateCamera } from "../../../../global-state/slices/gizmo-orbit-camera-slice";
 import { clamp } from "lodash";
 import { getSceneCanvas, getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
+import { Vec3 } from "@shot-engine/math";
 
 export function CameraMovement(){
   const [mode, setMode] = useState(0); // 0 idle 1 moving 2 rotating
@@ -40,16 +40,16 @@ export function CameraMovement(){
       if(mode === 1){
         if(!moveable) return;
         const { r, theta, phi } = camera.sphereCoordinate;
-        let camWorldPos = sphereCoordinateToCartesian(r, theta, phi);
-        camWorldPos = Vec3.Add(camera.origin, camWorldPos);
-        let forward = Vec3.Sub(camera.origin, camWorldPos);
-        let right = Vec3.Cross(forward, Vec3.Up());
-        let up = Vec3.Cross(right, forward);
-        forward = Vec3.Normalize(forward);
-        right = Vec3.Normalize(right);
-        up = Vec3.Normalize(up);
-        let origin = Vec3.Add(camera.origin, Vec3.Scale(right, -deltaX * 0.05));
-        origin = Vec3.Add(origin, Vec3.Scale(up, deltaY * 0.05));
+        const camWorldPos = sphereCoordinateToCartesian(r, theta, phi);
+        Vec3.Add(camWorldPos, camWorldPos, camera.origin);
+        const forward = Vec3.Sub(new Vec3(), camera.origin, camWorldPos);
+        const right = Vec3.Cross(new Vec3(), forward, Vec3.FromValues(0, 1, 0));
+        const up = Vec3.Cross(new Vec3(), right, forward);
+        Vec3.Normalize(forward, forward);
+        Vec3.Normalize(right, right);
+        Vec3.Normalize(up, up);
+        const origin = Vec3.Add(new Vec3(), camera.origin, Vec3.Scale(new Vec3(), right, -deltaX * 0.05));
+        Vec3.Add(origin, origin, Vec3.Scale(up, up, deltaY * 0.05));
         dispatch(updateCamera({ camera: { ...camera, origin } }));
       }
       else if(mode === 2){

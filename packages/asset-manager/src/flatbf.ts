@@ -7,7 +7,6 @@ import {
 import {
     ImageAsset, PrimitiveAttribute, Primitive, MeshAsset, PrefabAsset,
     SceneAsset,
-    IndexType,
     HdrImage,
     HdrCube,
     HdrAsset,
@@ -74,7 +73,6 @@ export function saveMeshAssetBinary(meshAsset: ShotEngineType.MeshAsset, filePat
         Primitive.addType(builder, primitiveType);
         Primitive.addAttribute(builder, attrOffset);
         Primitive.addIndices(builder, indicesOffset);
-        Primitive.addIndexType(builder, prim.indexType);
         Primitive.addDrawMode(builder, prim.drawMode);
         Primitive.addAabb(builder, aabbOffset);
         Primitive.addInvBindPoseMatrices(builder, invBindPoseMatricesOffset);
@@ -303,36 +301,12 @@ export function readMeshAsset(filePath: string){
             primType = "static";
         }
 
-        let indexType = prim.indexType();
-        let indices: Uint8Array | Uint16Array | Uint32Array;
-        if(indexType === IndexType.UNSIGNED_BYTE){
-            indices = new Uint8Array(
-                rawIndices.buffer,
-                rawIndices.byteOffset,
-                rawIndices.byteLength
-            );
-            indices = new Uint8Array(rawIndices);
-        }
-        else if(indexType === IndexType.UNSIGNED_SHORT){
-            indices = new Uint16Array(
-                rawIndices.buffer,
-                rawIndices.byteOffset,
-                rawIndices.byteLength / 2
-            );
-            indices = new Uint16Array(indices);
-        }
-        else if(indexType === IndexType.UNSIGNED_INT){
-            indices = new Uint32Array(
-                rawIndices.buffer,
-                rawIndices.byteOffset,
-                rawIndices.byteLength / 4
-            );
-            indices = new Uint32Array(indices);
-        }
-        else{
-            indices = new Uint32Array();
-            indexType = IndexType.UNSIGNED_INT;
-        }
+        let indices = new Uint32Array(
+            rawIndices.buffer,
+            rawIndices.byteOffset,
+            rawIndices.byteLength / 4
+        );
+        indices = new Uint32Array(indices); // copy array
 
         asset.primitives.push({
             type: primType,
@@ -340,7 +314,6 @@ export function readMeshAsset(filePath: string){
                 interleaveArray: getUint8Array(attr.interleaveArrayArray())
             },
             indices,
-            indexType,
             drawMode: prim.drawMode(),
             aabb: {
                 min: getVec3(prim.aabb()?.min()),

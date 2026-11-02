@@ -5,6 +5,7 @@ import * as ShotEngineType from "@shot-engine/types";
 import { v4 as uuidv4 } from "uuid";
 import { genKTX2 } from './helpers/gen-ktx.js';
 import { defaultImageAsset } from './schema.js';
+import * as math from "@shot-engine/math";
 
 type GLB = {
     textures: GLBTexture[],
@@ -137,11 +138,8 @@ export async function readGLBFile(filePath: string){
     }
     for(const mesh of root.listMeshes()){
         const primitives = mesh.listPrimitives().map((e => {
-            const indices = getIndices(e.getIndices());
-            let indexType = 0;
-            if(indices instanceof Uint8Array) indexType = 5121;
-            if(indices instanceof Uint16Array) indexType = 5123;
-            if(indices instanceof Uint32Array) indexType = 5125;
+            let indices = getIndices(e.getIndices());
+            indices = new Uint32Array(indices);
 
             const positions = getAttr(e.getAttribute("POSITION")); // vec3
             const normals = getAttr(e.getAttribute("NORMAL")); // vec3
@@ -171,7 +169,6 @@ export async function readGLBFile(filePath: string){
                     interleaveArray: interleaveArrayWithJoint
                 },
                 indices,
-                indexType,
                 drawMode: e.getMode(),
                 aabb: ShotEngineType.AABB.FromVertices([...positions]),
                 invBindPoseMatrices
@@ -317,22 +314,22 @@ function createGameObject(node: Node, meshMap: Map<Mesh, number>){
         {
             type: "Transform",
             id: "",
-            pos: {
-                x: node.getTranslation()[0],
-                y: node.getTranslation()[1],
-                z: node.getTranslation()[2]
-            },
-            rot: {
-                x: node.getRotation()[0],
-                y: node.getRotation()[1],
-                z: node.getRotation()[2],
-                w: node.getRotation()[3]
-            },
-            scale: {
-                x: node.getScale()[0],
-                y: node.getScale()[1],
-                z: node.getScale()[2]
-            },
+            pos: math.Vec3.FromValues(
+                node.getTranslation()[0],
+                node.getTranslation()[1],
+                node.getTranslation()[2]
+            ),
+            rot: math.Quat.FromValues(
+                node.getRotation()[0],
+                node.getRotation()[1],
+                node.getRotation()[2],
+                node.getRotation()[3]
+            ),
+            scale: math.Vec3.FromValues(
+                node.getScale()[0],
+                node.getScale()[1],
+                node.getScale()[2]
+            ),
             editor: {
                 euler: quatToEulerYXZ(node.getRotation())
             }
@@ -365,7 +362,7 @@ function createGameObject(node: Node, meshMap: Map<Mesh, number>){
                 id: uuidv4(),
                 culling: "none",
                 transparent: false,
-                color: { x: 1, y: 1, z: 1 }
+                color: math.Vec4.FromValues(1, 1, 1, 1)
             }
         );
     }
@@ -394,11 +391,11 @@ function quatToEulerYXZ(q: [number, number, number, number]) {
       1 - 2 * (x * x + z * z)
     );
     const rollZ = 0;
-    return {
-        x: pitchX * (180 / Math.PI),
-        y: yawY * (180 / Math.PI), 
-        z: rollZ * (180 / Math.PI)
-    };
+    return math.Vec3.FromValues(
+        pitchX * (180 / Math.PI),
+        yawY * (180 / Math.PI), 
+        rollZ * (180 / Math.PI)
+    );
   }
 
   // Y (yaw)
@@ -413,11 +410,11 @@ function quatToEulerYXZ(q: [number, number, number, number]) {
     1 - 2 * (x * x + z * z)
   );
 
-  return {
-    x: pitchX * (180 / Math.PI),
-    y: yawY * (180 / Math.PI), 
-    z: rollZ * (180 / Math.PI)
-  }; // radians
+  return math.Vec3.FromValues(
+    pitchX * (180 / Math.PI),
+    yawY * (180 / Math.PI), 
+    rollZ * (180 / Math.PI)
+  ); // radians
 }
 
 function printNode(node: Node, space = 0){

@@ -1,7 +1,7 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
 import type { NodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { createConeNode, createCubeNode, createCylinderNode, createEmptyNode, createPbrTest, createSphereNode, createUILayoutNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
-import { createDirectionalLightComponent, createPbrShadingComponent, createPointLightComponent, createSimpleShadingComponent, createSkyBoxComponent, createSpotLightComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
+import { createConeNode, createCubeNode, createCylinderNode, createEmptyNode, createPbrTest, createSphereNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
+import { createCameraComponent, createDirectionalLightComponent, createPbrShadingComponent, createPointLightComponent, createSimpleShadingComponent, createSkyBoxComponent, createSpotLightComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
 import { goAddedThunk, goRemovedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 import { componentAddedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
 
@@ -82,17 +82,16 @@ export function SceneNodeContextMenu(
             unique: true,
         }));
     }
+    const addCameraComponent = () => {
+        dispatch(componentAddedThunk({
+            component: createCameraComponent(),
+            unique: true,
+        }));
+    }
     const addSkyBox = () => {
         dispatch(componentAddedThunk({
             component: createSkyBoxComponent(),
             unique: true,
-        }));
-    }
-    const createUILayoutChild = () => {
-        const newNode = createUILayoutNode();
-        newNode.parent = node.id;
-        dispatch(goAddedThunk({
-            node: newNode
         }));
     }
     const createPbrTestChild = () => {
@@ -171,6 +170,12 @@ export function SceneNodeContextMenu(
                 </li>
                 <li className='text-xs text-white select-none cursor-pointer transition
                     hover:bg-blue-500 px-2 py-1 rounded-sm'
+                    onMouseDown={addCameraComponent}
+                >
+                    Add Camera Component
+                </li>
+                <li className='text-xs text-white select-none cursor-pointer transition
+                    hover:bg-blue-500 px-2 py-1 rounded-sm'
                     onMouseDown={addSimpleShadingComponent}
                 >
                     Add Simple Shading
@@ -198,12 +203,6 @@ export function SceneNodeContextMenu(
                     onMouseDown={createPbrTestChild}
                 >
                     createPbrTestChild
-                </li>
-                <li className='text-xs text-white select-none cursor-pointer transition
-                    hover:bg-blue-500 px-2 py-1 rounded-sm'
-                    onMouseDown={createUILayoutChild}
-                >
-                    create UILayout Child
                 </li>
             </ul>
         </div>

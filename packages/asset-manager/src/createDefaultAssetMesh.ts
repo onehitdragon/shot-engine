@@ -1,3 +1,4 @@
+import { Vec3 } from "@shot-engine/math";
 import * as ShotEngineType from "@shot-engine/types";
 
 export function createDefaultCubeAssetMesh(){
@@ -27,7 +28,7 @@ export function createDefaultCubeAssetMesh(){
         ...v3, ...down, 1, 1, ...v2, ...down, 0, 1, ...v7, ...down, 0, 0, ...v4, ...down, 1, 0,// down
         ...v4, ...back, 1, 1, ...v7, ...back, 0, 1, ...v6, ...back, 0, 0, ...v5, ...back, 1, 0,// back
     ]);
-    const indices = new Uint8Array(
+    const indices = new Uint32Array(
         [
             0, 1, 2, 0, 2, 3,       // front
             4, 5, 6, 4, 6, 7,       // right
@@ -48,7 +49,6 @@ export function createDefaultCubeAssetMesh(){
                 interleaveArray: new Uint8Array(interleaveArrayWithTangent.buffer)
             },
             indices,
-            indexType: 5121,
             drawMode: 4,
             aabb: ShotEngineType.AABB.FromVertices(
                 [...v0, ...v1, ...v2, ...v3, ...v4, ...v5, ...v6, ...v7]
@@ -120,7 +120,7 @@ export function createDefaultSphereAssetMesh(){
     }
 
     const interleaveArray = new Float32Array(vertices);
-    const indicesOut = new Uint16Array(indices);
+    const indicesOut = new Uint32Array(indices);
     const interleaveArrayWithTangent = ShotEngineType.MeshHelper.InterleaveArrayTangent(
         interleaveArray,
         indices
@@ -134,9 +134,6 @@ export function createDefaultSphereAssetMesh(){
 
             // ~2400 indices => Uint16
             indices: indicesOut,
-
-            // gl.UNSIGNED_SHORT
-            indexType: 5123,
 
             // gl.TRIANGLES
             drawMode: 4,
@@ -186,12 +183,10 @@ export function createDefaultCylinderAssetMesh(){
     const du = 1 / nSegment;
     for(let i = 0, u = 1, v = 1; i < vertices.length; i += 3){
         const vertex = [vertices[i], vertices[i + 1], vertices[i + 2]];
-        let normal = [vertices[i], 0, vertices[i + 2]];
-        normal = ShotEngineType.Vec3.ToArray(
-            ShotEngineType.Vec3.Normalize(ShotEngineType.Vec3.FromArray(normal))
-        );
+        let normal = Vec3.FromValues(vertices[i], 0, vertices[i + 2]);
+        Vec3.Normalize(normal, normal);
         const uv = [u, v];
-        interleave.push(...vertex, ...normal, ...uv);
+        interleave.push(...vertex, ...normal.values, ...uv);
         if(v === 0) u -= du;
         if(v === 0) v = 1; else v = 0;
     }
@@ -213,15 +208,13 @@ export function createDefaultCylinderAssetMesh(){
     indicies.push(...topIndicies);
     for(let i = 0; i < topVertices.length; i += 3){
         const vertex = [topVertices[i], topVertices[i + 1], topVertices[i + 2]];
-        let normal = [0, 1, 0];
-        normal = ShotEngineType.Vec3.ToArray(
-            ShotEngineType.Vec3.Normalize(ShotEngineType.Vec3.FromArray(normal))
-        );
+        let normal = Vec3.FromValues(0, 1, 0);
+        Vec3.Normalize(normal, normal);
         let uv = [vertex[0]/(2*r)+0.5, vertex[2]/(2*r)+0.5];
         if(i === topVertices.length - 3){ // center vertex
             uv = [0.5, 0.5];
         }
-        interleave.push(...vertex, ...normal, ...uv);
+        interleave.push(...vertex, ...normal.values, ...uv);
     }
 
     // bot
@@ -241,19 +234,17 @@ export function createDefaultCylinderAssetMesh(){
     indicies.push(...botIndicies);
     for(let i = 0; i < botVertices.length; i += 3){
         const vertex = [botVertices[i], botVertices[i + 1], botVertices[i + 2]];
-        let normal = [0, -1, 0];
-        normal = ShotEngineType.Vec3.ToArray(
-            ShotEngineType.Vec3.Normalize(ShotEngineType.Vec3.FromArray(normal))
-        );
+        let normal = Vec3.FromValues(0, -1, 0);
+        Vec3.Normalize(normal, normal);
         let uv = [vertex[0]/(2*r)+0.5, vertex[2]/(2*r)+0.5];
         if(i === botVertices.length - 3){ // center vertex
             uv = [0.5, 0.5];
         }
-        interleave.push(...vertex, ...normal, ...uv);
+        interleave.push(...vertex, ...normal.values, ...uv);
     }
 
     const interleaveArray = new Float32Array(interleave);
-    const indicesOut = new Uint16Array(indicies);
+    const indicesOut = new Uint32Array(indicies);
     const interleaveArrayWithTangent = ShotEngineType.MeshHelper.InterleaveArrayTangent(
         interleaveArray,
         indicesOut
@@ -267,9 +258,6 @@ export function createDefaultCylinderAssetMesh(){
 
             // indices => Uint16
             indices: indicesOut,
-
-            // gl.UNSIGNED_SHORT
-            indexType: 5123,
 
             // gl.TRIANGLES
             drawMode: 4,
@@ -314,19 +302,17 @@ export function createDefaultConeAssetMesh(){
     for(let i = 0, u = 1; i < vertices.length; i += 3){
         const vertexIndex = Math.floor(i / 3);
         const vertex = [vertices[i], vertices[i + 1], vertices[i + 2]];
-        let normal = [vertex[0],  k * (height/2 - vertex[1]), vertex[2]];
+        let normal = Vec3.FromValues(vertex[0],  k * (height/2 - vertex[1]), vertex[2]);
         if(vertexIndex % 2 !== 0){ // center
             let j = i - 3;
             let jj = i + 3;
-            normal = [
+            normal = Vec3.FromValues(
                 vertices[j] + vertices[jj],
                 k * (height/2 - vertices[j + 1]) + k * (height/2 - vertices[jj + 1]),
                 vertices[j + 2] + vertices[jj + 2]
-            ];
+            );
         }
-        normal = ShotEngineType.Vec3.ToArray(
-            ShotEngineType.Vec3.Normalize(ShotEngineType.Vec3.FromArray(normal))
-        );
+        Vec3.Normalize(normal, normal);
         let uv: number[];
         if(vertexIndex % 2 !== 0){ // center
             uv = [u - (du / 2), 1];
@@ -335,7 +321,7 @@ export function createDefaultConeAssetMesh(){
         else{
             uv = [u, 0];
         }
-        interleave.push(...vertex, ...normal, ...uv);
+        interleave.push(...vertex, ...normal.values, ...uv);
     }
 
     // bot
@@ -355,19 +341,17 @@ export function createDefaultConeAssetMesh(){
     indicies.push(...botIndicies);
     for(let i = 0; i < botVertices.length; i += 3){
         const vertex = [botVertices[i], botVertices[i + 1], botVertices[i + 2]];
-        let normal = [0, -1, 0];
-        normal = ShotEngineType.Vec3.ToArray(
-            ShotEngineType.Vec3.Normalize(ShotEngineType.Vec3.FromArray(normal))
-        );
+        let normal = Vec3.FromValues(0, -1, 0);
+        Vec3.Normalize(normal, normal);
         let uv = [vertex[0]/(2*r)+0.5, vertex[2]/(2*r)+0.5];
         if(i === botVertices.length - 3){ // center vertex
             uv = [0.5, 0.5];
         }
-        interleave.push(...vertex, ...normal, ...uv);
+        interleave.push(...vertex, ...normal.values, ...uv);
     }
 
     const interleaveArray = new Float32Array(interleave);
-    const indicesOut = new Uint16Array(indicies);
+    const indicesOut = new Uint32Array(indicies);
     const interleaveArrayWithTangent = ShotEngineType.MeshHelper.InterleaveArrayTangent(
         interleaveArray,
         indicesOut
@@ -381,9 +365,6 @@ export function createDefaultConeAssetMesh(){
 
             // indices => Uint16
             indices: indicesOut,
-
-            // gl.UNSIGNED_SHORT
-            indexType: 5123,
 
             // gl.TRIANGLES
             drawMode: 4,

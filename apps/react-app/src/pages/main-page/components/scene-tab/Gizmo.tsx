@@ -2,13 +2,14 @@ import { useEffect, useRef } from "react";
 import { GizmoOrbitCameraInfo } from "../../../../global-state/thunks/gizmo-orbit-camera-thunk";
 import { nodeFocusedThunk, NodesInfo, nodeUnfocusedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 import { GlobalSceneNodeRenderer } from "./SceneRenderer";
-import { ComponentHelper, Mat3, Mat4, Ray, Vec3 } from "@shot-engine/types";
+import { ComponentHelper, Ray } from "@shot-engine/types";
 import { getSceneCanvas } from "../../helpers/resource-manager-helper/CanvasHelper";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { selectNodeRecord } from "../../../../global-state/slices/go-tree-slice";
 import { updateMoveable } from "../../../../global-state/slices/gizmo-orbit-camera-slice";
 import { cloneDeep } from "lodash";
 import { componentUpdatedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
+import { Mat3, Mat4, Vec3 } from "@shot-engine/math";
 
 export function Gizmo(){
   const dispatch = useAppDispatch();
@@ -72,7 +73,7 @@ export function Gizmo(){
         const t = ray.intersectPlane(gizmoIntersect.point, GizmoOrbitCameraInfo.getInstance().forward);
         if(!t) return;
         const movedPoint = ray.getPoint(t);
-        const moveDir = Vec3.Sub(movedPoint, gizmoIntersect.point);
+        const moveDir = Vec3.Sub(new Vec3(), movedPoint, gizmoIntersect.point);
         gizmoIntersect.point = movedPoint;
         const gizmoNodeId = latestProps.current.gizmoNodeId;
         if(!gizmoNodeId) return;
@@ -80,27 +81,29 @@ export function Gizmo(){
         let localAxis: Vec3;
         const parentWorldMatrix = NodesInfo.getInstance().nodeInfos.get(gizmoNodeId)?.parentWorldMatrix;
         if(!parentWorldMatrix) return;
-        const parentWorldMatrixInvert = Mat3.FromMat4(Mat4.Invert(parentWorldMatrix));
+        Mat4.Invert(parentWorldMatrix, parentWorldMatrix);
+        const parentWorldMatrixInvert = Mat3.FromMat4(new Mat3(), parentWorldMatrix);
         if(latestProps.current.mode === "global"){
-          const axis = Vec3.Axis(translate);
+          const axis = Vec3.FromAxis(translate);
           const distance = Vec3.Dot(moveDir, axis);
-          const worldDelta = Vec3.Scale(axis, distance);
-          localAxis = Vec3.TransformMat3(worldDelta, parentWorldMatrixInvert);
+          const worldDelta = Vec3.Scale(axis, axis, distance);
+          localAxis = Vec3.TransformMat3(worldDelta, worldDelta, parentWorldMatrixInvert);
         }
         else{
           const worldMatrix = NodesInfo.getInstance().nodeInfos.get(gizmoNodeId)?.worldMatrix;
           if(!worldMatrix) return;
-          const axis = Vec3.Normalize(Mat4.GetAxis(worldMatrix, translate));
+          const axis = Mat4.GetAxis(worldMatrix, translate);
+          Vec3.Normalize(axis, axis);
           const distance = Vec3.Dot(moveDir, axis);
-          const worldDelta = Vec3.Scale(axis, distance);
-          localAxis = Vec3.TransformMat3(worldDelta, parentWorldMatrixInvert);
+          const worldDelta = Vec3.Scale(axis, axis, distance);
+          localAxis = Vec3.TransformMat3(worldDelta, worldDelta, parentWorldMatrixInvert);
         }
 
         const components = latestProps.current.nodeRecord[gizmoNodeId].components;
         const transform = ComponentHelper.FindComponentByType(components, "Transform");
         if(!transform) return;
         const transformClone = cloneDeep(transform);
-        transformClone.pos = Vec3.Add(transformClone.pos, localAxis);
+        Vec3.Add(transformClone.pos, transformClone.pos, localAxis);
         dispatch(componentUpdatedThunk({ component: transformClone }));
       }
     }
@@ -165,17 +168,17 @@ export function rayPick(
         const v1_index = indices[i + 1] * amountFloat;
         const v2_index = indices[i + 2] * amountFloat;
         const v0 = new Vec3();
-        v0.x = interleaveArray[v0_index];
-        v0.y = interleaveArray[v0_index + 1];
-        v0.z = interleaveArray[v0_index + 2];
+        v0.values[0] = interleaveArray[v0_index];
+        v0.values[1] = interleaveArray[v0_index + 1];
+        v0.values[2] = interleaveArray[v0_index + 2];
         const v1 = new Vec3();
-        v1.x = interleaveArray[v1_index];
-        v1.y = interleaveArray[v1_index + 1];
-        v1.z = interleaveArray[v1_index + 2];
+        v1.values[0] = interleaveArray[v1_index];
+        v1.values[1] = interleaveArray[v1_index + 1];
+        v1.values[2] = interleaveArray[v1_index + 2];
         const v2 = new Vec3();
-        v2.x = interleaveArray[v2_index];
-        v2.y = interleaveArray[v2_index + 1];
-        v2.z = interleaveArray[v2_index + 2];
+        v2.values[0] = interleaveArray[v2_index];
+        v2.values[1] = interleaveArray[v2_index + 1];
+        v2.values[2] = interleaveArray[v2_index + 2];
         const distance = localRay.trigIntersect(v0, v1, v2);
         if(distance === false) continue;
 

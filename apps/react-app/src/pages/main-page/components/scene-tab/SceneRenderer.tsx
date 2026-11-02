@@ -3,7 +3,7 @@ import { useAppSelector } from "../../../../global-state/hooks";
 import { getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
 import { WebglRenderer } from "../../helpers/resource-manager-helper/WebglRenderer";
 import { selectNodeRecord, selectNodes, type NodeState } from "../../../../global-state/slices/go-tree-slice";
-import { ComponentHelper, Mat3, Mat4, type Component, type MeshAsset } from "@shot-engine/types";
+import { ComponentHelper, type Component, type Mesh, type MeshAsset, type ShadingBase } from "@shot-engine/types";
 import { AssetCache } from "../../helpers/asset-cache/asset-cache";
 import { LightInfo } from "../../helpers/asset-cache/LightInfo";
 import { SkyBoxInfo } from "../../helpers/asset-cache/SkyBoxInfo";
@@ -12,6 +12,7 @@ import { NodesInfo, type NodeRenderState } from "../../../../global-state/thunks
 import { selectGizmoNodes } from "../../../../global-state/slices/gizmo-go-tree-slice";
 import { GizmoOrbitCameraInfo } from "../../../../global-state/thunks/gizmo-orbit-camera-thunk";
 import { GizmoControl } from "./GizmoControl";
+import { Mat3, Mat4 } from "@shot-engine/math";
 
 export function SceneRenderer(){
     const nodes = useAppSelector(state => selectNodes(state));
@@ -68,7 +69,7 @@ export function SceneRenderer(){
 
         GlobalSceneNodeRenderer.getInstance().reset();
         const renderer = new SceneNodeRenderer(webglRenderer);
-        renderer.renderNodes(nodes, NodesInfo.getInstance().nodeInfos, nodeRecord);
+        renderer.renderNodes(nodes, nodeRecord);
 
         webglRenderer.renderSkyBox(
             GizmoOrbitCameraInfo.getInstance().viewMat4,
@@ -79,7 +80,7 @@ export function SceneRenderer(){
 
         webglRenderer.renderAxis(GizmoOrbitCameraInfo.getInstance().vpMat4);
 
-        renderer.renderNodes(gizmoNodes, NodesInfo.getInstance().nodeInfos, nodeRecord);
+        renderer.renderNodes(gizmoNodes, nodeRecord);
     },[
         camera, nodes, nodeRecord, gizmoNodes, webglRenderer, prepareAssetCount, nodeFocusedId
     ]);
@@ -96,28 +97,54 @@ export function SceneRenderer(){
         </div>
     );
 }
+type RenderNodeData = {
+    node: NodeState,
+    distanceToCam: number,
+    meshComponent: Mesh,
+    shadingComponent: ShadingBase
+}
 export class SceneNodeRenderer{
     private _webglRenderer: WebglRenderer;
-    constructor( webglRenderer: WebglRenderer){
+    private _opaqueNodes: RenderNodeData[];
+    private _transparentNodes: RenderNodeData[];
+    constructor(webglRenderer: WebglRenderer){
         this._webglRenderer = webglRenderer;
+        this._opaqueNodes = [];
+        this._transparentNodes = [];
     }
     renderNodes(
         nodes: NodeState[],
-        nodeRenderStates: Map<string, NodeRenderState>,
         nodeRecord: Record<string, NodeState>,
     ){
+        
+
+
         for(const node of nodes){
-            this.renderGo(node, nodeRenderStates, nodeRecord);
-            this.renderLayout(node);
+            this.renderGo(node, NodesInfo.getInstance().nodeInfos, nodeRecord);
         }
     }
-    renderLayout(
-        go: NodeState
-    ){
-        // const uiLayoutComponent = ComponentHelper.FindComponentByType(go.components, "UILayout");
-        // if(!uiLayoutComponent) return;
-        // this._webglRenderer.renderUILayout(uiLayoutComponent);
-    }
+    // pepareRenderNodes(nodes: NodeState[]){
+    //     this._opaqueNodes = [];
+    //     this._transparentNodes = [];
+    //     const camPos = GizmoOrbitCameraInfo.getInstance().worldPos;
+    //     for(const node of nodes){
+    //         const meshComponent = ComponentHelper.FindComponentByType(node.components, "Mesh");
+    //         if(!meshComponent) continue;
+    //         const shadingComponent = ComponentHelper.FindComponentByType(node.components, "Shading");
+    //         if(!shadingComponent) continue;
+    //         const nodeWordPos = NodesInfo.getInstance().getWorldPos(node.id);
+    //         if(!nodeWordPos) continue;
+    //         const renderNodeData: RenderNodeData = {
+    //             node,
+    //             distanceToCam: math.Vec3.SquaredDistance(
+    //                 math.Vec3.FromValues(camPos.x, camPos.y, camPos.z),
+    //                 math.Vec3.FromValues(nodeWordPos.x, nodeWordPos.y, nodeWordPos.z),
+    //             ),
+    //             meshComponent,
+    //             shadingComponent
+    //         }
+    //     }
+    // }
     renderGo(
         go: NodeState,
         nodeRenderStates: Map<string, NodeRenderState>,
@@ -167,7 +194,7 @@ export class SceneNodeRenderer{
         nodeRecord: Record<string, NodeState>,
     ){
         if(!rootJointId) return new Float32Array();
-        const jointMatrices: number[][] = [];
+        const jointMatrices: Float32Array[] = [];
         function recur(jointId: string){
             const jointNode = nodeRecord[jointId];
             if(!jointNode) return;
@@ -179,13 +206,18 @@ export class SceneNodeRenderer{
             }
         }
         recur(rootJointId);
-        return new Float32Array(jointMatrices.flat());
+        const result = new Float32Array(jointMatrices.length * 16);
+        for(let i = 0, offset = 0; i < jointMatrices.length; i++){
+            result.set(jointMatrices[i], offset);
+            offset += 16;
+        }
+        return result;
     }
     createMVPMatrix(modelMat4: Mat4){
-        return Mat4.Multiply(GizmoOrbitCameraInfo.getInstance().vpMat4, modelMat4); // P * V * M
+        return Mat4.Multiply(new Mat4(), GizmoOrbitCameraInfo.getInstance().vpMat4, modelMat4); // P * V * M
     }
     createNormalMatrix(modelMat4: Mat4){
-        return Mat3.NormalFromMat4(modelMat4);
+        return Mat3.NormalFromMat4(new Mat3(), modelMat4);
     }
 }
 export class GlobalSceneNodeRenderer{

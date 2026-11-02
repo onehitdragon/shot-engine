@@ -1,17 +1,10 @@
-import type { GameObject, Mesh, PbrShading, Shading, Transform, UILayout } from '@shot-engine/types';
+import type { GameObject, Mesh, PbrShading, Shading } from '@shot-engine/types';
 import type { NodeState } from '../../../../global-state/slices/go-tree-slice';
+import { Vec3, Vec4 } from '@shot-engine/math';
+import { createTransformComponent } from './SceneNodeComponentHelper';
 
 export function createEmptyNode(){
-    const transform: Transform = {
-        type: "Transform",
-        id: "",
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 },
-        editor: {
-            euler: { x: 0, y: 0, z: 0}
-        }
-    }
+    const transform = createTransformComponent();
     const sceneNode: NodeState = {
         name: "EmptyNode",
         id: "",
@@ -22,16 +15,7 @@ export function createEmptyNode(){
     return sceneNode;
 }
 export function createCubeNode(){
-    const transform: Transform = {
-        type: "Transform",
-        id: "",
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 },
-        editor: {
-            euler: { x: 0, y: 0, z: 0}
-        }
-    }
+    const transform = createTransformComponent();
     const mesh: Mesh = {
         id: "",
         type: "Mesh",
@@ -42,8 +26,8 @@ export function createCubeNode(){
         type: "Shading",
         shaderType: "simple",
         transparent: false,
-        culling: 'none',
-        color: { x: 1, y: 1, z: 1 }
+        culling: "none",
+        color: Vec4.FromValues(1, 1, 1 ,1)
     }
     const sceneNode: NodeState = {
         name: "CubeNode",
@@ -55,16 +39,7 @@ export function createCubeNode(){
     return sceneNode;
 }
 export function createSphereNode(){
-    const transform: Transform = {
-        type: "Transform",
-        id: "",
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 },
-        editor: {
-            euler: { x: 0, y: 0, z: 0}
-        }
-    }
+    const transform = createTransformComponent();
     const mesh: Mesh = {
         id: "",
         type: "Mesh",
@@ -75,8 +50,8 @@ export function createSphereNode(){
         type: "Shading",
         shaderType: "simple",
         transparent: false,
-        culling: 'none',
-        color: { x: 1, y: 1, z: 1 }
+        culling: "none",
+        color: Vec4.FromValues(1, 1, 1 ,1)
     }
     const sceneNode: NodeState = {
         name: "SphereNode",
@@ -88,16 +63,7 @@ export function createSphereNode(){
     return sceneNode;
 }
 export function createCylinderNode(){
-    const transform: Transform = {
-        type: "Transform",
-        id: "",
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 },
-        editor: {
-            euler: { x: 0, y: 0, z: 0}
-        }
-    }
+    const transform = createTransformComponent();
     const mesh: Mesh = {
         id: "",
         type: "Mesh",
@@ -108,8 +74,8 @@ export function createCylinderNode(){
         type: "Shading",
         shaderType: "simple",
         transparent: false,
-        culling: 'none',
-        color: { x: 1, y: 1, z: 1 }
+        culling: "none",
+        color: Vec4.FromValues(1, 1, 1 ,1)
     }
     const sceneNode: NodeState = {
         name: "CylinderNode",
@@ -121,16 +87,7 @@ export function createCylinderNode(){
     return sceneNode;
 }
 export function createConeNode(){
-    const transform: Transform = {
-        type: "Transform",
-        id: "",
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 },
-        editor: {
-            euler: { x: 0, y: 0, z: 0}
-        }
-    }
+    const transform = createTransformComponent();
     const mesh: Mesh = {
         id: "",
         type: "Mesh",
@@ -141,8 +98,8 @@ export function createConeNode(){
         type: "Shading",
         shaderType: "simple",
         transparent: false,
-        culling: 'none',
-        color: { x: 1, y: 1, z: 1 }
+        culling: "none",
+        color: Vec4.FromValues(1, 1, 1 ,1)
     }
     const sceneNode: NodeState = {
         name: "ConeNode",
@@ -154,16 +111,7 @@ export function createConeNode(){
     return sceneNode;
 }
 export function createEmptyPrefab(){
-    const transform: Transform = {
-        type: "Transform",
-        id: "",
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 },
-        editor: {
-            euler: { x: 0, y: 0, z: 0}
-        }
-    }
+    const transform = createTransformComponent();
     const sceneNode: GameObject = {
         name: "EmptyNode",
         id: "",
@@ -248,16 +196,7 @@ export function createPbrTest(){
         x: number, z: number,
         baseColor: number[], metallic: number, roughness: number, reflectance: number
     ){
-        const transform: Transform = {
-            type: "Transform",
-            id: "",
-            pos: { x, y: 0, z },
-            rot: { x: 0, y: 0, z: 0, w: 1 },
-            scale: { x: 1, y: 1, z: 1 },
-            editor: {
-                euler: { x: 0, y: 0, z: 0}
-            }
-        }
+        const transform = createTransformComponent();
         const mesh: Mesh = {
             id: "",
             type: "Mesh",
@@ -268,10 +207,10 @@ export function createPbrTest(){
             type: "Shading",
             shaderType: "pbr",
             transparent: false,
-            culling: 'none',
+            culling: "none",
             diffuse: {
                 type: "color",
-                color: { x: baseColor[0] / 255, y: baseColor[1] / 255, z: baseColor[2] / 255 }
+                color: Vec3.FromValues(baseColor[0] / 255, baseColor[1] / 255, baseColor[2] / 255)
             },
             metallic: {
                 type: "value",
@@ -285,7 +224,7 @@ export function createPbrTest(){
             emissive: {
                 color: {
                     type: "color",
-                    color: { x: 0, y: 0, z: 0 }
+                    color: Vec3.FromValues(0, 0, 0)
                 },
                 intensity: 0
             },
@@ -335,34 +274,4 @@ export function createPbrTest(){
     }
 
     return sphereChilds;
-}
-export function createUILayoutNode(){
-    const transform: Transform = {
-        type: "Transform",
-        id: "",
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 1, z: 1 },
-        editor: {
-            euler: { x: 0, y: 0, z: 0}
-        }
-    }
-    const uiLayout: UILayout = {
-        id: "",
-        type: "UILayout",
-        html: { type: "string", value: "" },
-        css: { type: "string", value: "" },
-        js: { type: "string", value: "" },
-        asset: {
-            imageRefs: []
-        }
-    }
-    const sceneNode: NodeState = {
-        name: "UILayout",
-        id: "",
-        components: [transform, uiLayout],
-        childs: [],
-    }
-
-    return sceneNode;
 }

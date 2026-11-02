@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { Vec3 } from "@shot-engine/types"
+import { Vec3 } from "@shot-engine/math"
 
 export interface GizmoOrbitCameraState{
   fov: number,
@@ -20,7 +20,7 @@ const initialState:InitState = {
     near: 0.1,
     far: 1000,
     sphereCoordinate: { r: 5, theta: 0, phi: 0 },
-    origin: {x: 0, y: 0, z: 0}
+    origin: Vec3.FromValues(0, 0, 0)
   },
   moveable: true
 };

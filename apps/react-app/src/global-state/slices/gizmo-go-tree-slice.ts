@@ -3,8 +3,9 @@ import type { NodeState } from "./go-tree-slice";
 import { v4 as uuidv4 } from "uuid";
 import type { RootState } from "../store";
 import { nodeFocusedThunk, nodeUnfocusedThunk } from "../thunks/go-tree-thunks";
-import { ComponentHelper, Vec3, Vec4, type GizmoTransform } from "@shot-engine/types";
+import { ComponentHelper, type Component, type GizmoTransform } from "@shot-engine/types";
 import { cloneDeep } from "lodash";
+import { Quat, Vec3 } from "@shot-engine/math";
 
 const nodeAdapter = createEntityAdapter<NodeState, string>({
   selectId: (node) => node.id
@@ -33,11 +34,11 @@ const slice = createSlice({
   initialState,
   name: "gizmo-go-tree",
   reducers: {
-    updateGizmoToolPosRot(state, action: PayloadAction<{ pos: Vec3, rot: Vec4 }>){
+    updateGizmoToolPosRot(state, action: PayloadAction<{ pos: Vec3, rot: Quat }>){
       if(!state.nodeTrackInfo) return;
       const gizmoToolNode = state.nodes.entities[gizmoTool.rootId];
       if(!gizmoToolNode) return;
-      const transform = ComponentHelper.FindComponentByType(gizmoToolNode.components, "GizmoTransform");
+      const transform = ComponentHelper.FindComponentByType(gizmoToolNode.components as unknown as Component[], "GizmoTransform");
       if(!transform) return;
       transform.pos = action.payload.pos;
       transform.rot = action.payload.rot;
@@ -79,9 +80,9 @@ function createGizmoTool(){
   const rootTransform: GizmoTransform = {
     type: "GizmoTransform",
     id: gizmoUuidv4(),
-    pos: { x: 0, y: 0, z: 0 },
-    rot: { x: 0, y: 0, z: 0, w: 1 },
-    scale: { x: 1, y: 1, z: 1 }
+    pos: Vec3.FromValues(0, 0, 0),
+    rot: Quat.FromValues(0, 0, 0, 1),
+    scale: Vec3.FromValues(1, 1, 1),
   }
   const root: NodeState = {
     id: rootId,
@@ -96,10 +97,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1.5, y: 1.5, z: 1.5 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0, 0, 0),
+        rot: Quat.FromValues(0, 0, 0, 1),
+        scale: Vec3.FromValues(1.5, 1.5, 1.5),
+        editor: { euler: Vec3.FromValues(0, 0, 0 ) }
       }
     ],
     childs: []
@@ -111,10 +112,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0.5, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: -0.70710678, w: 0.70710678 },
-        scale: { x: 0.1, y: 0.1, z: 0.1 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0.5, 0, 0 ),
+        rot: Quat.FromValues(0, 0, -0.70710678, 0.70710678 ),
+        scale: Vec3.FromValues(0.1, 0.1, 0.1 ),
+        editor: { euler: Vec3.FromValues(0, 0, 0) }
       }
     ],
     childs: []
@@ -126,10 +127,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 6, z: 1 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0, 0, 0),
+        rot: Quat.FromValues(0, 0, 0, 1),
+        scale: Vec3.FromValues(1, 6, 1),
+        editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
         type: "Mesh",
@@ -142,7 +143,7 @@ function createGizmoTool(){
         shaderType: "gizmo",
         culling: "none",
         transparent: false,
-        color: { x: 1, y: 0, z: 0 }
+        color: Vec3.FromValues(1, 0, 0)
       }
     ],
     childs: []
@@ -154,10 +155,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0, y: 7, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1.5, y: 1.5, z: 1.5 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0, 7, 0),
+        rot: Quat.FromValues(0, 0, 0, 1),
+        scale: Vec3.FromValues(1.5, 1.5, 1.5),
+        editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
         type: "Mesh",
@@ -170,7 +171,7 @@ function createGizmoTool(){
         shaderType: "gizmo",
         culling: "none",
         transparent: false,
-        color: { x: 1, y: 0, z: 0 }
+        color: Vec3.FromValues(1, 0, 0)
       }
     ],
     childs: []
@@ -182,10 +183,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0, y: 0.5, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 0.1, y: 0.1, z: 0.1 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0, 0.5, 0),
+        rot: Quat.FromValues(0, 0, 0, 1),
+        scale: Vec3.FromValues(0.1, 0.1, 0.1),
+        editor: { euler: Vec3.FromValues(0, 0, 0) }
       }
     ],
     childs: []
@@ -197,10 +198,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 6, z: 1 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0, 0, 0),
+        rot: Quat.FromValues(0, 0, 0, 1),
+        scale: Vec3.FromValues(1, 6, 1),
+        editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
         type: "Mesh",
@@ -213,7 +214,7 @@ function createGizmoTool(){
         shaderType: "gizmo",
         culling: "none",
         transparent: false,
-        color: { x: 0, y: 1, z: 0 }
+        color: Vec3.FromValues(0, 1, 0)
       }
     ],
     childs: []
@@ -225,10 +226,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0, y: 7, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1.5, y: 1.5, z: 1.5 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0, 7, 0),
+        rot: Quat.FromValues(0, 0, 0, 1),
+        scale: Vec3.FromValues(1.5, 1.5, 1.5),
+        editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
         type: "Mesh",
@@ -241,7 +242,7 @@ function createGizmoTool(){
         shaderType: "gizmo",
         culling: "none",
         transparent: false,
-        color: { x: 0, y: 1, z: 0 }
+        color: Vec3.FromValues(0, 1, 0)
       }
     ],
     childs: []
@@ -253,10 +254,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0, y: 0, z: 0.5 },
-        rot: { x: 0.70710678, y: 0, z: 0, w: 0.70710678 },
-        scale: { x: 0.1, y: 0.1, z: 0.1 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0, 0, 0.5),
+        rot: Quat.FromValues(0.70710678, 0, 0, 0.70710678),
+        scale: Vec3.FromValues(0.1, 0.1, 0.1),
+        editor: { euler: Vec3.FromValues(0, 0, 0) }
       }
     ],
     childs: []
@@ -268,10 +269,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0, y: 0, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1, y: 6, z: 1 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0, 0, 0),
+        rot: Quat.FromValues(0, 0, 0, 1),
+        scale: Vec3.FromValues(1, 6, 1),
+        editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
         type: "Mesh",
@@ -284,7 +285,7 @@ function createGizmoTool(){
         shaderType: "gizmo",
         culling: "none",
         transparent: false,
-        color: { x: 0, y: 0, z: 1 }
+        color: Vec3.FromValues(0, 0, 1)
       }
     ],
     childs: []
@@ -296,10 +297,10 @@ function createGizmoTool(){
       {
         type: "Transform",
         id: gizmoUuidv4(),
-        pos: { x: 0, y: 7, z: 0 },
-        rot: { x: 0, y: 0, z: 0, w: 1 },
-        scale: { x: 1.5, y: 1.5, z: 1.5 },
-        editor: { euler: { x: 0, y: 0, z: 0 } }
+        pos: Vec3.FromValues(0, 7, 0),
+        rot: Quat.FromValues(0, 0, 0, 1),
+        scale: Vec3.FromValues(1.5, 1.5, 1.5),
+        editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
         type: "Mesh",
@@ -312,7 +313,7 @@ function createGizmoTool(){
         shaderType: "gizmo",
         culling: "none",
         transparent: false,
-        color: { x: 0, y: 0, z: 1 }
+        color: Vec3.FromValues(0, 0, 1)
       }
     ],
     childs: []

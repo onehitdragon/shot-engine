@@ -21,9 +21,9 @@ table Mesh{
 
 table SimpleShading{
     id: string;
-    culling: string;
+    culling: ubyte;
     transparent: bool;
-    color: Vec3;
+    color: Vec4;
 }
 
 table Image{
@@ -55,7 +55,7 @@ table Emissive{
 
 table PhongShading{
     id: string;
-    culling: string;
+    culling: ubyte;
     transparent: bool;
     diffuse: ImageOrColor;
     specular: Vec3;
@@ -64,7 +64,7 @@ table PhongShading{
 
 table PbrShading{
     id: string;
-    culling: string;
+    culling: ubyte;
     transparent: bool;
     diffuse: ImageOrColor;
     metallic: ImageOrValue;
@@ -108,6 +108,11 @@ table SpotLight{
     shadow: LightShadow;
 }
 
+table Camera{
+    id: string;
+    fovy: double;
+}
+
 table SkyBox{
     id: string;
     hdrRef: string;
@@ -144,6 +149,7 @@ union Component{
     PointLight,
     DirectionalLight,
     SpotLight,
+    Camera,
     SkyBox,
     Skeleton,
     UILayout

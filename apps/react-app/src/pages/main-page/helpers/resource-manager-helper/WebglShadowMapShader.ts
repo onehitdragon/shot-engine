@@ -2,7 +2,7 @@ import { WebglHelper } from "./WebglHelper";
 import shadowMapVS from "../shaders/shadow-map-shader/shadowMap-vs.glsl?raw";
 import shadowMapFS from "../shaders/shadow-map-shader/shadowMap-fs.glsl?raw";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
-import type { Mat4 } from "@shot-engine/types";
+import type { Mat4 } from "@shot-engine/math";
 
 export class WebglShadowMapShader{
     private static _instance: WebglShadowMapShader;

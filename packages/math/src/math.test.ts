@@ -1,6 +1,14 @@
 import { expect, test, describe } from 'vitest';
 import { Deg2Rad, Mat3, Mat4, Quat, Rad2Deg, Vec2, Vec3, Vec4 } from './math.js';
 
+describe("Vec2", () => {
+  test("Sub", () => {
+    let a = Vec2.FromValues(1, 2);
+    let b = Vec2.FromValues(4, 5);
+    let c = new Vec2();
+    expect(Vec2.Sub(c, b, a).values).toEqual(new Float32Array([3, 3]));
+  });
+});
 describe("Vec3", () => {
   test("Add", () => {
     const a = Vec3.FromValues(1, 2, 3);
@@ -21,20 +29,20 @@ describe("Vec3", () => {
   });
   test("Ceil & Floor", () => {
     let a = Vec3.FromValues(1.1, 2.2, 3.8);
-    a.ceil();
+    Vec3.Ceil(a, a);
     expect(a.values).toEqual(new Float32Array([2, 3, 4]));
     let b = Vec3.FromValues(1.1, 2.2, 3.8);
-    b.floor();
+    Vec3.Floor(b, b);
     expect(b.values).toEqual(new Float32Array([1, 2, 3]));
   });
   test("Clone & Copy", () => {
     let a = Vec3.FromValues(1.1, 2.2, 3.8);
     let c = Vec3.Create();
-    c.copy(a);
+    Vec3.Copy(c, a);
     expect(c.values).toEqual(new Float32Array([1.1, 2.2, 3.8]));
     
     let b = Vec3.FromValues(5, 6, 9);
-    c = b.clone();
+    c = Vec3.Clone(b);
     expect(c.values).toEqual(b.values);
     expect(c.values).not.equal(b.values);
   });
@@ -64,12 +72,12 @@ describe("Vec3", () => {
   });
   test("Inverse", () => {
     let a = Vec3.FromValues(1, 2, 3);
-    a.inverse();
+    Vec3.Inverse(a, a);
     expect(a.values).toEqual(new Float32Array([1, 0.5, 0.3333333333333333]));
   });
   test("Length", () => {
     let a = Vec3.FromValues(1, 2, 3);
-    expect(a.length()).toEqual(3.7416573867739413);
+    expect(Vec3.Length(a)).toEqual(3.7416573867739413);
   });
   test("Lerp", () => {
     let a = Vec3.FromValues(1, 2, 3);
@@ -109,21 +117,21 @@ describe("Vec3", () => {
   });
   test("Negate", () => {
     let a = Vec3.FromValues(1, 2, 3);
-    a.negate();
+    Vec3.Negate(a, a);
     expect(a.values).toEqual(new Float32Array([-1, -2, -3]));
   });
   test("Normalize", () => {
     let a = Vec3.FromValues(1, 2, 3);
-    a.normalize();
+    Vec3.Normalize(a, a);
     expect(a.values).toEqual(new Float32Array([0.2672612419124244, 0.5345224838248488, 0.8017837257372732]));
-    expect(a.length()).toBeCloseTo(1);
+    expect(Vec3.Length(a)).toBeCloseTo(1);
   });
   test("Random", () => {
     let a = new Vec3();
     Vec3.Random(a, 5);
-    expect(a.length()).toBeCloseTo(5);
+    expect(Vec3.Length(a)).toBeCloseTo(5);
     Vec3.Random(a, 10);
-    expect(a.length()).toBeCloseTo(10);
+    expect(Vec3.Length(a)).toBeCloseTo(10);
   });
   test("Rotate(XYZ)", () => {
     let origin = Vec3.FromValues(4, 5, 6);
@@ -139,26 +147,26 @@ describe("Vec3", () => {
   });
   test("Round", () => {
     let a = Vec3.FromValues(1.5, -1.5, 3.6);
-    a.round();
+    Vec3.Round(a, a);
     expect(a.values).toEqual(new Float32Array([2, -2, 4]));
   });
   test("Scale & ScaleAndAdd & Set", () => {
     let a = Vec3.FromValues(1, 2, 3);
-    a.scale(2);
+    Vec3.Scale(a, a, 2);
     expect(a.values).toEqual(new Float32Array([2, 4, 6]));
 
     let b = Vec3.FromValues(1, 2, 3);
-    a.scaleAndAdd(b, 5);
+    Vec3.ScaleAndAdd(a, a, b, 5);
     expect(a.values).toEqual(new Float32Array([7, 14, 21]));
 
-    a.set(7, 8, 9);
+    Vec3.Set(a, 7, 8, 9);
     expect(a.values).toEqual(new Float32Array([7, 8, 9]));
   });
   test("SquaredDistance & SquaredLength", () => {
     let a = Vec3.FromValues(1, 2, 3);
     let b = Vec3.FromValues(4, 5, 6);
-    expect(a.squaredDistance(b)).toEqual(27);
-    expect(a.squaredLength()).toEqual(14);
+    expect(Vec3.SquaredDistance(a, b)).toEqual(27);
+    expect(Vec3.SquaredLength(a)).toEqual(14);
   });
   test("Sub", () => {
     let a = Vec3.FromValues(1, 2, 3);
@@ -183,14 +191,14 @@ describe("Vec3", () => {
   test("TransformQuat", () => {
     const quat = Quat.FromValues(0.1276,0.1448,0.2685,0.9437);
     let a = Vec3.FromValues(1, 2, 3);
-    a.transformQuat(quat);
+    Vec3.TransformQuat(a, a, quat);
     expect(a.values).toEqual(
       new Float32Array([0.8997037353963142, 1.7009999147159816, 3.208912542975964])
     );
   });
   test("Zero", () => {
     let a = Vec3.FromValues(1, 2, 3);
-    a.zero();
+    Vec3.Zero(a);
     expect(a.values).toEqual(
       new Float32Array([0, 0, 0])
     );
@@ -206,20 +214,20 @@ describe("Vec4", () => {
   });
   test("Ceil & Floor", () => {
     let a = Vec4.FromValues(1.1, 2.2, 3.8, 9.1);
-    a.ceil();
+    Vec4.Ceil(a, a);
     expect(a.values).toEqual(new Float32Array([2, 3, 4, 10]));
     let b = Vec4.FromValues(1.1, 2.2, 3.8, 9.3);
-    b.floor();
+    Vec4.Floor(b, b);
     expect(b.values).toEqual(new Float32Array([1, 2, 3, 9]));
   });
   test("Clone & Copy", () => {
     let a = Vec4.FromValues(1.1, 2.2, 3.8, 9.1);
     let c = Vec4.Create();
-    c.copy(a);
+    Vec4.Copy(c, a);
     expect(c.values).toEqual(new Float32Array([1.1, 2.2, 3.8, 9.1]));
     
     let b = Vec4.FromValues(5, 6, 9, 2);
-    c = b.clone();
+    c = Vec4.Clone(b);
     expect(c.values).toEqual(b.values);
     expect(c.values).not.equal(b.values);
   });
@@ -254,12 +262,12 @@ describe("Vec4", () => {
   });
   test("Inverse", () => {
     let a = Vec4.FromValues(1, 2, 3, 9);
-    a.inverse();
+    Vec4.Inverse(a, a);
     expect(a.values).toEqual(new Float32Array([1, 0.5, 0.3333333333333333, 0.1111111111111111]));
   });
   test("Length", () => {
     let a = Vec4.FromValues(1, 2, 3, 4);
-    expect(a.length()).toEqual(5.477225575051661);
+    expect(Vec4.Length(a)).toEqual(5.477225575051661);
   });
   test("Lerp", () => {
     let a = Vec4.FromValues(1, 2, 3, -5);
@@ -287,45 +295,45 @@ describe("Vec4", () => {
   });
   test("Negate", () => {
     let a = Vec4.FromValues(1, 2, 3, 4);
-    a.negate();
+    Vec4.Negate(a, a);
     expect(a.values).toEqual(new Float32Array([-1, -2, -3, -4]));
   });
   test("Normalize", () => {
     let a = Vec4.FromValues(1, 2, 3, 4);
-    a.normalize();
+    Vec4.Normalize(a, a);
     expect(a.values).toEqual(new Float32Array([0.18257418583505536,0.3651483716701107,0.5477225575051661,0.7302967433402214]));
-    expect(a.length()).toBeCloseTo(1);
+    expect(Vec4.Length(a)).toBeCloseTo(1);
   });
   test("Random", () => {
     let a = new Vec4();
     Vec4.Random(a, 5);
-    expect(a.length()).toBeCloseTo(5);
+    expect(Vec4.Length(a)).toBeCloseTo(5);
 
     Vec4.Random(a, 10);
-    expect(a.length()).toBeCloseTo(10);
+    expect(Vec4.Length(a)).toBeCloseTo(10);
   });
   test("Round", () => {
     let a = Vec4.FromValues(1.5, -1.5, 3.6, 6.3);
-    a.round();
+    Vec4.Round(a, a);
     expect(a.values).toEqual(new Float32Array([2, -2, 4, 6]));
   });
   test("Scale & ScaleAndAdd & Set", () => {
     let a = Vec4.FromValues(1, 2, 3, 4);
-    a.scale(2);
+    Vec4.Scale(a, a, 2);
     expect(a.values).toEqual(new Float32Array([2, 4, 6, 8]));
 
     let b = Vec4.FromValues(1, 2, 3, 4);
-    a.scaleAndAdd(b, 5);
+    Vec4.ScaleAndAdd(a, a, b, 5);
     expect(a.values).toEqual(new Float32Array([7, 14, 21, 28]));
 
-    a.set(7, 8, 9, 10);
+    Vec4.Set(a, 7, 8, 9, 10);
     expect(a.values).toEqual(new Float32Array([7, 8, 9, 10]));
   });
   test("SquaredDistance & SquaredLength", () => {
     let a = Vec4.FromValues(1, 2, 3, 4);
     let b = Vec4.FromValues(5, 6, 7, 8);
-    expect(a.squaredDistance(b)).toEqual(64);
-    expect(a.squaredLength()).toEqual(30);
+    expect(Vec4.SquaredDistance(a, b)).toEqual(64);
+    expect(Vec4.SquaredLength(a)).toEqual(30);
   });
   test("Sub", () => {
     let a = Vec4.FromValues(1, 2, 3, 4);
@@ -343,14 +351,14 @@ describe("Vec4", () => {
   test("TransformQuat", () => {
     const quat = Quat.FromValues(0.1276,0.1448,0.2685,0.9437);
     let a = Vec4.FromValues(1, 2, 3, 4);
-    a.transformQuat(quat);
+    Vec4.TransformQuat(a, a, quat);
     expect(a.values).toEqual(
       new Float32Array([0.8997037353963142, 1.7009999147159816, 3.208912542975964, 4])
     );
   });
   test("Zero", () => {
     let a = Vec4.FromValues(1, 2, 3, 4);
-    a.zero();
+    Vec4.Zero(a);
     expect(a.values).toEqual(
       new Float32Array([0, 0, 0, 0])
     );
@@ -383,11 +391,11 @@ describe("Quat", () => {
   });
   test("Exp", () => {
     let a = Quat.FromValues(1, 2, 3, 0);
-    a.exp();
+    Quat.Exp(a, a);
     expect(a.values).toEqual(new Float32Array([-0.15092132721996449,-0.30184265443992897,-0.45276398165989346,-0.8252990620752587]));
 
     let b = Quat.FromValues(1, 2, 3, 4);
-    b.exp();
+    Quat.Exp(b, b);
     expect(b.values).toEqual(new Float32Array([-8.240025266756877,-16.480050533513754,-24.72007580027063,-45.05980201339819]));
   });
   test("FromEuler", () => {
@@ -431,17 +439,17 @@ describe("Quat", () => {
   });
   test("Identity", () => {
     const a = new Quat();
-    a.identity();
+    Quat.Identity(a);
     expect(a.values).toEqual(new Float32Array([0, 0, 0, 1]));
   });
   test("Invert", () => {
     const a = Quat.FromValues(1, 2, 3, 4);
-    a.invert();
+    Quat.Invert(a, a);
     expect(a.values).toEqual(new Float32Array([-0.03333333333333333,-0.06666666666666667,-0.1,0.13333333333333333]));
   });
   test("Length", () => {
     let a = Quat.FromValues(1, 2, 3, 4);
-    expect(a.length()).toEqual(5.477225575051661);
+    expect(Quat.Length(a)).toEqual(5.477225575051661);
   });
   test("Lerp", () => {
     let a = Quat.FromValues(1, 2, 3, -5);
@@ -459,14 +467,14 @@ describe("Quat", () => {
   test("Multiply", () => {
     let a = Quat.FromValues(1, 2, 3, 4);
     let b = Quat.FromValues(6, 7, 8, 9);
-    a.multiply(b);
+    Quat.Multiply(a, a, b);
     expect(a.values).toEqual(new Float32Array([28, 56, 54, -8]));
   });
   test("Normalize", () => {
     let a = Quat.FromValues(1, 2, 3, 4);
-    a.normalize();
+    Quat.Normalize(a, a);
     expect(a.values).toEqual(new Float32Array([0.18257418583505536,0.3651483716701107,0.5477225575051661,0.7302967433402214]));
-    expect(a.length()).toBeCloseTo(1);
+    expect(Quat.Length(a)).toBeCloseTo(1);
   });
   test("Pow", () => {
     let a = new Quat();
@@ -481,7 +489,7 @@ describe("Quat", () => {
   test("Random", () => {
     let a = new Quat();
     Quat.Random(a);
-    expect(a.length()).toBeCloseTo(1);
+    expect(Quat.Length(a)).toBeCloseTo(1);
   });
   test("Rotate(XYZ)", () => {
     let a = new Quat();
@@ -497,15 +505,15 @@ describe("Quat", () => {
   });
   test("Scale & Set", () => {
     let a = Quat.FromValues(1, 2, 3, 4);
-    a.scale(2);
+    Quat.Scale(a, a, 2);
     expect(a.values).toEqual(new Float32Array([2, 4, 6, 8]));
 
-    a.set(7, 8, 9, 10);
+    Quat.Set(a, 7, 8, 9 ,10);
     expect(a.values).toEqual(new Float32Array([7, 8, 9, 10]));
   });
   test("SetAxisAngle", () => {
     let a = new Quat();
-    a.setAxisAngle(Vec3.FromValues(1, 0, 0), 30 * Deg2Rad);
+    Quat.SetAxisAngle(a, Vec3.FromValues(1, 0, 0), 30 * Deg2Rad);
     expect(a.values).toEqual(new Float32Array([0.25881904510252074, 0, 0, 0.9659258262890683]));
   });
   test("Slerp", () => {
@@ -519,7 +527,7 @@ describe("Quat", () => {
   });
   test("SquaredLength", () => {
     let a = Quat.FromValues(1, 2, 3, 4);
-    expect(a.squaredLength()).toEqual(30);
+    expect(Quat.SquaredLength(a)).toEqual(30);
   });
 
 });
@@ -562,16 +570,16 @@ describe("Mat3", () => {
       -4,-5,-6,
       -7,-8,-9
     );
-    a.add(b);
+    Mat3.Add(a, a, b);
     expect(a.values).toEqual(new Float32Array([0,0,0,0,0,0,0,0,0]));
   });
   test("Det", () => {
     const a = Mat3.FromValues(1, 2, 3, 4, 5, 6, 7, 8, 9);
     const b = Mat3.FromValues(1, 0, 0, 0, 1, 0, 0, 0, 1);
     const c = Mat3.FromValues(1, 2, 3, 0, 1, 2, 0, 2, 0);
-    expect(a.det()).toEqual(0);
-    expect(b.det()).toEqual(1);
-    expect(c.det()).toEqual(-4);
+    expect(Mat3.Det(a)).toEqual(0);
+    expect(Mat3.Det(b)).toEqual(1);
+    expect(Mat3.Det(c)).toEqual(-4);
   });
   test("FromMat4", () => {
     const a = Mat4.FromValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12, 13, 14, 15, 16);
@@ -622,13 +630,13 @@ describe("Mat3", () => {
   });
   test("Invert", () => {
     const a = Mat3.FromValues(1, 0, 0, 0, 1, 0, 0, 0, 1);
-    a.invert();
+    Mat3.Invert(a, a);
     expect(a.values).toEqual(new Float32Array([
       1,0,0,0,1,0,0,0,1
     ]));
 
     const b = Mat3.FromValues(1, 2, 3, 0, 2, 3, 0, 0, 3);
-    b.invert();
+    Mat3.Invert(b, b);
     expect(b.values).toEqual(new Float32Array([
       1,-1,0,0,0.5,-0.5,0,0,0.3333333333333333
     ]));
@@ -689,7 +697,7 @@ describe("Mat3", () => {
   test("Rotate", () => {
     const a = new Mat3();
     Mat3.FromRotation(a, 30 * Deg2Rad);
-    a.rotate(20 * Deg2Rad);
+    Mat3.Rotate(a, a, 20 * Deg2Rad);
     expect(a.values).toEqual(new Float32Array([
       0.6427875757217407,0.7660444378852844,0,-0.7660444378852844,0.6427875757217407,0,0,0,1
     ]));
@@ -704,12 +712,12 @@ describe("Mat3", () => {
   });
   test("Set", () => {
     const a = new Mat3();
-    a.set(1, 2, 3, 4, 5, 6, 7, 8, 9)
+    Mat3.Set(a, 1, 2, 3, 4, 5, 6, 7, 8, 9)
     expect(a.values).toEqual(new Float32Array([1, 2, 3, 4, 5, 6, 7, 8, 9]));
   });
   test("Sub", () => {
     const a = Mat3.FromValues(1, 2, 3, 4, 5, 6, 7, 8, 9);
-    a.sub(a);
+    Mat3.Sub(a, a, a);
     expect(a.values).toEqual(new Float32Array([0, 0, 0, 0, 0, 0, 0, 0, 0]));
   });
   test("Translate", () => {
@@ -723,8 +731,8 @@ describe("Mat3", () => {
   test("Transpose", () => {
     const b = Mat3.FromValues(1, 0, 0, 0, 1, 0, 0, 0, 1);
     const c = Mat3.FromValues(1, 2, 3, 4, 5, 6, 7, 8, 9);
-    b.transpose();
-    c.transpose();
+    Mat3.Transpose(b, b);
+    Mat3.Transpose(c, c);
     const result1 = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
     const result2 = new Float32Array([1,4,7,2,5,8,3,6,9]);
     expect(b.values).toEqual(result1);
@@ -901,7 +909,7 @@ describe("Mat4", () => {
     );
     const b = new Mat4();
     Mat4.MultiplyScalar(b, a, -1);
-    a.add(b);
+    Mat4.Add(a, a, b);
     const result = new Float32Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     expect(a.values).toEqual(result);
 
@@ -911,7 +919,7 @@ describe("Mat4", () => {
       9, 10, 11, 12,
       13, 14, 15, 16
     );
-    a.sub(c);
+    Mat4.Sub(a, a, c);
     const result2 = new Float32Array([-1, -5, -9, -13, -2, -6, -10, -14, -3, -7, -11, -15, -4, -8, -12, -16]);
     expect(a.values).toEqual(result2);
   });
@@ -990,15 +998,15 @@ describe("Mat4", () => {
     const a = Mat4.FromValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
     const b = Mat4.FromValues(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
     const c = Mat4.FromValues(1, 2, 3, 4, 0, 2, 3, 4, 0, 0, 3, 4, 0, 0, 0, 4);
-    expect(a.det()).toEqual(0);
-    expect(b.det()).toEqual(1);
-    expect(c.det()).toEqual(24);
+    expect(Mat4.Det(a)).toEqual(0);
+    expect(Mat4.Det(b)).toEqual(1);
+    expect(Mat4.Det(c)).toEqual(24);
   });
   test("Invert", () => {
     const b = Mat4.FromValues(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
     const c = Mat4.FromValues(1, 2, 3, 4, 0, 2, 3, 4, 0, 0, 3, 4, 0, 0, 0, 4);
-    b.invert();
-    c.invert();
+    Mat4.Invert(b, b);
+    Mat4.Invert(c, c);
     const result1 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     const result2 = new Float32Array([1,-1,0,0,0,0.5,-0.5,0,0,0,0.3333333432674408,-0.3333333432674408,0,0,0,0.25]);
     expect(b.values).toEqual(result1);
@@ -1007,8 +1015,8 @@ describe("Mat4", () => {
   test("Transpose", () => {
     const b = Mat4.FromValues(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
     const c = Mat4.FromValues(1, 2, 3, 4, 0, 2, 3, 4, 0, 0, 3, 4, 0, 0, 0, 4);
-    b.transpose();
-    c.transpose();
+    Mat4.Transpose(b, b);
+    Mat4.Transpose(c, c);
     const result1 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     const result2 = new Float32Array([1,0,0,0,2,2,0,0,3,3,3,0,4,4,4,4]);
     expect(b.values).toEqual(result1);

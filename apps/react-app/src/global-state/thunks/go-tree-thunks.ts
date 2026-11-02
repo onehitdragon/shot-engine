@@ -1,6 +1,6 @@
 import { createAsyncThunk, isAnyOf } from "@reduxjs/toolkit";
 import type { AppDispatch, RootState } from "../store";
-import { ComponentHelper, Mat4, Transform, Vec3, Vec4, type AssetManager } from "@shot-engine/types";
+import { ComponentHelper, Transform, type AssetManager } from "@shot-engine/types";
 import { componentsChangedThunk, componentsInpectedThunk } from "./inspector-components-thunks";
 import { showInspector } from "../slices/inspector-slice";
 import { type NodeState } from "../slices/go-tree-slice";
@@ -8,6 +8,7 @@ import { cloneDeep } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import type { AppStartListening } from "../listenerMiddleware";
 import { GizmoOrbitCameraInfo } from "./gizmo-orbit-camera-thunk";
+import { Mat4, Quat, Vec3, Vec4 } from "@shot-engine/math";
 
 export const nodeFocusedThunk = createAsyncThunk
 <
@@ -224,6 +225,7 @@ export const goRemovedThunk = createAsyncThunk
         }
     }
 );
+
 export function nodesListener(startListening: AppStartListening){
     // go-tree
     startListening({
@@ -306,7 +308,11 @@ export function nodesListener(startListening: AppStartListening){
                     const transform = ComponentHelper.FindComponentByType(node.components, "Transform");
                     const gizmoTransform = ComponentHelper.FindComponentByType(node.components, "GizmoTransform");
                     let localMatrix: Mat4;
-                    if(transform) localMatrix = Mat4.FromTRS(transform);
+                    if(transform){
+                        localMatrix = Mat4.FromRotationTranslationScale(
+                            new Mat4(), transform.rot, transform.pos, transform.scale
+                        );
+                    }
                     else if(gizmoTransform) localMatrix = NodesInfo.CreateGizmoModelMatrix(
                         gizmoTransform, camera.fov
                     );
@@ -314,7 +320,7 @@ export function nodesListener(startListening: AppStartListening){
 
                     let worldMatrix = localMatrix;
                     if(parentWorldMatrix){
-                        worldMatrix = Mat4.Multiply(parentWorldMatrix, localMatrix);
+                        worldMatrix = Mat4.Multiply(new Mat4(), parentWorldMatrix, localMatrix);
                     }
                     NodesInfo.getInstance().nodeInfos.set(node.id, {
                         localMatrix,
@@ -353,7 +359,7 @@ export class NodesInfo{
     public getWorldPos(nodeId: string){
         const worldMatrix = NodesInfo.getInstance().nodeInfos.get(nodeId)?.worldMatrix;
         if(!worldMatrix) return;
-        return Mat4.GetTranslation(worldMatrix);
+        return Mat4.GetTranslation(new Vec3(), worldMatrix);
     }
     public getWorldAxis(nodeId: string, axis: "x" | "y" | "z"){
         const worldMatrix = NodesInfo.getInstance().nodeInfos.get(nodeId)?.worldMatrix;
@@ -370,7 +376,9 @@ export class NodesInfo{
             if(!node) continue;
             const transform = ComponentHelper.FindComponentByType(node.components, "Transform");
             if(!transform) continue;
-            const localMatrix = Mat4.FromTRS(transform);
+            const localMatrix = Mat4.FromRotationTranslationScale(
+                new Mat4(), transform.rot, transform.pos, transform.scale
+            );
             let worldMatrix = localMatrix;
 
             const parentId = node.parent;
@@ -379,26 +387,26 @@ export class NodesInfo{
                 parentWorldMatrix = NodesInfo.getInstance().nodeInfos.get(parentId)?.worldMatrix
             }
             if(parentWorldMatrix){
-                worldMatrix = Mat4.Multiply(parentWorldMatrix, localMatrix);
+                worldMatrix = Mat4.Multiply(new Mat4(), parentWorldMatrix, localMatrix);
             }
 
             NodesInfo.getInstance().nodeInfos.set(node.id, {
                 localMatrix,
                 worldMatrix,
-                parentWorldMatrix: parentWorldMatrix ?? Mat4.Identity()
+                parentWorldMatrix: parentWorldMatrix ?? Mat4.Identity(new Mat4())
             });
             this.DFS(node.childs, nodeRecord);
         }
     }
-    public static CreateGizmoModelMatrix(transform: { pos: Vec3, rot: Vec4, scale: Vec3 }, fov: number){
+    public static CreateGizmoModelMatrix(transform: { pos: Vec3, rot: Quat, scale: Vec3 }, fov: number){
         const { pos, rot, scale } = transform;
-        let viewPos = Vec4.FromArray([pos.x, pos.y, pos.z, 1]);
-        viewPos = Vec4.TransformMat4(viewPos, GizmoOrbitCameraInfo.getInstance().viewMat4);
-        const dept = Math.abs(viewPos.z); // z-dep
+        let viewPos = Vec4.FromValues(pos.values[0], pos.values[1], pos.values[2], 1);
+        Vec4.TransformMat4(viewPos, viewPos, GizmoOrbitCameraInfo.getInstance().viewMat4);
+        const dept = Math.abs(viewPos.values[2]); // z-dep
         const gizmoScaler = 0.1; // settings
         const fovFactor = 2 * Math.tan(fov * 0.5);
-        const gizmoScale = Vec3.Scale(scale, dept * fovFactor * gizmoScaler);
-        return Mat4.FromTRS({ pos, rot, scale: gizmoScale });
+        const gizmoScale = Vec3.Scale(new Vec3(), scale, dept * fovFactor * gizmoScaler);
+        return Mat4.FromRotationTranslationScale(new Mat4(), rot, pos, gizmoScale);
     }
 }
 

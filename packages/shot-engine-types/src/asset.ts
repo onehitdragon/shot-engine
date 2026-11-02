@@ -14,9 +14,8 @@ export type MeshAsset = {
             // weight(4) 16 bytes, joint(4 uint) 4 bytes
             interleaveArray: Uint8Array,
         },
-        indices: Uint8Array | Uint16Array | Uint32Array,
-        indexType: number,
-        drawMode: number,
+        indices: Uint32Array,
+        drawMode: number, // 4-triangles
         aabb: AABB,
         invBindPoseMatrices: Float32Array
     }[]
@@ -91,6 +90,21 @@ export function isPrefabAsset(asset?: Asset | null): asset is PrefabAsset{
 }
 
 export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene" | "hdr" | "setting" | "font" | "text";
+export function assetTypeToNum(type: AssetType): number{
+    enum AssetTypeEnum{
+        other, image, mesh, prefab, scene, hdr, setting, font, text
+    }
+    if(type === "other") return AssetTypeEnum.other;
+    if(type === "image") return AssetTypeEnum.image;
+    if(type === "mesh") return AssetTypeEnum.mesh;
+    if(type === "prefab") return AssetTypeEnum.prefab;
+    if(type === "scene") return AssetTypeEnum.scene;
+    if(type === "hdr") return AssetTypeEnum.hdr;
+    if(type === "setting") return AssetTypeEnum.setting;
+    if(type === "font") return AssetTypeEnum.font;
+    if(type === "text") return AssetTypeEnum.text;
+    throw "dont support type " + type;
+}
 export namespace AssetProperty{
     export type Other = {
         type: "other"

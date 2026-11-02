@@ -2,11 +2,12 @@ import { WebglHelper } from "./WebglHelper";
 import pbrShadingVShaderSource from "../shaders/pbr-shader/vshader.glsl?raw";
 import pbrShadingFShaderSource from "../shaders/pbr-shader/fshader.glsl?raw";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
-import { Vec3, type Mat3, type Mat4, type PbrShading } from "@shot-engine/types";
+import { type PbrShading } from "@shot-engine/types";
 import { LightInfo } from "../asset-cache/LightInfo";
 import { AssetCache } from "../asset-cache/asset-cache";
 import { ColorCache } from "../asset-cache/color-cache";
 import { SkyBoxInfo } from "../asset-cache/SkyBoxInfo";
+import { Mat3, Mat4, Vec3 } from "@shot-engine/math";
 
 export class WebglPbrShader{
     private static _instance: WebglPbrShader;
@@ -219,7 +220,7 @@ export class WebglPbrShader{
         gl.uniformMatrix4fv(this._u_MvpMatrixLoc, false, mvpMat4.values);
         gl.uniformMatrix4fv(this._u_ModelMatrixLoc, false, modelMat4.values);
         gl.uniformMatrix3fv(this._u_NormalMatrixLoc, false, normalMat3.values);
-        gl.uniform3fv(this._u_CamWorldPosLoc, [camPos.x, camPos.y, camPos.z]);
+        gl.uniform3fv(this._u_CamWorldPosLoc, camPos.values);
         gl.uniform1f(this._u_reflectanceLoc, reflectance);
 
         // lights
@@ -232,12 +233,12 @@ export class WebglPbrShader{
             const { light, forward, cascadeShadow } = directionalInfos[i];
             gl.uniform3fv(
                 this._programLoc.u_directionalLights[i].color,
-                [light.color.x, light.color.y, light.color.z]
+                light.color.values
             );
             gl.uniform1f(this._programLoc.u_directionalLights[i].intensity, light.intensity);
             gl.uniform3fv(
                 this._programLoc.u_directionalLights[i].dir,
-                [forward.x, forward.y, forward.z]
+                forward.values
             );
             if(
                 cascadeShadow &&
@@ -274,20 +275,20 @@ export class WebglPbrShader{
             const { light, pos } = pointLightInfos[i];
             gl.uniform3fv(
                 this._programLoc.u_pointLights[i].color,
-                [light.color.x, light.color.y, light.color.z]
+                light.color.values
             );
             gl.uniform1f(this._programLoc.u_pointLights[i].intensity, light.intensity);
             gl.uniform1f(this._programLoc.u_pointLights[i].radius, light.radius);
             gl.uniform3fv(
                 this._programLoc.u_pointLights[i].position,
-                [pos.x, pos.y, pos.z]
+                pos.values
             );
         }
         for(let i = 0; i < spotLightInfos.length; i++){
             const { light, pos, forward } = spotLightInfos[i];
             gl.uniform3fv(
                 this._programLoc.u_spotLights[i].color,
-                [light.color.x, light.color.y, light.color.z]
+                light.color.values
             );
             gl.uniform1f(this._programLoc.u_spotLights[i].intensity, light.intensity);
             gl.uniform1f(this._programLoc.u_spotLights[i].radius, light.radius);
@@ -295,11 +296,11 @@ export class WebglPbrShader{
             gl.uniform1f(this._programLoc.u_spotLights[i].outerAngle, light.outerAngle * Math.PI / 180);
             gl.uniform3fv(
                 this._programLoc.u_spotLights[i].position,
-                [pos.x, pos.y, pos.z]
+                pos.values
             );
             gl.uniform3fv(
                 this._programLoc.u_spotLights[i].dir,
-                [forward.x, forward.y, forward.z]
+                forward.values
             );
         }
 
@@ -371,7 +372,7 @@ export class WebglPbrShader{
         gl.uniform1f(this._u_emissiveIntensityLoc, emissive.intensity);
         if(emissive.color.type === "color"){
             gl.uniform1i(this._u_hasEmissiveMapLoc, 0);
-            gl.uniform3fv(this._u_emissiveLoc, Vec3.ToArray(emissive.color.color));
+            gl.uniform3fv(this._u_emissiveLoc, emissive.color.color.values);
         }
         else{
             gl.uniform1i(this._u_hasEmissiveMapLoc, 1);

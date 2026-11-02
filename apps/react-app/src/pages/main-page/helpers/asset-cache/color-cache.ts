@@ -1,8 +1,8 @@
-import type { Vec3 } from "@shot-engine/types";
+import { Vec3ToColor } from "../../components/inspector-tab/helper";
 import { getSceneWebglContext } from "../resource-manager-helper/CanvasHelper";
 import { WebglTexture } from "../resource-manager-helper/WebglTexture";
-import { getDenormalizeColor } from "../utils/utils";
 import { WebglTextureEmpty } from "../resource-manager-helper/WebglTextureEmpty";
+import { Vec3 } from "@shot-engine/math";
 
 export class ColorCache{
     private static _instance: ColorCache;
@@ -31,12 +31,12 @@ export class ColorCache{
         this._usedKeys.add(key);
     }
     private colorToKey(color: Vec3){
-        return `color:${color.x},${color.y},${color.z}`;
+        return `color:${color.values[0]},${color.values[1]},${color.values[2]}`;
     }
     private _createWebglColorTexture(color: Vec3){
-        color = getDenormalizeColor(color);
+        const color255 = Vec3ToColor(color);
         const webglTexture = WebglTexture.CreateWithColor(
-            this._gl, new Uint8Array([color.x, color.y, color.z, 255])
+            this._gl, new Uint8Array([color255.x, color255.y, color255.z, 255])
         );
         return webglTexture;
     }

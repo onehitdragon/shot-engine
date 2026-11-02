@@ -4,9 +4,10 @@ import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { clamp } from "lodash";
 import type { AssetManager, ImageAsset, ImageOrColor, ImageOrValue, OptionalImage, TextOrString } from "@shot-engine/types";
 import z from "zod";
-import { getDenormalizeColor, getNormalizeColor } from "../../helpers/utils/utils";
 import { KTXTranscoder } from "@shot-engine/ktx-tool/transcoder";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ColorToVec3, Vec3ToColor } from "./helper";
+import { Vec3 } from "@shot-engine/math";
 
 const numberStringSchema = z.preprocess(
     (val) => (val === '' || val === null ? NaN : Number(val)),
@@ -90,6 +91,12 @@ const rgbSchema = z.object({
     y: rgbStringSchema,
     z: rgbStringSchema,
 });
+const rgbaSchema = z.object({
+    x: rgbStringSchema,
+    y: rgbStringSchema,
+    z: rgbStringSchema,
+    w: rgbStringSchema
+});
 export function RGBValueRow(
     props: {
         label: string,
@@ -150,6 +157,83 @@ export function RGBValueRow(
                 <input className="outline-none border text-sm px-0.5 w-12"
                     value={localValue.z}
                     onChange={(e) => { handleChange("z", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+                <div style={{background: `rgb(${localValue.x}, ${localValue.y}, ${localValue.z})`}}
+                    className="size-3"></div>
+            </div>
+        </div>
+    );
+}
+export function RGBAValueRow(
+    props: {
+        label: string,
+        value: {x: number, y: number, z: number, w: number}, // 255
+        onChange: (value: {x: number, y: number, z: number, w: number}) => void // 255
+    }
+){
+    function toString(value: {x: number, y: number, z: number, w: number}){
+        return { x: value.x.toString(), y: value.y.toString(), z: value.z.toString(), w: value.w.toString() }
+    }
+
+    const { label, value } = props;
+    const [localValue, setLocalValue] = useState(toString(value));
+
+    useEffect(() => {
+        setLocalValue(toString(value));
+    }, [value.x, value.y, value.z, value.w]);
+
+    const handleChange = (axis: 'x' | 'y' | 'z' | 'w', valStr: string) => {
+        const newValue = { ...localValue, [axis]: valStr }
+        setLocalValue(newValue);
+        const isNumber = rgbaSchema.safeParse(newValue);
+        if(isNumber.success){
+            props.onChange(isNumber.data);
+        }
+    };
+    const onBlur = () => {
+        const newValue = {
+            x: parseFloat(localValue.x) || 0,
+            y: parseFloat(localValue.y) || 0,
+            z: parseFloat(localValue.z) || 0,
+            w: parseFloat(localValue.w) || 0,
+        }
+        newValue.x = clamp(newValue.x, 0, 255);
+        newValue.y = clamp(newValue.y, 0, 255);
+        newValue.z = clamp(newValue.z, 0, 255);
+        newValue.w = clamp(newValue.w, 0, 255);
+        setLocalValue(toString(newValue));
+        props.onChange(newValue);
+    }
+
+    return (
+        <div className="flex items-center my-0.5">
+            <div className="mr-1 w-24">
+                <span className="select-none text-sm text-white">{label}:</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <input className="outline-none border text-sm px-0.5 w-12"
+                    value={localValue.x}
+                    onChange={(e) => { handleChange("x", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+                <input className="outline-none border text-sm px-0.5 w-12"
+                    value={localValue.y}
+                    onChange={(e) => { handleChange("y", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+                <input className="outline-none border text-sm px-0.5 w-12"
+                    value={localValue.z}
+                    onChange={(e) => { handleChange("z", e.target.value) }}
+                    onBlur={onBlur}
+                    onKeyDown={(e) => e.key === "Enter" && onBlur()}
+                />
+                <input className="outline-none border text-sm px-0.5 w-12"
+                    value={localValue.w}
+                    onChange={(e) => { handleChange("w", e.target.value) }}
                     onBlur={onBlur}
                     onKeyDown={(e) => e.key === "Enter" && onBlur()}
                 />
@@ -259,7 +343,7 @@ export function ImageOrColorSelection(props: {
                 if(value === "color"){
                     onChange({
                         type: "color",
-                        color: { x: 1, y: 1, z: 1 }
+                        color: Vec3.FromValues(1, 1, 1)
                     });
                 }
                 else{
@@ -274,11 +358,11 @@ export function ImageOrColorSelection(props: {
             imageOrColor.type === "color" &&
             <RGBValueRow
                 label={`${label} color`}
-                value={getDenormalizeColor(imageOrColor.color)}
+                value={Vec3ToColor(imageOrColor.color)}
                 onChange={(value) => {
                     onChange({
                         type: "color",
-                        color: getNormalizeColor(value)
+                        color: ColorToVec3(value)
                     });
                 }
             }/>

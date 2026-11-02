@@ -3,7 +3,8 @@ import simpleShadingVShaderSource from "../shaders/simple-shader/vshader.glsl?ra
 import simpleShadingFShaderSource from "../shaders/simple-shader/fshader.glsl?raw";
 import simpleSkinShadingVShaderSource from "../shaders/simple-shader/vshader-skin.glsl?raw";
 import type { WebglMeshVBOs } from "./WebglMeshVBOs";
-import type { Mat4, Vec3 } from "@shot-engine/types";
+import type { SimpleShading } from "@shot-engine/types";
+import type { Mat4 } from "@shot-engine/math";
 
 export class WebglSimpleShader{
     private static _instance: WebglSimpleShader;
@@ -103,25 +104,29 @@ export class WebglSimpleShader{
 
         return vao;
     }
-    renderStaticMesh(meshVBOs: WebglMeshVBOs, vao: WebGLVertexArrayObject, mvpMat4: Mat4, color?: Vec3){
+    renderStaticMesh(meshVBOs: WebglMeshVBOs, vao: WebGLVertexArrayObject, mvpMat4: Mat4, simpleShading: SimpleShading){
         const gl = this._gl;
         const { program, u_MvpMatrixLoc, u_color } = this._staticProgram;
         const vbos = meshVBOs;
         gl.useProgram(program);
         gl.uniformMatrix4fv(u_MvpMatrixLoc, false, mvpMat4.values);
-        if(!color) color = { x: 1, y: 1, z: 1 };
-        gl.uniform3fv(u_color, [color.x, color.y, color.z]);
+        gl.uniform4fv(u_color, simpleShading.color.values);
 
+        if(simpleShading.transparent){
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        }
         gl.bindVertexArray(vao);
             gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
         gl.bindVertexArray(null);
+        gl.disable(gl.BLEND);
     }
     renderSkinMesh(
         meshVBOs: WebglMeshVBOs,
         vao: WebGLVertexArrayObject,
         vpMat4: Mat4,
         jointMatrices: Float32Array,
-        color?: Vec3
+        simpleShading: SimpleShading
     ){
         const gl = this._gl;
         const { program, u_vpMatrixLoc, u_jointMatrixLoc, u_color } = this._skinProgram;
@@ -129,11 +134,15 @@ export class WebglSimpleShader{
         gl.useProgram(program);
         gl.uniformMatrix4fv(u_vpMatrixLoc, false, vpMat4.values);
         gl.uniformMatrix4fv(u_jointMatrixLoc, false, jointMatrices);
-        if(!color) color = { x: 1, y: 1, z: 1 };
-        gl.uniform3fv(u_color, [color.x, color.y, color.z]);
+        gl.uniform4fv(u_color, simpleShading.color.values);
 
+        if(simpleShading.transparent){
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        }
         gl.bindVertexArray(vao);
             gl.drawElements(vbos.drawMode, vbos.indexCount, vbos.indexType, 0);
         gl.bindVertexArray(null);
+        gl.disable(gl.BLEND);
     }
 }

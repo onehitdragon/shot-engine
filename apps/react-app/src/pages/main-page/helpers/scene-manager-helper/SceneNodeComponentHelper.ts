@@ -1,5 +1,19 @@
-import type { Light, PbrShading, PhongShading, SimpleShading, SkyBox } from '@shot-engine/types';
+import type { Camera, Light, PbrShading, PhongShading, SimpleShading, SkyBox, Transform } from '@shot-engine/types';
+import { Quat, Vec3, Vec4 } from '@shot-engine/math';
 
+export function createTransformComponent(){
+    const transform: Transform = {
+        type: "Transform",
+        id: "",
+        pos: Vec3.FromValues(0, 0, 0),
+        rot: Quat.FromValues(0, 0, 0, 1),
+        scale: Vec3.FromValues(1, 1, 1),
+        editor: {
+            euler: Vec3.FromValues(0, 0, 0)
+        }
+    }
+    return transform;
+}
 export function createSimpleShadingComponent(){
     const component: SimpleShading = {
         id: "",
@@ -7,7 +21,7 @@ export function createSimpleShadingComponent(){
         shaderType: "simple",
         culling: "none",
         transparent: false,
-        color: { x: 1, y: 1, z: 1 }
+        color: Vec4.FromValues(1, 1, 1 ,1)
     }
     return component;
 }
@@ -20,9 +34,9 @@ export function createPhongShadingComponent(){
         shaderType: "phong",
         diffuse: {
             type: "color",
-            color: { x: 1, y: 1, z: 1 }
+            color: Vec3.FromValues(1, 1, 1)
         },
-        specular: {x: 0, y: 0, z: 0},
+        specular: Vec3.FromValues(0, 0, 0),
         shininess: 1
     }
     return component;
@@ -36,7 +50,7 @@ export function createPbrShadingComponent(){
         shaderType: "pbr",
         diffuse: {
             type: "color",
-            color: { x: 1, y: 1, z: 1 }
+            color: Vec3.FromValues(1, 1, 1)
         },
         metallic: {
             type: "value",
@@ -50,7 +64,7 @@ export function createPbrShadingComponent(){
         emissive: {
             color: {
                 type: "color",
-                color: { x: 0, y: 0, z: 0 }
+                color: Vec3.FromValues(0, 0, 0)
             },
             intensity: 0
         },
@@ -68,7 +82,7 @@ export function createPointLightComponent(){
         id: "",
         type: "Light",
         lightType: "PointLight",
-        color: { x: 1, y: 1, z: 1 },
+        color: Vec3.FromValues(1, 1, 1),
         intensity: 100,
         radius: 10,
         shadow: {
@@ -86,7 +100,7 @@ export function createDirectionalLightComponent(){
         id: "",
         type: "Light",
         lightType: "DirectionalLight",
-        color: { x: 1, y: 1, z: 1 },
+        color: Vec3.FromValues(1, 1, 1),
         intensity: 100,
         shadow: {
             enable: false,
@@ -103,7 +117,7 @@ export function createSpotLightComponent(){
         id: "",
         type: "Light",
         lightType: "SpotLight",
-        color: { x: 1, y: 1, z: 1 },
+        color: Vec3.FromValues(1, 1, 1),
         intensity: 100,
         radius: 10,
         innerAngle: 30,
@@ -117,6 +131,14 @@ export function createSpotLightComponent(){
         }
     }
     return light;
+}
+export function createCameraComponent(){
+    const camera: Camera = {
+        id: "",
+        type: "Camera",
+        fovy: 90
+    }
+    return camera;
 }
 export function createSkyBoxComponent(){
     const skyBox: SkyBox = {

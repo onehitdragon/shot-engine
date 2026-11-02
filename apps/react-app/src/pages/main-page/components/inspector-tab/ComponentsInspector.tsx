@@ -1,14 +1,14 @@
-import type { AssetManager, Component, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, Skeleton, SkyBox, SpotLight, Transform, UILayout } from "@shot-engine/types";
+import type { AssetManager, Camera, Component, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, SimpleShading, Skeleton, SkyBox, SpotLight, Transform, UILayout } from "@shot-engine/types";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { selectComponents } from "../../../../global-state/slices/inspector-components-slice";
 import { cloneDeep } from "lodash";
 import { componentUpdatedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
-import { ThreeValueRow, RGBValueRow, CheckBox, OneValueRow, Selection, TextRow, ImageOrColorSelection, ImageOrValueSelection, OptionalImageSelection, TextRowErr, TextOrStringSelection } from "./components";
+import { ThreeValueRow, RGBValueRow, CheckBox, OneValueRow, Selection, TextRow, ImageOrColorSelection, ImageOrValueSelection, OptionalImageSelection, TextRowErr, TextOrStringSelection, RGBAValueRow } from "./components";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { quat } from "gl-matrix";
-import { getNormalizeColor, getDenormalizeColor } from "../../helpers/utils/utils";
 import { selectNodeRecord } from "../../../../global-state/slices/go-tree-slice";
+import { ColorToVec3, ColorToVec4, ObjectToVec3, Vec3ToColor, Vec3ToObject, Vec4ToColor } from "./helper";
+import { Quat, Vec3 } from "@shot-engine/math";
 
 export function ComponentsInspector(){
     const components = useAppSelector(state => selectComponents(state));
@@ -31,6 +31,9 @@ export function ComponentsInspector(){
                     }
                     else if(component.type === "Light"){
                         return <LightSection key={component.id} light={component}/>
+                    }
+                    else if(component.type === "Camera"){
+                        return <CameraSection key={component.id} camera={component}/>
                     }
                     else if(component.type === "SkyBox"){
                         return <SkyBoxSection key={component.id} skyBox={component}/>
@@ -60,28 +63,28 @@ function TransformSection(props: { transform: Transform }){
             <div className="flex flex-col">
                 <ThreeValueRow
                     label="Position"
-                    value={transform.pos}
+                    value={Vec3ToObject(transform.pos)}
                     onChange={(value) => {
-                        transformClone.pos = value;
+                        transformClone.pos = ObjectToVec3(value);
                         update();
                     }}
                 />
                 <ThreeValueRow
                     label="Rotation"
-                    value={transform.editor.euler}
+                    value={Vec3ToObject(transform.editor.euler)}
                     onChange={(value) => {
-                        const q = quat.create();
-                        quat.fromEuler(q, value.x, value.y, value.z, "yxz");
-                        transformClone.editor.euler = value;
-                        transformClone.rot = { x: q[0], y: q[1], z: q[2], w: q[3] };
+                        const q = new Quat();
+                        Quat.FromEuler(q, value.x, value.y, value.z, "yxz");
+                        transformClone.editor.euler = ObjectToVec3(value);
+                        transformClone.rot = q;
                         update();
                     }}
                 />
                 <ThreeValueRow
                     label="Scale"
-                    value={transform.scale}
+                    value={Vec3ToObject(transform.scale)}
                     onChange={(value) => {
-                        transformClone.scale = value;
+                        transformClone.scale = ObjectToVec3(value);
                         update();
                     }}
                 />
@@ -140,7 +143,6 @@ function ShadingSection(props: { shading: Shading }){
                     { label: "None", value: "none" },
                     { label: "Back", value: "back" },
                     { label: "Front", value: "front" },
-                    { label: "Both", value: "both" }
                 ]}
                 onChange={(value) => {
                     shadingClone.culling = value;
@@ -156,6 +158,10 @@ function ShadingSection(props: { shading: Shading }){
                 }}
             />
             {
+                shading.shaderType === "simple" &&
+                <SimpleShadingEditor simpleShading={shading}/>
+            }
+            {
                 shading.shaderType === "phong" &&
                 <PhongShadingEditor phongShading={shading}/>
             }
@@ -163,6 +169,26 @@ function ShadingSection(props: { shading: Shading }){
                 shading.shaderType === "pbr" &&
                 <PbrShadingEditor pbrShading={shading}/>
             }
+        </div>
+    );
+}
+function SimpleShadingEditor(props: { simpleShading: SimpleShading }){
+    const { simpleShading } = props;
+    const dispatch = useAppDispatch();
+    const shadingClone = cloneDeep(simpleShading);
+    const update = () => {
+        dispatch(componentUpdatedThunk({ component: shadingClone }));
+    }
+    return (
+        <div className="flex flex-col">
+            <RGBAValueRow
+                label="Color"
+                value={Vec4ToColor(simpleShading.color)}
+                onChange={(value) => {
+                    shadingClone.color = ColorToVec4(value);
+                    update();
+                }}
+            />
         </div>
     );
 }
@@ -203,7 +229,7 @@ function PhongShadingEditor(props: { phongShading: PhongShading }){
                 onChange={(value) => {
                     shadingClone.diffuse.type = value;
                     if(shadingClone.diffuse.type === "color"){
-                        shadingClone.diffuse.color = { x: 1, y: 1, z: 1 };
+                        shadingClone.diffuse.color = Vec3.FromValues(1, 1, 1);
                     }
                     if(shadingClone.diffuse.type === "image"){
                         shadingClone.diffuse.imageRef = "";
@@ -215,10 +241,10 @@ function PhongShadingEditor(props: { phongShading: PhongShading }){
                 diffuse.type === "color" &&
                 <RGBValueRow
                     label="Color"
-                    value={getDenormalizeColor(diffuse.color)}
+                    value={Vec3ToColor(diffuse.color)}
                     onChange={(value) => {
                     if(shadingClone.diffuse.type === "color"){
-                        shadingClone.diffuse.color = getNormalizeColor(value);;
+                        shadingClone.diffuse.color = ColorToVec3(value);;
                         update();
                     }
                 }}/>
@@ -247,9 +273,9 @@ function PhongShadingEditor(props: { phongShading: PhongShading }){
             }
             <RGBValueRow
                 label="Specular color"
-                value={getDenormalizeColor(specular)}
+                value={Vec3ToColor(specular)}
                 onChange={(value) => {
-                    shadingClone.specular = getNormalizeColor(value);;
+                    shadingClone.specular = ColorToVec3(value);;
                     update();
                 }
             }/>
@@ -386,9 +412,9 @@ function BaseLightEditor(props: { baseLight: Light }){
         <div className="flex flex-col">
             <RGBValueRow
                 label="Color"
-                value={getDenormalizeColor(color)}
+                value={Vec3ToColor(color)}
                 onChange={(value) => {
-                    baseLightClone.color = getNormalizeColor(value);
+                    baseLightClone.color = ColorToVec3(value);
                     update();
                 }}
             />
@@ -522,6 +548,28 @@ function SpotLightEditor(props: { spotLight: SpotLight }){
                 range={[0, 89]}
                 onChange={(value) => {
                     spotLightClone.outerAngle = value;
+                    update();
+                }}
+            />
+        </div>
+    );
+}
+function CameraSection(props: { camera: Camera }){
+    const { camera } = props;
+    const dispatch = useAppDispatch();
+    const cameraClone = cloneDeep(camera);
+    const update = () => {
+        dispatch(componentUpdatedThunk({ component: cameraClone }));
+    }
+    return (
+        <div className="flex flex-col">
+            <Header label="Camera" component={camera}/>
+            <OneValueRow
+                label="Fovy"
+                value={camera.fovy}
+                range={[30, 180]}
+                onChange={(value) => {
+                    cameraClone.fovy = value;
                     update();
                 }}
             />

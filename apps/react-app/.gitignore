@@ -1,3 +1,6 @@
+#
+src/pages/main-page/helpers/shaders-binding/shader-gen
+
 # Logs
 logs
 *.log

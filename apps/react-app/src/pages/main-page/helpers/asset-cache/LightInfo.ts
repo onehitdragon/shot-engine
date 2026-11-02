@@ -1,10 +1,10 @@
-import { ComponentHelper, Mat4, Vec3, type DirectionalLight, type Light, type PointLight, type SpotLight } from "@shot-engine/types";
+import { ComponentHelper, type DirectionalLight, type Light, type PointLight, type SpotLight } from "@shot-engine/types";
 import { getSceneWebglContext } from "../resource-manager-helper/CanvasHelper";
-
 import type { NodeState } from "../../../../global-state/slices/go-tree-slice";
 import { AssetCache } from "./asset-cache";
 import { NodesInfo } from "../../../../global-state/thunks/go-tree-thunks";
 import { GizmoOrbitCameraInfo } from "../../../../global-state/thunks/gizmo-orbit-camera-thunk";
+import { Mat4, Vec3 } from "@shot-engine/math";
 
 export class LightInfo{
     private static _instance: LightInfo;
@@ -71,27 +71,29 @@ export class LightInfo{
         camFov: number, camAspect: number, camView: Mat4,
         shadowMapSize: number, lightDir: Vec3, zMul = 1
     ){
-        const cascadeProj = Mat4.Perspective(camFov, camAspect, cascade.near, cascade.far);
-        const invertVP = Mat4.Invert(Mat4.Multiply(cascadeProj, camView));
+        const cascadeProj = Mat4.Perspective(new Mat4(), camFov, camAspect, cascade.near, cascade.far);
+        Mat4.Multiply(cascadeProj, cascadeProj, camView);
+        Mat4.Invert(cascadeProj, cascadeProj);
+        const invertVP = cascadeProj;
 
         const ndcs = [
-            Vec3.FromArray([-1,-1,-1]),
-            Vec3.FromArray([ 1,-1,-1]),
-            Vec3.FromArray([-1, 1,-1]),
-            Vec3.FromArray([ 1, 1,-1]),
-            Vec3.FromArray([-1,-1, 1]),
-            Vec3.FromArray([ 1,-1, 1]),
-            Vec3.FromArray([-1, 1, 1]),
-            Vec3.FromArray([1, 1, 1])
+            Vec3.FromValues(-1,-1,-1),
+            Vec3.FromValues(1,-1,-1),
+            Vec3.FromValues(-1, 1,-1),
+            Vec3.FromValues(1, 1,-1),
+            Vec3.FromValues(-1,-1, 1),
+            Vec3.FromValues(1,-1, 1),
+            Vec3.FromValues(-1, 1, 1),
+            Vec3.FromValues(1, 1, 1)
         ];
         const corners: Vec3[] = [];
-        let center = Vec3.Zero();
+        let center = Vec3.Zero(new Vec3());
         for(const ndc of ndcs){
-            const corner = Vec3.TransformMat4(ndc, invertVP);
+            const corner = Vec3.TransformMat4(new Vec3(), ndc, invertVP);
             corners.push(corner);
-            center = Vec3.Add(center, corner);
+            Vec3.Add(center, center, corner);
         }
-        center = Vec3.Scale(center, 1 / 8);
+        Vec3.Scale(center, center, 1 / 8);
 
         let radius = 0;
         for (const pt of corners) {
@@ -100,24 +102,24 @@ export class LightInfo{
         }
         radius = Math.ceil(radius);
 
-        let up = Vec3.Up();
-        if(Math.abs(Vec3.Dot(lightDir, up)) > 0.99) up = Vec3.Forward();
+        let up = Vec3.FromValues(0, 1, 0);
+        if(Math.abs(Vec3.Dot(lightDir, up)) > 0.99) up = Vec3.FromValues(0, 0, 1);
 
         const texelPerWorld = shadowMapSize / (radius * 2);
-        const scaleMat4 = Mat4.FromScaling(Vec3.FromArray([texelPerWorld,texelPerWorld,texelPerWorld]));
-        const lookAtBase = Mat4.LookAt(Vec3.Zero(), Vec3.Scale(lightDir, -1), Vec3.Up());
-        const lookAt = Mat4.Multiply(scaleMat4, lookAtBase);
-        const lookInv = Mat4.Invert(lookAt);
-        center = Vec3.TransformMat4(center, lookAt);
-        center.x = Math.floor(center.x);
-        center.y = Math.floor(center.y);
-        center = Vec3.TransformMat4(center, lookInv);
+        const scaleMat4 = Mat4.FromScaling(new Mat4(), Vec3.FromValues(texelPerWorld,texelPerWorld,texelPerWorld));
+        const lookAtBase = Mat4.LookAt(new Mat4(), Vec3.Zero(new Vec3()), Vec3.Scale(new Vec3(), lightDir, -1), Vec3.FromValues(0, 1, 0));
+        const lookAt = Mat4.Multiply(new Mat4(), scaleMat4, lookAtBase);
+        Vec3.TransformMat4(center, center, lookAt);
+        center.values[0] = Math.floor(center.values[0]);
+        center.values[1] = Math.floor(center.values[1]);
+        Mat4.Invert(lookAt, lookAt);
+        Vec3.TransformMat4(center, center, lookAt);
 
-        let lightPos = Vec3.Sub(center, Vec3.Scale(lightDir, 0.001));
-        let lightViewMat4 = Mat4.LookAt(lightPos, center, up);
+        let lightPos = Vec3.Sub(new Vec3(), center, Vec3.Scale(new Vec3(), lightDir, 0.001));
+        let lightViewMat4 = Mat4.LookAt(new Mat4(), lightPos, center, up);
 
-        const lightClipMat4 = Mat4.Ortho(-radius, radius, -radius, radius, -radius * zMul, radius);
-        const lightVPMat4 = Mat4.Multiply(lightClipMat4, lightViewMat4);
+        const lightClipMat4 = Mat4.Ortho(new Mat4(), -radius, radius, -radius, radius, -radius * zMul, radius);
+        const lightVPMat4 = Mat4.Multiply(new Mat4(), lightClipMat4, lightViewMat4);
         return lightVPMat4;
     }
     private cascadeVPs(lightDir: Vec3, shadowMapSize: number, nCas: number, lamda: number){

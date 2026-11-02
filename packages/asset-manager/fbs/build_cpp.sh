@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# ./fbs/build_cpp.sh
+
 echo "remove fbs-gen-cpp folder"
 rm -rf fbs-gen-cpp
 
