@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# cd packages/asset-manager
 # ./fbs/build_cpp.sh
 
 echo "remove fbs-gen-cpp folder"

@@ -3,7 +3,7 @@ import { useAppSelector } from "../../../../global-state/hooks";
 import { getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
 import { WebglRenderer } from "../../helpers/resource-manager-helper/WebglRenderer";
 import { selectNodeRecord, selectNodes, type NodeState } from "../../../../global-state/slices/go-tree-slice";
-import { ComponentHelper, type Component, type Mesh, type MeshAsset, type ShadingBase } from "@shot-engine/types";
+import { ComponentHelper, type Component, type Mesh, type MeshAsset, type Shading } from "@shot-engine/types";
 import { AssetCache } from "../../helpers/asset-cache/asset-cache";
 import { LightInfo } from "../../helpers/asset-cache/LightInfo";
 import { SkyBoxInfo } from "../../helpers/asset-cache/SkyBoxInfo";
@@ -12,7 +12,7 @@ import { NodesInfo, type NodeRenderState } from "../../../../global-state/thunks
 import { selectGizmoNodes } from "../../../../global-state/slices/gizmo-go-tree-slice";
 import { GizmoOrbitCameraInfo } from "../../../../global-state/thunks/gizmo-orbit-camera-thunk";
 import { GizmoControl } from "./GizmoControl";
-import { Mat3, Mat4 } from "@shot-engine/math";
+import { Mat3, Mat4, Vec3 } from "@shot-engine/math";
 
 export function SceneRenderer(){
     const nodes = useAppSelector(state => selectNodes(state));
@@ -101,7 +101,7 @@ type RenderNodeData = {
     node: NodeState,
     distanceToCam: number,
     meshComponent: Mesh,
-    shadingComponent: ShadingBase
+    shadingComponent: Shading
 }
 export class SceneNodeRenderer{
     private _webglRenderer: WebglRenderer;
@@ -116,49 +116,50 @@ export class SceneNodeRenderer{
         nodes: NodeState[],
         nodeRecord: Record<string, NodeState>,
     ){
-        
-
-
-        for(const node of nodes){
+        this.pepareRenderNodes(nodes);
+        for(const node of this._opaqueNodes){
+            this.renderGo(node, NodesInfo.getInstance().nodeInfos, nodeRecord);
+        }
+        for(const node of this._transparentNodes){
             this.renderGo(node, NodesInfo.getInstance().nodeInfos, nodeRecord);
         }
     }
-    // pepareRenderNodes(nodes: NodeState[]){
-    //     this._opaqueNodes = [];
-    //     this._transparentNodes = [];
-    //     const camPos = GizmoOrbitCameraInfo.getInstance().worldPos;
-    //     for(const node of nodes){
-    //         const meshComponent = ComponentHelper.FindComponentByType(node.components, "Mesh");
-    //         if(!meshComponent) continue;
-    //         const shadingComponent = ComponentHelper.FindComponentByType(node.components, "Shading");
-    //         if(!shadingComponent) continue;
-    //         const nodeWordPos = NodesInfo.getInstance().getWorldPos(node.id);
-    //         if(!nodeWordPos) continue;
-    //         const renderNodeData: RenderNodeData = {
-    //             node,
-    //             distanceToCam: math.Vec3.SquaredDistance(
-    //                 math.Vec3.FromValues(camPos.x, camPos.y, camPos.z),
-    //                 math.Vec3.FromValues(nodeWordPos.x, nodeWordPos.y, nodeWordPos.z),
-    //             ),
-    //             meshComponent,
-    //             shadingComponent
-    //         }
-    //     }
-    // }
+    private pepareRenderNodes(nodes: NodeState[]){
+        this._opaqueNodes = [];
+        this._transparentNodes = [];
+        const camPos = GizmoOrbitCameraInfo.getInstance().worldPos;
+        for(const node of nodes){
+            const meshComponent = ComponentHelper.FindComponentByType(node.components, "Mesh");
+            if(!meshComponent) continue;
+            const shadingComponent = ComponentHelper.FindComponentByType(node.components, "Shading");
+            if(!shadingComponent) continue;
+            const nodeWordPos = NodesInfo.getInstance().getWorldPos(node.id);
+            if(!nodeWordPos) continue;
+            const renderNodeData: RenderNodeData = {
+                node,
+                distanceToCam: Vec3.SquaredDistance(camPos, nodeWordPos),
+                meshComponent,
+                shadingComponent
+            }
+            if(!shadingComponent.transparent) this._opaqueNodes.push(renderNodeData);
+            else this._transparentNodes.push(renderNodeData);
+        }
+        this._opaqueNodes.sort((a, b) => a.distanceToCam - b.distanceToCam);
+        this._transparentNodes.sort((a, b) => b.distanceToCam - a.distanceToCam);
+    }
     renderGo(
-        go: NodeState,
+        renderNode: RenderNodeData,
         nodeRenderStates: Map<string, NodeRenderState>,
         nodeRecord: Record<string, NodeState>,
     ){
+        const { node: go, meshComponent, shadingComponent } = renderNode;
+
         // model mat4
         const nodeRenderState = nodeRenderStates.get(go.id);
         let modelMat4 = nodeRenderState?.worldMatrix;
         if(!modelMat4) throw "dont find modelMat4";
 
-        const meshComponent = ComponentHelper.FindComponentByType(go.components, "Mesh");
-        if(!meshComponent) return;
-        const shadingComponent = ComponentHelper.FindComponentByType(go.components, "Shading");
-        if(!shadingComponent) return;
+        // skeleton
         const skeletonComponent = ComponentHelper.FindComponentByType(go.components, "Skeleton");
         const jointMatrices = this.createJointMatrices(
             skeletonComponent?.rootJointId,
@@ -169,6 +170,7 @@ export class SceneNodeRenderer{
         const mvpMat4 = this.createMVPMatrix(modelMat4);
         const viewMat4 = GizmoOrbitCameraInfo.getInstance().viewMat4;
         const normalMat3 = this.createNormalMatrix(modelMat4);
+
         this._webglRenderer.render(
             shadingComponent,
             meshComponent,

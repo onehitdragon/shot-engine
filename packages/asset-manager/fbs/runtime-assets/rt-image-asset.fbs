@@ -1,0 +1,9 @@
+include "../engine.fbs";
+
+namespace FBSRTAsset;
+
+table RTImageAsset{
+  
+}
+
+root_type RTImageAsset;

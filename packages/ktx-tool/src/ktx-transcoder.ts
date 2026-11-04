@@ -56,7 +56,7 @@ export class KTXTranscoder{
 
   /**
    * @ cTFBC3_RGBA ~ S3TC_DXT5
-   * @returns array of etc rgba image
+   * @returns array of rgba image
   */
   public async bc3RGBA(ktx2: Uint8Array){
     if(!this._inited) throw "call init() before call this function";
