@@ -1,8 +1,7 @@
 import { WebglMeshVBOs } from "./WebglMeshVBOs";
 import { WebglSimpleShader } from "./WebglSimpleShader";
 import { WebglHelper } from "./WebglHelper";
-import { WebglPhongShader } from "./WebglPhongShader";
-import type { GizmoShading, MeshAsset, PbrShading, PhongShading, Shading, SimpleShading } from "@shot-engine/types";
+import type { GizmoShading, MeshAsset, PbrShading, Shading, SimpleShading } from "@shot-engine/types";
 import { WebglPbrShader } from "./WebglPbrShader";
 import { WebglGizmoShader } from "./WebglGizmoShader";
 import { WebglShadowMapShader } from "./WebglShadowMapShader";
@@ -23,10 +22,6 @@ export class WebglMesh{
             this.type === "skin" ?
             WebglSimpleShader.getInstance(gl).createSkinMeshVAOs(this._meshVBOs, primitive.invBindPoseMatrices):
             WebglSimpleShader.getInstance(gl).createStaticMeshVAOs(this._meshVBOs)
-        );
-        this._meshVAOMap.set(
-            "phong",
-            WebglPhongShader.getInstance(gl).createMeshVAOs(this._meshVBOs)
         );
         this._meshVAOMap.set(
             "pbr",
@@ -53,25 +48,6 @@ export class WebglMesh{
             WebglSimpleShader.getInstance(gl).renderStaticMesh(this._meshVBOs, vao, mvpMat4, simpleShading);
         }
         
-    }
-    renderWithPhongShader(
-        mvpMat4: Mat4,
-        modelMat4: Mat4,
-        normalMat3: Mat3,
-        camPos: Vec3,
-        shadingComponent: PhongShading
-    ){
-        const gl = this._gl;
-        const vao = this._meshVAOMap.get("phong")!;
-        WebglPhongShader.getInstance(gl).renderMesh(
-            this._meshVBOs,
-            vao,
-            mvpMat4,
-            modelMat4,
-            normalMat3,
-            camPos,
-            shadingComponent
-        );
     }
     renderWithPbrShader(
         mvpMat4: Mat4,

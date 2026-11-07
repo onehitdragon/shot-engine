@@ -18,14 +18,11 @@ export class KTXTranscoder{
     this._basisModule = await BASIS();
     this._inited = true;
   }
-  /**
-   * @returns array of raw rgba image
-  */
-  public async rawRGBA(ktx2: Uint8Array){
+  public async transcode(ktx2: Uint8Array, type: "rgba" | "bc1" | "bc3" | "bc5"){
     if(!this._inited) throw "call init() before call this function";
     if(!this._basisModule) throw "fail to init this._basisModule";
 
-    const result: { info: KTX2ImageLevelInfo, rawRGBA: Uint8Array }[] = [];
+    const result: { info: KTX2ImageLevelInfo, compressed: Uint8Array }[] = [];
 
     const basisModule = this._basisModule;
     const { initializeBasis, KTX2File, transcoder_texture_format } = basisModule;
@@ -38,7 +35,13 @@ export class KTXTranscoder{
     const layerIdx = 0;
     const faceIdx = 0;
     const nLevel = ktx2File.getLevels();
-    const format = transcoder_texture_format.cTFRGBA32.value; // cTFRGBA32
+    let format: number;
+    if(type === "rgba") format = transcoder_texture_format.cTFRGBA32.value;
+    else if(type === "bc1") format = transcoder_texture_format.cTFBC1_RGB.value;
+    else if(type === "bc3") format = transcoder_texture_format.cTFBC3_RGBA.value;
+    else if(type === "bc5") format = transcoder_texture_format.cTFBC5_RG.value;
+    else throw "error cant pick format";
+
     for(let levelIdx = 0; levelIdx < nLevel; levelIdx++){
       const imageLevelInfo = ktx2File.getImageLevelInfo(levelIdx, layerIdx, faceIdx);
       const size = ktx2File.getImageTranscodedSizeInBytes(levelIdx, layerIdx, faceIdx, format);
@@ -48,45 +51,7 @@ export class KTXTranscoder{
         outBuffer, levelIdx, layerIdx, faceIdx, format, flags, -1, -1
       );
       if(status === 0) throw "error: transcodeImageWithFlags";
-      result.push({ info: imageLevelInfo, rawRGBA: outBuffer });
-    }
-
-    return result;
-  }
-
-  /**
-   * @ cTFBC3_RGBA ~ S3TC_DXT5
-   * @returns array of rgba image
-  */
-  public async bc3RGBA(ktx2: Uint8Array){
-    if(!this._inited) throw "call init() before call this function";
-    if(!this._basisModule) throw "fail to init this._basisModule";
-
-    const result: { info: KTX2ImageLevelInfo, bc3RGBA: Uint8Array }[] = [];
-
-    const basisModule = this._basisModule;
-    const { initializeBasis, KTX2File, transcoder_texture_format } = basisModule;
-    initializeBasis();
-
-    const ktx2File = new KTX2File(ktx2);
-    if(!ktx2File.isValid()) throw "error: ktx2File.isValid()";
-    if(!ktx2File.startTranscoding()) throw "error: startTranscoding";
-
-    const layerIdx = 0;
-    const faceIdx = 0;
-    const nLevel = ktx2File.getLevels();
-    // cTFBC3_RGBA
-    const format = transcoder_texture_format.cTFBC3_RGBA.value;
-    for(let levelIdx = 0; levelIdx < nLevel; levelIdx++){
-      const imageLevelInfo = ktx2File.getImageLevelInfo(levelIdx, layerIdx, faceIdx);
-      const size = ktx2File.getImageTranscodedSizeInBytes(levelIdx, layerIdx, faceIdx, format);
-      const outBuffer = new Uint8Array(size);
-      const flags = 0;
-      const status = ktx2File.transcodeImageWithFlags(
-        outBuffer, levelIdx, layerIdx, faceIdx, format, flags, -1, -1
-      );
-      if(status === 0) throw "error: transcodeImageWithFlags";
-      result.push({ info: imageLevelInfo, bc3RGBA: outBuffer });
+      result.push({ info: imageLevelInfo, compressed: outBuffer });
     }
 
     return result;

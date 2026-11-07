@@ -28,6 +28,10 @@ export class KTXEncoder{
   }
   private _inited: boolean;
   private _addon?: Addon;
+  private _options = {
+    quality: 100,
+    effort: 0
+  };
   private constructor(){
     this._inited = false;
   }
@@ -42,31 +46,28 @@ export class KTXEncoder{
    * @param genMipmap
    */
   public async encodeTexture(
-    imagePath: string | Uint8Array,
+    rgbaRaw: Uint8Array,
+    width: number,
+    height: number,
     sRGB: boolean,
-    genMipmap: boolean
+    genMipmap: boolean,
+    flipY: boolean
   ){
     if(!this._inited) throw "call init() before call this function";
     if(!this._addon) throw "fail to init this._addon";
-    
-    const imageSharp = sharp(imagePath);
-    const { width, height } = await imageSharp.metadata();
-    // with ensureAlpha().raw()
-    // any number of channel alway ensure 4 channels(rgba)
-    const imageRawBuffer = await imageSharp.ensureAlpha().raw().toBuffer();
 
-    const outBuffer = this._addon.encodeLdrImage(
+    const outBuffer = await this._addon.encodeLdrImage(
       {
-        data: imageRawBuffer,
+        data: rgbaRaw,
         width,
         height
       },
       {
-        quality: 50,
-        effort: 1,
+        quality: this._options.quality,
+        effort: this._options.effort,
         srgb: sRGB,
         mipmapGen: genMipmap,
-        yFlip: true
+        yFlip: flipY
       }
     )
     return outBuffer;
@@ -78,30 +79,33 @@ export class KTXEncoder{
    * @param genMipmap
    */
   public async encodeNormalMap(
-    imagePath: string | Uint8Array,
-    genMipmap: boolean
+    rgbaRaw: Uint8Array,
+    width: number,
+    height: number,
+    genMipmap: boolean,
+    flipY: boolean
   ){
     if(!this._inited) throw "call init() before call this function";
     if(!this._addon) throw "fail to init this._basisModule";
-    
-    const imageSharp = sharp(imagePath);
-    const { width, height } = await imageSharp.metadata();
-    // with ensureAlpha().raw()
-    // any number of channel alway ensure 4 channels(rgba)
-    const imageRawBuffer = await imageSharp.ensureAlpha().raw().toBuffer();
 
-    const outBuffer = this._addon.encodeLdrImage(
+    // swap y -> alpha
+    for(let i = 3; i < rgbaRaw.length; i += 4){
+      rgbaRaw[i] = rgbaRaw[i - 2];
+    }
+
+    // encode
+    const outBuffer = await this._addon.encodeLdrImage(
       {
-        data: imageRawBuffer,
+        data: rgbaRaw,
         width,
         height
       },
       {
-        quality: 50,
-        effort: 1,
+        quality: this._options.quality,
+        effort: this._options.effort,
         normal: true,
         mipmapGen: genMipmap,
-        yFlip: true
+        yFlip: flipY
       }
     )
     return outBuffer;
@@ -109,15 +113,15 @@ export class KTXEncoder{
 }
 
 async function main(){
-  const imagePath = "./test/image-rgba-8-sRGB.png";
-  const ktx2Path = "./test/image-rgba-8-sRGB.ktx2";
+  const imagePath = "./test/brickwall.jpg";
+  const ktx2Path = "./test/brickwall.ktx2";
 
   const imageSharp = sharp(imagePath);
   const { width, height } = await imageSharp.metadata();
   const imageRawBuffer = await imageSharp.ensureAlpha().raw().toBuffer();
 
   const addon = await importAddon();
-  const outBuffer = addon.encodeLdrImage(
+  const outBuffer = await addon.encodeLdrImage(
     // imagePath
     {
       data: imageRawBuffer,
@@ -125,11 +129,28 @@ async function main(){
       height
     },
     {
-      mipmapGen: true
+      srgb: true,
+      mipmapGen: true,
+      debug: false
     }
   )
   await fs.writeFile(ktx2Path, outBuffer);
 }
+
+// async function main(){
+//   const imagePath = "./test/brickwall.jpg";
+//   const ktx2Path = "./test/brickwall.ktx2";
+
+//   const imageSharp = sharp(imagePath);
+//   const { width, height } = await imageSharp.metadata();
+//   const imageRawBuffer = await imageSharp.ensureAlpha().raw().toBuffer();
+
+//   const encoder = KTXEncoder.getInstance();
+//   await encoder.init();
+//   const outBuffer = await encoder.encodeTexture(imageRawBuffer, width, height, true, true, false);
+
+//   await fs.writeFile(ktx2Path, outBuffer);
+// }
 
 async function main2(){
   const ktx2Path = "./test/image-rgba-8-sRGB.ktx2";

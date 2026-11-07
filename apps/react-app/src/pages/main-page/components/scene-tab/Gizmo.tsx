@@ -163,7 +163,7 @@ export function rayPick(
         continue;
       }
       for(let i = 0; i < indices.length; i += 3){
-        const amountFloat = type === "static" ? 11 : 16;
+        const amountFloat = type === "static" ? 12 : 16;
         const v0_index = indices[i] * amountFloat; // (3 verter, 3 normal, 2 uv, 3 tangent)
         const v1_index = indices[i + 1] * amountFloat;
         const v2_index = indices[i + 2] * amountFloat;

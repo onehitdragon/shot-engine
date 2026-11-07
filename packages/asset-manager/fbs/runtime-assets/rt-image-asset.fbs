@@ -3,7 +3,10 @@ include "../engine.fbs";
 namespace FBSRTAsset;
 
 table RTImageAsset{
-  
+  compressed_data: [ubyte];
+  s_rgb: bool;
+  wrap_mode: ubyte;
+  filter_mode: ubyte;
 }
 
 root_type RTImageAsset;

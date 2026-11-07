@@ -4,7 +4,10 @@ export type OtherAsset = {
     content: string
 }
 export type ImageAsset = {
-    ktx2: Uint8Array
+    ktx2: Uint8Array, // for webgl with flipY
+    ktx2NoFlip: Uint8Array, // for sdl3
+    hasAlpha: boolean,
+    alphaType: "cutoff" | "smooth", // cutoff - all alphas is 0 or 1
 }
 export type MeshAsset = {
     primitives: {

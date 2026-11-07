@@ -849,7 +849,7 @@ export function RawImage(props: { imageAsset: ImageAsset }){
     const ref = useRef<HTMLCanvasElement>(null);
     const [rawImages, setRawImages] = useState<{
         info: { origWidth: number, origHeight: number },
-        rawRGBA: Uint8Array
+        compressed: Uint8Array
     }[]>([]);
     const [slideIndex, setSlideIndex] = useState(0);
 
@@ -859,7 +859,7 @@ export function RawImage(props: { imageAsset: ImageAsset }){
             const ktxTranscoder = KTXTranscoder.getInstance();
             await ktxTranscoder.init();
             if(cancelled) return;
-            const rawRGBAs = await ktxTranscoder.rawRGBA(imageAsset.ktx2);
+            const rawRGBAs = await ktxTranscoder.transcode(imageAsset.ktx2NoFlip, "rgba");
             if(cancelled) return;
             setRawImages(rawRGBAs);
             setSlideIndex(0);
@@ -872,7 +872,7 @@ export function RawImage(props: { imageAsset: ImageAsset }){
 
     useEffect(() => {
         if(rawImages.length === 0) return;
-        const { info, rawRGBA } = rawImages[slideIndex];
+        const { info, compressed } = rawImages[slideIndex];
         const { origWidth, origHeight } = info;
 
         const canvas = ref.current;
@@ -883,7 +883,7 @@ export function RawImage(props: { imageAsset: ImageAsset }){
         const ctx = canvas.getContext("2d");
         if(!ctx) return;
         const imageData = new ImageData(
-            new Uint8ClampedArray(rawRGBA),
+            new Uint8ClampedArray(compressed),
             canvas.width,
             canvas.height,
         );
@@ -903,7 +903,7 @@ export function RawImage(props: { imageAsset: ImageAsset }){
                 />
                 <span className="">{rawImages.length - 1}</span>
             </div>
-            <canvas className="w-40 h-auto scale-y-[-1]" ref={ref}/>
+            <canvas className="w-40 h-auto" ref={ref}/>
         </div>
     );
 }

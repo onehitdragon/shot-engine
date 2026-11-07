@@ -5,3 +5,4 @@ include "assets/scene-asset.fbs";
 include "assets/hdr-asset.fbs";
 include "assets/project-setting-asset.fbs";
 include "assets/font-asset.fbs";
+include "runtime-assets/rt-image-asset.fbs";

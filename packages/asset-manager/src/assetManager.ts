@@ -7,11 +7,11 @@ import * as schema from "./schema.js";
 import { createDBIfNotExist, FileRow, AssetRow, closeDB } from "./db.js";
 import * as ShotEngineType from "@shot-engine/types";
 import { AssetManager } from "@shot-engine/types";
-import { readGLBFile } from './glb.js';
+import { getImageFromGLB, readGLBFile } from './glb.js';
 import { readFontAsset, readHdrAsset, readImageAsset, readMeshAsset, readPrefabAsset, readProjectSettingAsset, readSceneAsset, saveFontAssetBinary, saveHdrAssetBinary, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf.js';
 import { createDefaultConeAssetMesh, createDefaultCubeAssetMesh, createDefaultCylinderAssetMesh, createDefaultSphereAssetMesh } from './createDefaultAssetMesh.js';
 import * as assetBakers from './assetBakers.js';
-import { genKTX2 } from './helpers/gen-ktx.js';
+import { createKTXImageAsset } from './helpers/create-ktx-image-asset.js';
 
 let configed = false;
 let ASSET_DIR = "";
@@ -189,7 +189,7 @@ export function query(){
 
 export async function rescan(){
     if(!configed) return;
-    ensureDefaultFiles();
+    await ensureDefaultFiles();
 
     /** check db first
      * loop db files
@@ -328,11 +328,11 @@ export async function rescan(){
     // now = performance.now();
 }
 
-function ensureDefaultFiles(){
+async function ensureDefaultFiles(){
     fs.ensureDirSync(ASSET_DEFAULT_DIR);
     const cubeAssetMeshPath = path.join(ASSET_DEFAULT_DIR, "cube-engine.mesh");
     if(!fs.existsSync(cubeAssetMeshPath)){
-        const cubeAssetMesh = createDefaultCubeAssetMesh();
+        const cubeAssetMesh = await createDefaultCubeAssetMesh();
         saveMeshAssetBinary(cubeAssetMesh, cubeAssetMeshPath);
     }
     const sphereAssetMeshPath = path.join(ASSET_DEFAULT_DIR, "sphere-engine.mesh");
@@ -381,6 +381,7 @@ async function hashImageAsset(imageAsset: ShotEngineType.ImageAsset) {
     const hash = xxHashAPI.create64();
     
     hash.update(imageAsset.ktx2);
+    hash.update(imageAsset.ktx2NoFlip);
     return hash.digest().toString();
 }
 async function hashMeshAsset(meshAsset: ShotEngineType.MeshAsset) {
@@ -466,7 +467,6 @@ async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
     if(!fileRow.path) return;
     const fullPath = path.join(ASSET_DIR, fileRow.path);
     const glb = await readGLBFile(fullPath);
-    if(!glb) return;
     const usedSet = new Set<string>();
     const { textures, meshes, prefabAssets, mats } = glb;
     const textureAssetRows: AssetRow[] = [];
@@ -687,8 +687,14 @@ async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: Asse
     if(!fileRow.path) return;
     const fullPath = path.join(ASSET_DIR, fileRow.path);
     if(type === "image"){
-        const imageAsset: ShotEngineType.ImageAsset = {
-            ktx2: await genKTX2(fullPath, JSON.parse(assetRow.property))
+        let imageAsset: ShotEngineType.ImageAsset
+        if(isGLBFile(fullPath)){
+            const raw = await getImageFromGLB(fullPath, assetRow.name);
+            if(!raw) throw "cant find image in glb";
+            imageAsset = await createKTXImageAsset(raw, JSON.parse(assetRow.property));
+        }
+        else{
+            imageAsset = await createKTXImageAsset(fullPath, JSON.parse(assetRow.property));
         }
         genImageAsset(assetRow, imageAsset);
     }

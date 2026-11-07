@@ -189,14 +189,14 @@ export class WebglPbrShader{
         const vao = gl.createVertexArray();
         gl.bindVertexArray(vao);
             vbos.bindVertexVBO();
-            const stride = (3 + 3 + 2 + 3) * 4; // (3 verter, 3 normal, 2 uv, 3 tangent) * floatSize = 4
+            const stride = (3 + 3 + 2 + 4) * 4; // (3 verter, 3 normal, 2 uv, 4 tangent) * floatSize = 4
             gl.vertexAttribPointer(this._a_PositionLoc, 3, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(this._a_PositionLoc);
             gl.vertexAttribPointer(this._a_NormalLoc, 3, gl.FLOAT, false, stride, 3 * 4);
             gl.enableVertexAttribArray(this._a_NormalLoc);
             gl.vertexAttribPointer(this._a_TextCoordLoc, 2, gl.FLOAT, false, stride, (3 + 3) * 4);
             gl.enableVertexAttribArray(this._a_TextCoordLoc);
-            gl.vertexAttribPointer(this._a_TangentLoc, 3, gl.FLOAT, false, stride, (3 + 3 + 2) * 4);
+            gl.vertexAttribPointer(this._a_TangentLoc, 4, gl.FLOAT, false, stride, (3 + 3 + 2) * 4);
             gl.enableVertexAttribArray(this._a_TangentLoc);
             vbos.bindIndexVBO();
         gl.bindVertexArray(null);

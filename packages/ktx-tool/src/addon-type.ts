@@ -32,7 +32,7 @@ export interface EncodeLdrImage{
   (
     imagePath: string | { data: Uint8Array, width: number, height: number },
     options?: EncodeLdrImageOptions
-  ): Uint8Array;
+  ): Promise<Uint8Array>;
 }
 export interface Addon{
   encodeLdrImage: EncodeLdrImage

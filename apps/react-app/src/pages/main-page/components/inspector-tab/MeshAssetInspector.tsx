@@ -25,7 +25,7 @@ function Mesh(props: { inspector: MeshAssetInspector }){
                         <span className="text-white text-sm">Primitive index: {index}</span>
                         <span className="text-white text-sm">- type: {prim.type}</span>
                         <span className="text-white text-sm">
-                            - vertices: {interleaveArray.length / (prim.type === "static" ? 44 : 64)}
+                            - vertices: {interleaveArray.length / (prim.type === "static" ? 48 : 68)}
                         </span>
                         <span className="text-white text-sm">- indices: {indices.length}</span>
                         <span className="text-white text-sm">- aabb: {JSON.stringify(prim.aabb)}</span>

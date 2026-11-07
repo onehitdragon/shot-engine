@@ -74,7 +74,7 @@ export class WebglSimpleShader{
         const vao = gl.createVertexArray();
         gl.bindVertexArray(vao);
             vbos.bindVertexVBO();
-            const stride = (3 + 3 + 2 + 3) * 4; // (3 verter, 3 normal, 2 uv, 3 tangent) * floatSize = 4
+            const stride = (3 + 3 + 2 + 4) * 4; // (3 verter, 3 normal, 2 uv, 4 tangent) * floatSize = 4
             gl.vertexAttribPointer(a_PositionLoc, 3, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(a_PositionLoc);
             vbos.bindIndexVBO();
@@ -88,7 +88,7 @@ export class WebglSimpleShader{
         const vao = gl.createVertexArray();
         gl.bindVertexArray(vao);
             vbos.bindVertexVBO();
-            const stride = 64; // (pos, normal, uv, tangent)44bytes (weight)16bytes (joint)4bytes
+            const stride = 68; // (pos, normal, uv, tangent)48bytes (weight)16bytes (joint)4bytes
             gl.vertexAttribPointer(a_PositionLoc, 3, gl.FLOAT, false, stride, 0);
             gl.enableVertexAttribArray(a_PositionLoc);
             gl.vertexAttribPointer(a_WeightLoc, 4, gl.FLOAT, false, stride, 44);

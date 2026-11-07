@@ -1,11 +1,13 @@
 import { NodeIO, Node, Texture, Mesh, Accessor } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { unweld, tangents, weld } from "@gltf-transform/functions";
+import { generateTangents } from 'mikktspace';
 import path from "node:path";
 import * as ShotEngineType from "@shot-engine/types";
 import { v4 as uuidv4 } from "uuid";
-import { genKTX2 } from './helpers/gen-ktx.js';
 import { defaultImageAsset } from './schema.js';
 import * as math from "@shot-engine/math";
+import { createKTXImageAsset } from './helpers/create-ktx-image-asset.js';
 
 type GLB = {
     textures: GLBTexture[],
@@ -33,6 +35,11 @@ export async function readGLBFile(filePath: string){
     .registerDependencies({});
 
     const document = await io.read(filePath);
+    await document.transform(unweld());
+    await document.transform(
+        tangents({generateTangents})
+    );
+    await document.transform(weld());
     const root = document.getRoot();
     
     // set id for all node
@@ -104,9 +111,7 @@ export async function readGLBFile(filePath: string){
 
         glb.textures.push({
             name: textureName,
-            imageAsset: {
-                ktx2: await genKTX2(image, defaultImageAsset)
-            }
+            imageAsset: await createKTXImageAsset(image, defaultImageAsset)
         });
     }
     for(const material of root.listMaterials()){
@@ -144,6 +149,7 @@ export async function readGLBFile(filePath: string){
             const positions = getAttr(e.getAttribute("POSITION")); // vec3
             const normals = getAttr(e.getAttribute("NORMAL")); // vec3
             const uvs = getAttr(e.getAttribute("TEXCOORD_0")); // vec2
+            const tangents = getAttr(e.getAttribute("TANGENT")); // vec4
 
             const weights = getAttr(e.getAttribute("WEIGHTS_0")); // vec4
             const joints = getAttrUint8(e.getAttribute("JOINTS_0")); // vec4
@@ -155,12 +161,9 @@ export async function readGLBFile(filePath: string){
                 invBindPoseMatrices = getAttr(skin.getInverseBindMatrices());
             }
             
-            const interleaveArray = createInterleaveArr(positions, normals, uvs); // new buffer
-            const interleaveArrayWithTangent = ShotEngineType.MeshHelper.InterleaveArrayTangent(
-                interleaveArray, indices
-            ); // new buffer
+            const interleaveArray = createInterleaveArr(positions, normals, uvs, tangents);
             const interleaveArrayWithJoint = extendInterleaveArr(
-                interleaveArrayWithTangent, weights, joints
+                interleaveArray, weights, joints
             );
 
             const primitive: ShotEngineType.MeshAsset["primitives"][0] = {
@@ -184,7 +187,7 @@ export async function readGLBFile(filePath: string){
     const textureMap = new Map<Texture, number>(root.listTextures().map((e, idx) => [e, idx]));
     const meshMap = new Map<Mesh, number>(root.listMeshes().map((e, idx) => [e, idx]));
     const scene = root.getDefaultScene();
-    if(!scene) return;
+    if(!scene) return glb;
     for(const node of scene.listChildren()){
         const prefabAsset: ShotEngineType.PrefabAsset = {
             root: createGameObject(node, meshMap)
@@ -193,6 +196,23 @@ export async function readGLBFile(filePath: string){
     }
 
     return glb;
+}
+export async function getImageFromGLB(filePath: string, imageName: string){
+     const io = new NodeIO()
+    .registerExtensions(ALL_EXTENSIONS)
+    .registerDependencies({});
+
+    const document = await io.read(filePath);
+    const root = document.getRoot();
+
+    for(let i = 0; i < root.listTextures().length; i++){
+        const texture = root.listTextures()[i];
+        const textureName = path.basename(filePath) + "/" + "tex" + i;
+        if(textureName === imageName){
+            const image = texture.getImage();
+            if(image) return image;
+        }
+    }
 }
 function getAttr(attr?: Accessor | null){
     const array = attr?.getArray();
@@ -246,38 +266,51 @@ function getIndices(attr?: Accessor | null){
     }
     return result;
 }
-function createInterleaveArr(positions: Float32Array, normals: Float32Array, uvs: Float32Array){
+function createInterleaveArr(
+    positions: Float32Array, normals: Float32Array, uvs: Float32Array, tangents: Float32Array
+){
     const vertexCount = positions.length / 3;
-    if(normals.length !== positions.length) throw "Positions and Normals mismatch";
-    if(uvs.length !== vertexCount * 2) throw "UV count mismatch";
+    const normalCount = normals.length / 3;
+    const uvCount = uvs.length / 2;
+    const tangentCount = tangents.length / 4;
+    if(normalCount !== vertexCount) throw "normal count mismatch";
+    if(uvCount !== vertexCount) throw "uv count mismatch";
+    if(tangentCount !== vertexCount) throw "tangent count mismatch";
 
-    const interleaveBuffer = new Float32Array(vertexCount * (3 + 3 + 2));
+    const interleaveBuffer = new Float32Array(vertexCount * (3 + 3 + 2 + 4));
     for(let i = 0; i < vertexCount; i++){
         const i3 = i * 3;
         const i2 = i * 2;
-        const i8 = i * 8;
-        interleaveBuffer[i8 + 0] = positions[i3 + 0];
-        interleaveBuffer[i8 + 1] = positions[i3 + 1];
-        interleaveBuffer[i8 + 2] = positions[i3 + 2];
-        interleaveBuffer[i8 + 3] = normals[i3 + 0];
-        interleaveBuffer[i8 + 4] = normals[i3 + 1];
-        interleaveBuffer[i8 + 5] = normals[i3 + 2];
-        interleaveBuffer[i8 + 6] = uvs[i2 + 0];
-        interleaveBuffer[i8 + 7] = uvs[i2 + 1];
-    }
+        const i4 = i * 4;
+        const i12 = i * 12;
+        interleaveBuffer[i12 + 0] = positions[i3 + 0];
+        interleaveBuffer[i12 + 1] = positions[i3 + 1];
+        interleaveBuffer[i12 + 2] = positions[i3 + 2];
 
+        interleaveBuffer[i12 + 3] = normals[i3 + 0];
+        interleaveBuffer[i12 + 4] = normals[i3 + 1];
+        interleaveBuffer[i12 + 5] = normals[i3 + 2];
+
+        interleaveBuffer[i12 + 6] = uvs[i2 + 0];
+        interleaveBuffer[i12 + 7] = uvs[i2 + 1];
+
+        interleaveBuffer[i12 + 8]  = tangents[i4 + 0];
+        interleaveBuffer[i12 + 9]  = tangents[i4 + 1];
+        interleaveBuffer[i12 + 10] = tangents[i4 + 2];
+        interleaveBuffer[i12 + 11] = tangents[i4 + 3];
+    }
     return interleaveBuffer;
 }
 function extendInterleaveArr(
-    interleaveArray: Float32Array, // pos 3, normal 3, uv 2, tangent 3
+    interleaveArray: Float32Array, // pos 3, normal 3, uv 2, tangent 4
     weights: Float32Array, joints: Uint8Array // weight 4 float joint 4 uint
 ){
     if(joints.length === 0) return new Uint8Array(interleaveArray.buffer);
     // create interleaveBuffer
-    // (pos 12bytes + normal 12bytes + uv 8bytes + tangent 12bytes) 44
+    // (pos 12bytes + normal 12bytes + uv 8bytes + tangent 16bytes) 48
     // (weights 16bytes joint 4bytes) 20
-    const vertexCount = Math.floor(interleaveArray.length / 11);
-    const buffer = new ArrayBuffer(64 * vertexCount);
+    const vertexCount = Math.floor(interleaveArray.length / 12);
+    const buffer = new ArrayBuffer(68 * vertexCount);
     const floatView = new Float32Array(buffer);
     const uint8View = new Uint8Array(buffer);
     let floatIdx = 0;
@@ -286,11 +319,11 @@ function extendInterleaveArr(
     let jointIdx = 0;
     for(let i = 0; i < vertexCount; i++){
         floatView.set(
-            interleaveArray.subarray(interleaveArrayIdx, interleaveArrayIdx + 11),
+            interleaveArray.subarray(interleaveArrayIdx, interleaveArrayIdx + 12),
             floatIdx
         );
-        interleaveArrayIdx += 11;
-        floatIdx += 11;
+        interleaveArrayIdx += 12;
+        floatIdx += 12;
 
         floatView.set(weights.subarray(weightIdx, weightIdx + 4), floatIdx);
         weightIdx += 4;

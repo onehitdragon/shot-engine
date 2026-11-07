@@ -17,17 +17,18 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc"
+    "build": "copyfiles src/glb-default-files/* dist/ & tsc"
   },
   "dependencies": {
     "@gltf-transform/core": "^4.3.0",
     "@gltf-transform/extensions": "^4.3.0",
-    "@gltf-transform/functions": "^4.3.0",
+    "@gltf-transform/functions": "^4.5.1",
     "@nodelib/fs.walk": "^3.0.1",
     "better-sqlite3": "^13.0.3",
     "flatbuffers": "^25.9.23",
     "fs-extra": "^11.3.4",
     "lodash": "^4.18.1",
+    "mikktspace": "^1.1.1",
     "msdf-bmfont-xml": "^2.8.0",
     "sharp": "^0.35.5",
     "uuid": "^14.0.0",
@@ -38,6 +39,7 @@
     "@types/better-sqlite3": "^9.6.0",
     "@types/fs-extra": "^11.0.4",
     "@types/lodash": "^4.17.24",
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.6.0",
+    "copyfiles": "^2.4.1"
   }
 }

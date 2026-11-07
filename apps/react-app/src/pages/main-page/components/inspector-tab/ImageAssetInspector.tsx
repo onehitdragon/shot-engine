@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { type ImageAssetInspector } from "../../../../global-state/slices/inspector-slice";
 import { ButtonRow, CheckBox, RawImage, Selection, TextRow } from "./components";
-import type { AssetProperty } from "@shot-engine/types";
+import type { AssetProperty, ImageAsset } from "@shot-engine/types";
 import { cloneDeep } from "lodash";
 import { useAppDispatch } from "../../../../global-state/hooks";
 import { inspectAssetThunk } from "../../../../global-state/thunks/inspector-thunks";
@@ -28,7 +28,7 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
                 imageType: "NormalMap",
                 wrapMode: "REPEAT",
                 filterMode: "BILINEAR",
-                generateMipmaps: false,
+                generateMipmaps: true,
             };
         }
         return {
@@ -75,6 +75,17 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
             {
                 imageProperty.imageType === "Texture" &&
                 <TextureModifier
+                    imageAsset={imageAsset}
+                    textureProperty={imageProperty}
+                    onChange={(value) => {
+                        setImageProperty(value);
+                    }}
+                />
+            }
+            {
+                imageProperty.imageType === "NormalMap" &&
+                <NormalMapModifier
+                    imageAsset={imageAsset}
                     textureProperty={imageProperty}
                     onChange={(value) => {
                         setImageProperty(value);
@@ -97,10 +108,11 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
     );
 }
 function TextureModifier(props: {
+    imageAsset: ImageAsset,
     textureProperty: AssetProperty.Texture,
     onChange: (textureProperty: AssetProperty.Texture) => void
 }){
-    const { textureProperty, onChange } = props;
+    const { imageAsset, textureProperty, onChange } = props;
     const texturePropertyClone = cloneDeep(textureProperty);
 
     return(
@@ -147,6 +159,57 @@ function TextureModifier(props: {
                     onChange(texturePropertyClone);
                 }}
             />
+            <TextRow label="Has alpha"
+                content={`${imageAsset.hasAlpha && imageAsset.alphaType}`}
+            />
         </>
     );
 }
+function NormalMapModifier(props: {
+    imageAsset: ImageAsset,
+    textureProperty: AssetProperty.NormalMap,
+    onChange: (textureProperty: AssetProperty.NormalMap) => void
+}){
+    const { textureProperty, onChange } = props;
+    const texturePropertyClone = cloneDeep(textureProperty);
+
+    return(
+        <>
+            <Selection
+                label="Wrap mode"
+                value={textureProperty.wrapMode}
+                options={[
+                    { label: "REPEAT", value: "REPEAT" },
+                    { label: "CLAMP", value: "CLAMP" },
+                    { label: "MIRROR", value: "MIRROR" },
+                ]}
+                onChange={(value) => {
+                    texturePropertyClone.wrapMode = value;
+                    onChange(texturePropertyClone);
+                }}
+            />
+            <Selection
+                label="Filter mode"
+                value={textureProperty.filterMode}
+                options={[
+                    { label: "NONE", value: "NONE" },
+                    { label: "BILINEAR", value: "BILINEAR" },
+                    { label: "TRILINEAR", value: "TRILINEAR" },
+                ]}
+                onChange={(value) => {
+                    texturePropertyClone.filterMode = value;
+                    onChange(texturePropertyClone);
+                }}
+            />
+            <CheckBox
+                label="Generate mipmaps"
+                value={textureProperty.generateMipmaps}
+                onChange={(value) => {
+                    texturePropertyClone.generateMipmaps = value;
+                    onChange(texturePropertyClone);
+                }}
+            />
+        </>
+    );
+}
+

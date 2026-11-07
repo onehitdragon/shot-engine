@@ -7,7 +7,9 @@ export default defineConfig({
       external: [
         "better-sqlite3",
         "sharp",
-        "@shot-engine/ktx-tool/encoder"
+        "@shot-engine/ktx-tool/encoder",
+        "mikktspace",
+        "@shot-engine/asset-manager",
       ]
     }
   }

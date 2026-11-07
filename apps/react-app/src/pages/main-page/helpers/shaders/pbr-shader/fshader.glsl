@@ -146,6 +146,7 @@ vec3 getWorldNormal(){
     if(u_hasNormalMap){
         vec3 normal = texture(u_normalMap, v_TextCoord).rgb;
         normal = normal * 2.0 - 1.0;
+        normal.z = sqrt(max(1.0 - dot(normal.xy, normal.xy), 0.0));
         normal = normalize(v_WorldTBN * normal);
         return normal;
     }

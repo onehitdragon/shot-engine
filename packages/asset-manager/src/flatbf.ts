@@ -23,18 +23,37 @@ import {
     SceneSetting
 } from "../fbs-gen/fbsasset.js";
 import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, readGameObject } from "./flatbfUtil.js";
+// import * as RTAsset from "./runtime-asset.js";
+import { RTImageAsset } from "../fbs-gen/fbsrtasset.js";
 
 export function saveImageAssetBinary(imageAsset: ShotEngineType.ImageAsset, filePath: string){
     const builder = new Builder(1024);
     const ktx2Offset = ImageAsset.createKtx2Vector(builder, imageAsset.ktx2);
+    const ktx2NoFlipOffset = ImageAsset.createKtx2Vector(builder, imageAsset.ktx2NoFlip);
     ImageAsset.startImageAsset(builder);
     ImageAsset.addKtx2(builder, ktx2Offset);
+    ImageAsset.addKtx2NoFlip(builder, ktx2NoFlipOffset);
+    ImageAsset.addHasAlpha(builder, imageAsset.hasAlpha);
+    ImageAsset.addAlphaType(builder, imageAsset.alphaType === "cutoff" ? 0 : 1);
     const offset = ImageAsset.endImageAsset(builder);
     builder.finish(offset);
 
     const bytes = builder.asUint8Array();
     fs.writeFileSync(filePath, bytes);
 }
+// export function rtImageAssetToBinary(rtImageAsset: RTAsset.RTImageAsset){
+//     const builder = new Builder(1024);
+//     const compressedDataOffset = RTImageAsset.createCompressedDataVector(builder, rtImageAsset.compressedData);
+//     RTImageAsset.startRTImageAsset(builder);
+//     RTImageAsset.addCompressedData(builder, compressedDataOffset);
+//     RTImageAsset.addSRgb(builder, rtImageAsset.sRGB);
+//     RTImageAsset.addWrapMode(builder, rtImageAsset.wrapMode);
+//     RTImageAsset.addFilterMode(builder, rtImageAsset.filterMode);
+//     const offset = RTImageAsset.endRTImageAsset(builder);
+//     builder.finish(offset);
+
+//     return builder.asUint8Array();
+// }
 export function saveMeshAssetBinary(meshAsset: ShotEngineType.MeshAsset, filePath: string){
     const builder = new Builder(1024);
     const primitiveOffsets: Offset[] = [];
@@ -270,7 +289,10 @@ export function readImageAsset(filePath: string): ShotEngineType.ImageAsset{
     const byteBuffer = new ByteBuffer(bytes);
     const image = ImageAsset.getRootAsImageAsset(byteBuffer);
     return {
-        ktx2: getUint8Array(image.ktx2Array())
+        ktx2: getUint8Array(image.ktx2Array()),
+        ktx2NoFlip: getUint8Array(image.ktx2NoFlipArray()),
+        hasAlpha: image.hasAlpha(),
+        alphaType: image.alphaType() === 0 ? "cutoff" : "smooth"
     };
 }
 export function readMeshAsset(filePath: string){

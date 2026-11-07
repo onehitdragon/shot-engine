@@ -12,11 +12,11 @@ export async function pack(projectSettingAssetUuid: string){
   // --buid dependencyMap
   const getResourcePath = (uuid: string) => path.join(ASSET_GENERATED_DIR, uuid);
   const dependencyMap = new Map<
-    string, { type: number, resourcePath: string }
+    string, { type: ShotEngineType.AssetType, resourcePath: string }
   >();
   const addDependency = (uuid: string, type: ShotEngineType.AssetType) => {
     dependencyMap.set(uuid, {
-      type: ShotEngineType.assetTypeToNum(type),
+      type,
       resourcePath: getResourcePath(uuid)
     });
   }
@@ -101,12 +101,18 @@ export async function pack(projectSettingAssetUuid: string){
   let tableOffset = 0;
   let resourceOffset = headerSize + tableSize;
   for(const [uuid, { type, resourcePath }] of dependencyMap){
-    const resourceBuffer = await fsExtra.readFile(resourcePath);
+    let resourceBuffer: Uint8Array;
+    if(type === "image"){
+      resourceBuffer = await fsExtra.readFile(resourcePath);
+    }
+    else{
+      resourceBuffer = await fsExtra.readFile(resourcePath);
+    }
     await fsExtra.write(fd, resourceBuffer);
 
     tableUint8View.set(textEncoder.encode(uuid), tableOffset);
     tableOffset += 56;
-    tableView.setUint32(tableOffset, type, little);
+    tableView.setUint32(tableOffset, ShotEngineType.assetTypeToNum(type), little);
     tableOffset += 4;
     tableView.setUint32(tableOffset, resourceOffset, little);
     tableOffset += 4;
@@ -115,6 +121,7 @@ export async function pack(projectSettingAssetUuid: string){
 
     resourceOffset += resourceBuffer.byteLength;
   }
+  // write (header + entry table) to top
   await fsExtra.write(fd, new Uint8Array(buffer), 0, buffer.byteLength, 0);
   await fsExtra.close(fd);
 }

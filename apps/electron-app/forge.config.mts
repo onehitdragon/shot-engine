@@ -13,7 +13,7 @@ import * as fsWalk from "@nodelib/fs.walk";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: {
-      unpackDir: "node_modules/{better-sqlite3,@img/sharp-*,@shot-engine/ktx-tool}"
+      unpackDir: "node_modules/{better-sqlite3,@img/sharp-*,@shot-engine/ktx-tool,mikktspace,@shot-engine/asset-manager}"
     },
   },
   hooks: {
@@ -76,7 +76,9 @@ function copyNativeModule(buildPath: string){
   const requiredNativePackages = [
     "better-sqlite3", // "better-sqlite3"
     "sharp", "@img", "detect-libc", "semver", // sharp
-    "@shot-engine/ktx-tool"
+    "@shot-engine/ktx-tool",
+    "mikktspace",
+    "@shot-engine/asset-manager"
   ];
 
   const projectPath = path.resolve("..", "..");

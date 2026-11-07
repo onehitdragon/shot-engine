@@ -1,7 +1,13 @@
 import { Vec3 } from "@shot-engine/math";
 import * as ShotEngineType from "@shot-engine/types";
+import { readGLBFile } from "./glb.js";
+import path from "node:path";
 
-export function createDefaultCubeAssetMesh(){
+export async function createDefaultCubeAssetMesh(){
+    const glb = await readGLBFile(path.join(import.meta.dirname, "glb-default-files", "Cube.glb"));
+    return glb.meshes[0].meshAsset;
+}
+function _createDefaultCubeAssetMesh(){
     const [v0, v1, v2, v3, v4, v5, v6, v7] = [
         [1, 1, 1],   // v0
         [-1, 1, 1],  // v1

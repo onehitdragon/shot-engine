@@ -101,7 +101,7 @@ export function createDirectionalLightComponent(){
         type: "Light",
         lightType: "DirectionalLight",
         color: Vec3.FromValues(1, 1, 1),
-        intensity: 100,
+        intensity: 10,
         shadow: {
             enable: false,
             bias: 0.005,
