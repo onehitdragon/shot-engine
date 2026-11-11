@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { type JSX } from "react";
-import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, ChevronRightIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { clamp } from "lodash";
-import type { AssetManager, ImageAsset, ImageOrColor, ImageOrValue, OptionalImage, TextOrString } from "@shot-engine/types";
+import type { AssetManager, ImageAsset, TextOrString } from "@shot-engine/types";
 import z from "zod";
 import { KTXTranscoder } from "@shot-engine/ktx-tool/transcoder";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import { ColorToVec3, Vec3ToColor } from "./helper";
-import { Vec3 } from "@shot-engine/math";
+import { ArrowPathIcon, MinusIcon } from "@heroicons/react/24/outline";
+import { useAppSelector } from "../../../../global-state/hooks";
+import { selectNodes } from "../../../../global-state/slices/go-tree-slice";
 
 const numberStringSchema = z.preprocess(
     (val) => (val === '' || val === null ? NaN : Number(val)),
@@ -307,173 +307,125 @@ export function Selection<T extends number | string>(
         </div>
     );
 }
-export function ImageOrColorSelection(props: {
+export function ImageSelection(props: {
     label: string,
-    imageOrColor: ImageOrColor,
-    onChange: (imageOrColor: ImageOrColor) => void,
+    imageRef?: string,
+    onChange: (imageRef?: string) => void,
 }){
-    const { label, imageOrColor, onChange } = props;
+    const { label, imageRef, onChange } = props;
     const [imageAssetInfos, setImageAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
 
     useEffect(() => {
         let cancelled = false;
         const load = async () => {
-            if(imageOrColor.type === "color") setImageAssetInfos([]);
-            else{
-                const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
-                if(cancelled) return;
-                setImageAssetInfos(assetInfos);
-            }
+            const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
+            if(cancelled) return;
+            setImageAssetInfos(assetInfos);
         }
         load();
         return () => {
             cancelled = true;
         }
-    }, [imageOrColor.type]);
+    }, []);
 
-    return <>
+    return (
         <Selection
             label={label}
             options={[
-                { label: "image", value: "image" },
-                { label: "color", value: "color" },
+                { label: "None", value: "" },
+                ...imageAssetInfos.map(e => {
+                    return {
+                        label: e.name,
+                        value: e.uuid
+                    }
+                })
             ]}
-            value={imageOrColor.type}
+            value={imageRef || ""}
             onChange={(value) => {
-                if(value === "color"){
-                    onChange({
-                        type: "color",
-                        color: Vec3.FromValues(1, 1, 1)
-                    });
-                }
-                else{
-                    onChange({
-                        type: "image",
-                        imageRef: ""
-                    });
-                }
+                onChange(value || undefined);
             }}
         />
-        {
-            imageOrColor.type === "color" &&
-            <RGBValueRow
-                label={`${label} color`}
-                value={Vec3ToColor(imageOrColor.color)}
-                onChange={(value) => {
-                    onChange({
-                        type: "color",
-                        color: ColorToVec3(value)
-                    });
-                }
-            }/>
-        }
-        {
-            imageOrColor.type === "image" &&
-            <Selection
-                label={`${label} image`}
-                options={
-                    imageAssetInfos.map(e => {
-                        return {
-                            label: e.name,
-                            value: e.uuid
-                        }
-                    })
-                }
-                value={imageOrColor.imageRef}
-                onChange={(value) => {
-                    onChange({
-                        type: "image",
-                        imageRef: value
-                    });
-                }}
-            />
-        }
-    </>
+    );
 }
-export function ImageOrValueSelection(props: {
+export function MeshSelection(props: {
     label: string,
-    imageOrValue: ImageOrValue,
-    onChange: (imageOrValue: ImageOrValue) => void,
-    valueConfig: { default: number, range: [number, number] }
+    uuidRef?: string,
+    onChange: (uuidRef?: string) => void,
 }){
-    const { label, imageOrValue, onChange, valueConfig } = props;
-    const [imageAssetInfos, setImageAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+    const { label, uuidRef, onChange } = props;
+    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
 
     useEffect(() => {
         let cancelled = false;
         const load = async () => {
-            if(imageOrValue.type === "value") setImageAssetInfos([]);
-            else{
-                const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
-                if(cancelled) return;
-                setImageAssetInfos(assetInfos);
-            }
+            const assetInfos = await window.api.assetManager.getAssetInfosFromType("mesh");
+            if(cancelled) return;
+            setAssetInfos(assetInfos);
         }
         load();
         return () => {
             cancelled = true;
         }
-    }, [imageOrValue.type]);
+    }, []);
 
-    return <>
+    return (
         <Selection
             label={label}
             options={[
-                { label: "image", value: "image" },
-                { label: "value", value: "value" },
+                { label: "None", value: "" },
+                ...assetInfos.map(e => {
+                    return {
+                        label: e.name,
+                        value: e.uuid
+                    }
+                })
             ]}
-            value={imageOrValue.type}
+            value={uuidRef || ""}
             onChange={(value) => {
-                if(value === "value"){
-                    onChange({
-                        type: "value",
-                        value: valueConfig.default
-                    });
-                }
-                else{
-                    onChange({
-                        type: "image",
-                        imageRef: ""
-                    });
-                }
+                onChange(value || undefined);
             }}
         />
-        {
-            imageOrValue.type === "value" &&
-            <OneValueRow
-                label={`${label} value`}
-                value={imageOrValue.value}
-                range={valueConfig.range}
-                onChange={(value) => {
-                    onChange({
-                        type: "value",
-                        value
-                    });
-                }}
-            />
+    );
+}
+export function MaterialSelection(props: {
+    label: string,
+    uuidRef?: string,
+    onChange: (uuidRef?: string) => void,
+}){
+    const { label, uuidRef, onChange } = props;
+    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            const assetInfos = await window.api.assetManager.getAssetInfosFromType("material");
+            if(cancelled) return;
+            setAssetInfos(assetInfos);
         }
-        {
-            imageOrValue.type === "image" &&
-            <Selection
-                label={`${label} image`}
-                options={
-                    imageAssetInfos.map(e => {
-                        return {
-                            label: e.name,
-                            value: e.uuid
-                        }
-                    })
-                }
-                value={imageOrValue.imageRef}
-                onChange={(value) => {
-                    onChange({
-                        type: "image",
-                        imageRef: value
-                    });
-                }}
-            />
+        load();
+        return () => {
+            cancelled = true;
         }
-    </>
+    }, []);
+
+    return (
+        <Selection
+            label={label}
+            options={[
+                { label: "None", value: "" },
+                ...assetInfos.map(e => {
+                    return {
+                        label: e.name,
+                        value: e.uuid
+                    }
+                })
+            ]}
+            value={uuidRef || ""}
+            onChange={(value) => {
+                onChange(value || undefined);
+            }}
+        />
+    );
 }
 export function TextOrStringSelection(props: {
     label: string,
@@ -558,75 +510,6 @@ export function TextOrStringSelection(props: {
         }
     </>
 }
-export function OptionalImageSelection(props: {
-    label: string,
-    optionalImage: OptionalImage,
-    onChange: (optionalImage: OptionalImage) => void,
-}){
-    const { label, optionalImage, onChange } = props;
-    const [imageAssetInfos, setImageAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
-
-    useEffect(() => {
-        let cancelled = false;
-        const load = async () => {
-            if(optionalImage.type === "none") setImageAssetInfos([]);
-            else{
-                const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
-                if(cancelled) return;
-                setImageAssetInfos(assetInfos);
-            }
-        }
-        load();
-        return () => {
-            cancelled = true;
-        }
-    }, [optionalImage.type]);
-
-    return <>
-        <Selection
-            label={label}
-            options={[
-                { label: "image", value: "image" },
-                { label: "none", value: "none" },
-            ]}
-            value={optionalImage.type}
-            onChange={(value) => {
-                if(value === "none"){
-                    onChange({
-                        type: "none"
-                    });
-                }
-                else{
-                    onChange({
-                        type: "image",
-                        imageRef: ""
-                    });
-                }
-            }}
-        />
-        {
-            optionalImage.type === "image" &&
-            <Selection
-                label={`${label} image`}
-                options={
-                    imageAssetInfos.map(e => {
-                        return {
-                            label: e.name,
-                            value: e.uuid
-                        }
-                    })
-                }
-                value={optionalImage.imageRef}
-                onChange={(value) => {
-                    onChange({
-                        type: "image",
-                        imageRef: value
-                    });
-                }}
-            />
-        }
-    </>
-}
 export function CheckBox(
     props: {
         label: string,
@@ -680,6 +563,36 @@ export function OneValueRow(
                     onBlur={onBlurValue}
                     onKeyDown={(e) => e.key === "Enter" && onBlurValue()}
                     onChange={(e) => { setValue(e.target.value) }}
+                />
+            </div>
+        </div>
+    );
+}
+export function ValueSliderRow(
+    props: {
+        label: string,
+        value: number,
+        range: [number, number]
+        onChange: (value: number) => void
+    }
+){
+    const { label, value, range, onChange } = props;
+
+    return (
+        <div className="flex items-center my-0.5">
+            <div className="mr-1 w-24">
+                <span className="select-none text-sm text-white">{label}:</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <input className="w-full h-1 bg-neutral-400 rounded-full appearance-none cursor-pointer" type="range"
+                    min={range[0]} max={range[1]} step={0.01}
+                    value={value}
+                    onChange={(e) => { onChange(Number(e.target.value)) }}
+                />
+                <input className="outline-none border text-sm px-0.5 w-1/3" type="number"
+                    min={range[0]} max={range[1]} step={0.01}
+                    value={value}
+                    onChange={(e) => { onChange(clamp(Number(e.target.value), range[0], range[1])) }}
                 />
             </div>
         </div>
@@ -859,7 +772,7 @@ export function RawImage(props: { imageAsset: ImageAsset }){
             const ktxTranscoder = KTXTranscoder.getInstance();
             await ktxTranscoder.init();
             if(cancelled) return;
-            const rawRGBAs = await ktxTranscoder.transcode(imageAsset.ktx2NoFlip, "rgba");
+            const rawRGBAs = await ktxTranscoder.transcode(imageAsset.ktx2, "rgba");
             if(cancelled) return;
             setRawImages(rawRGBAs);
             setSlideIndex(0);
@@ -1031,4 +944,159 @@ export function AssetList(props: {
         </ul>
         <div className="w-full h-0.5 bg-slate-400"></div>
     </div>
+}
+export function AssetSelectionList(props: {
+    label: string,
+    uuidRefs: (string | undefined)[],
+    type: AssetManager.AssetInfo["type"],
+    onItemChange?: (index: number, uuidRef?: string) => void,
+    onItemAdd?: () => void,
+    onItemDelete?: (index: number) => void,
+}){
+    const { label, uuidRefs, type, onItemChange, onItemAdd, onItemDelete } = props;
+    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
+    const [selectIndex, setSelectIndex] = useState(-1);
+    
+    useEffect(() => {
+        let cancelled = false;
+        const load = async () => {
+            const assetInfos = await window.api.assetManager.getAssetInfosFromType(type);
+            if(cancelled) return;
+            setAssetInfos(assetInfos);
+        }
+        load();
+        return () => {
+            cancelled = true;
+        }
+    }, [type]);
+    const itemCreator = (uuidRef: string | undefined, index: number) => {
+        return (
+            <div className={`${index === selectIndex ? "bg-slate-400" : ""}`} key={index}
+                onClick={() => {
+                    setSelectIndex(index);
+                }}>
+                <Selection label={`Element ${index}`}
+                    options={[
+                        { label: "None", value: "" },
+                        ...assetInfos.map(e => {
+                            return {
+                                label: e.name,
+                                value: e.uuid
+                            }
+                        })
+                    ]}
+                    value={uuidRef || ""}
+                    onChange={(value) => {
+                        onItemChange?.(index, value || undefined);
+                    }}
+                />
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col">
+            <TextRow label={label} content=""/>
+            <div className="flex flex-col bg-slate-600 rounded p-1">
+                {
+                    uuidRefs.map((uuidRef, index) => itemCreator(uuidRef, index))
+                }
+            </div>
+            <div className="flex flex-row justify-end mr-2">
+                <button className="size-5 bg-slate-600 cursor-pointer select-none
+                    hover:bg-slate-400 transition-all
+                    flex justify-center items-center"
+                    onClick={() => {
+                        onItemAdd?.();
+                    }}>
+                    <PlusIcon className="size-3 text-white"/>
+                </button>
+                {
+                    selectIndex !== -1 &&
+                    <button className="size-5 bg-slate-600 cursor-pointer select-none
+                        hover:bg-slate-400 transition-all
+                        flex justify-center items-center"
+                        onClick={() => {
+                            onItemDelete?.(selectIndex);
+                            setSelectIndex(-1);
+                        }}>
+                        <MinusIcon className="size-3 text-white"/>
+                    </button>
+                }
+            </div>
+        </div>
+    );
+}
+export function GameObjectSelectionList(props: {
+    label: string,
+    uuidRefs: (string | undefined)[],
+    fiexed?: boolean,
+    onItemChange?: (index: number, uuidRef?: string) => void,
+    onItemAdd?: () => void,
+    onItemDelete?: (index: number) => void,
+}){
+    const { label, uuidRefs, fiexed, onItemChange, onItemAdd, onItemDelete } = props;
+    const nodes = useAppSelector(state => selectNodes(state));
+    const [selectIndex, setSelectIndex] = useState(-1);
+
+    const itemCreator = (uuidRef: string | undefined, index: number) => {
+        return (
+            <div className={`${index === selectIndex ? "bg-slate-400" : ""}`} key={index}
+                onClick={() => {
+                    setSelectIndex(index);
+                }}>
+                <Selection label={`Element ${index}`}
+                    options={[
+                        { label: "None", value: "" },
+                        ...nodes.map(e => {
+                            return {
+                                label: e.name,
+                                value: e.id
+                            }
+                        })
+                    ]}
+                    value={uuidRef || ""}
+                    onChange={(value) => {
+                        onItemChange?.(index, value || undefined);
+                    }}
+                />
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col">
+            <TextRow label={label} content=""/>
+            <div className="flex flex-col bg-slate-600 rounded p-1">
+                {
+                    uuidRefs.map((uuidRef, index) => itemCreator(uuidRef, index))
+                }
+            </div>
+            {
+                !fiexed &&
+                <div className="flex flex-row justify-end mr-2">
+                    <button className="size-5 bg-slate-600 cursor-pointer select-none
+                        hover:bg-slate-400 transition-all
+                        flex justify-center items-center"
+                        onClick={() => {
+                            onItemAdd?.();
+                        }}>
+                        <PlusIcon className="size-3 text-white"/>
+                    </button>
+                    {
+                        selectIndex !== -1 &&
+                        <button className="size-5 bg-slate-600 cursor-pointer select-none
+                            hover:bg-slate-400 transition-all
+                            flex justify-center items-center"
+                            onClick={() => {
+                                onItemDelete?.(selectIndex);
+                                setSelectIndex(-1);
+                            }}>
+                            <MinusIcon className="size-3 text-white"/>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    );
 }

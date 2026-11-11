@@ -1,4 +1,4 @@
-import type { AssetManager, AssetType, Asset, PrefabAsset, SceneAsset, HdrAsset, FontAsset, FontAssetBakeSetting, ProjectSettingAsset } from "@shot-engine/types";
+import type { AssetManager, AssetType, Asset, PrefabAsset, SceneAsset, HdrAsset, FontAsset, FontAssetBakeSetting, ProjectSettingAsset, MaterialAsset } from "@shot-engine/types";
 
 export type ApiType = {
     close: () => void,
@@ -32,8 +32,8 @@ export type ApiType = {
         config: (config: AssetManager.Config) => Promise<void>,
         rescan: () => Promise<void>,
         close: () => Promise<void>,
-        getAssetInfos: (filePath: string) => Promise<AssetManager.AssetInfo[]>,
-        getAssetInfosFromRelativePath: (relativePath: string) => Promise<AssetManager.AssetInfo[]>,
+        getAssetInfoFromPath: (filePath: string) => Promise<AssetManager.AssetInfo | undefined>,
+        getAssetInfoFromRelativePath: (relativePath: string) => Promise<AssetManager.AssetInfo | undefined>,
         getAssetFromUuid: (uuid: string, type: AssetType) => Promise<Asset | undefined>,
         updateAssetPropertyByUuid: (uuid: string, property: string) => Promise<void>,
         getAssetInfoFromUuid: (uuid: string) => Promise<AssetManager.AssetInfo | undefined>,
@@ -41,9 +41,11 @@ export type ApiType = {
         savePrefabAssetBinary: (prefabAsset: PrefabAsset, filePath: string) => Promise<void>,
         saveSceneAssetBinary: (sceneAsset: SceneAsset, filePath: string) => Promise<void>,
         saveProjectSettingAssetBinary: (projectSettingAsset: ProjectSettingAsset, filePath: string) => Promise<void>,
+        saveMaterialAssetBinary: (materialAsset: MaterialAsset, filePath: string) => Promise<void>,
         getFilePathFromAssetId: (uuid: string) => Promise<string | undefined>,
         addBakedHdrAsset: (uuid: string, hdrAsset: HdrAsset) => Promise<void>,
         bakeFontAsset: (uuid: string, fontAssetBakeSetting: FontAssetBakeSetting) => Promise<void>,
+        importFile: (importPath: string, destFolder: string) => Promise<void>,
         pack: (projectSettingAssetUuid: string) => Promise<void>,
     },
     hdr: {

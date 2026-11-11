@@ -37,9 +37,10 @@ contextBridge.exposeInMainWorld("api", {
     config: (config: any) => ipcRenderer.invoke("assetManager:config", config),
     rescan: () => ipcRenderer.invoke("assetManager:rescan"),
     close: () => ipcRenderer.invoke("assetManager:close"),
-    getAssetInfos: (filePath: string) => ipcRenderer.invoke("assetManager:getAssetInfos", filePath),
-    getAssetInfosFromRelativePath: (relativePath: string) =>
-      ipcRenderer.invoke("assetManager:getAssetInfosFromRelativePath", relativePath),
+    getAssetInfoFromPath: (filePath: string) => 
+      ipcRenderer.invoke("assetManager:getAssetInfoFromPath", filePath),
+    getAssetInfoFromRelativePath: (relativePath: string) =>
+      ipcRenderer.invoke("assetManager:getAssetInfoFromRelativePath", relativePath),
     getAssetFromUuid: (uuid: string, type: any) => ipcRenderer.invoke("assetManager:getAssetFromUuid", uuid, type),
     updateAssetPropertyByUuid: (uuid: string, property: string) =>
       ipcRenderer.invoke("assetManager:updateAssetPropertyByUuid", uuid, property),
@@ -51,12 +52,17 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("assetManager:saveSceneAssetBinary", sceneAsset, filePath),
     saveProjectSettingAssetBinary: (projectSettingAsset: any, filePath: string) =>
       ipcRenderer.invoke("assetManager:saveProjectSettingAssetBinary", projectSettingAsset, filePath),
+    saveMaterialAssetBinary: (materialAsset: any, filePath: string) => {
+      ipcRenderer.invoke("assetManager:saveMaterialAssetBinary", materialAsset, filePath);
+    },
     getFilePathFromAssetId: (uuid: string) =>
       ipcRenderer.invoke("assetManager:getFilePathFromAssetId", uuid),
     addBakedHdrAsset: (uuid: string, hdrAsset: any) =>
       ipcRenderer.invoke("assetManager:addBakedHdrAsset", uuid, hdrAsset),
     bakeFontAsset: (uuid: string, fontAssetBakeSetting: any) =>
       ipcRenderer.invoke("assetManager:bakeFontAsset", uuid, fontAssetBakeSetting),
+    importFile: (importPath: string, destFolder: string) =>
+      ipcRenderer.invoke("assetManager:importFile", importPath, destFolder),
     pack: (projectSettingAssetUuid: string) =>
       ipcRenderer.invoke("assetManager:pack", projectSettingAssetUuid),
   },

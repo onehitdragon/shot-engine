@@ -2,8 +2,19 @@ include "../engine.fbs";
 
 namespace FBSAsset;
 
+table GLTypeAndNormalized{
+  type: int;
+  normalized: bool;
+}
+
 table PrimitiveAttribute{
-  interleaveArray: [uint8];
+  interleave_array: [uint8];
+  position: GLTypeAndNormalized;
+  normal: GLTypeAndNormalized;
+  uv: GLTypeAndNormalized;
+  tangent: GLTypeAndNormalized;
+  joint: GLTypeAndNormalized;
+  weight: GLTypeAndNormalized;
 }
 
 table AABB{
@@ -11,23 +22,17 @@ table AABB{
   max: FBSEngine.Vec3;
 }
 
-enum PrimitiveType : uint {
-  NONE = 0,
-  STATIC = 1,
-  SKIN = 2
-}
-
 table Primitive{
-  type: PrimitiveType;
   attribute: PrimitiveAttribute;
   indices: [ubyte];
-  drawMode: int;
+  index_type: int;
+  draw_mode: int;
   aabb: AABB;
-  invBindPoseMatrices: [float];
 }
 
 table MeshAsset{
   primitives: [Primitive];
+  inv_bind_pose_matrices: [float];
 }
 
 root_type MeshAsset;

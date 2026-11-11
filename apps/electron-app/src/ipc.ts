@@ -8,7 +8,7 @@ import crypto from "crypto";
 import * as fsWalk from '@nodelib/fs.walk';
 import { Entry } from "@nodelib/fs.walk";
 import * as asssetManager from "@shot-engine/asset-manager";
-import { AssetManager, AssetType, FontAssetBakeSetting, HdrAsset, PrefabAsset, ProjectSettingAsset, SceneAsset } from "@shot-engine/types";
+import { AssetManager, AssetType, FontAssetBakeSetting, HdrAsset, MaterialAsset, PrefabAsset, ProjectSettingAsset, SceneAsset } from "@shot-engine/types";
 import { readHdr } from "hdrify";
 
 export function setupIPC(){
@@ -208,15 +208,15 @@ export function setupIPC(){
     }
   );
   ipcMain.handle(
-    "assetManager:getAssetInfos",
+    "assetManager:getAssetInfoFromPath",
     (e, filePath: string) => {
-      return asssetManager.query().getAssetInfosFromPath(filePath);
+      return asssetManager.query().getAssetInfoFromPath(filePath);
     }
   );
   ipcMain.handle(
-    "assetManager:getAssetInfosFromRelativePath",
+    "assetManager:getAssetInfoFromRelativePath",
     (e, relativePath: string) => {
-      return asssetManager.query().getAssetInfosFromRelativePath(relativePath);
+      return asssetManager.query().getAssetInfoFromRelativePath(relativePath);
     }
   );
   ipcMain.handle(
@@ -262,6 +262,12 @@ export function setupIPC(){
     }
   );
   ipcMain.handle(
+    "assetManager:saveMaterialAssetBinary",
+    (e, materialAsset: MaterialAsset, filePath: string) => {
+      asssetManager.saveMaterialAssetBinary(materialAsset, filePath);
+    }
+  );
+  ipcMain.handle(
     "assetManager:getFilePathFromAssetId",
     (e, uuid: string) => {
       return asssetManager.query().getFilePathFromAssetId(uuid);
@@ -277,6 +283,12 @@ export function setupIPC(){
     "assetManager:bakeFontAsset",
     (e, uuid: string, fontAssetBakeSetting: FontAssetBakeSetting) => {
       return asssetManager.query().bakeFontAsset(uuid, fontAssetBakeSetting);
+    }
+  );
+  ipcMain.handle(
+    "assetManager:importFile",
+    (e, importPath: string, destFolder: string) => {
+      return asssetManager.tool().importFile(importPath, destFolder);
     }
   );
   ipcMain.handle(

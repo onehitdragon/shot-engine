@@ -9,9 +9,9 @@ export function SceneTab(){
 
     return (
         projectPaths && <>
-            <SceneRenderer />
+            {/* <SceneRenderer />
             <CameraMovement />
-            <Gizmo />
+            <Gizmo /> */}
         </>
     );
 }

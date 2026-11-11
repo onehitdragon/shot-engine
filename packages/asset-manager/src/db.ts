@@ -10,7 +10,6 @@ export type FileRow = {
     dirty?: boolean
 }
 export type AssetRow = {
-    uuid: string,
     fileId: string,
     hash: string,
     type: AssetType,
@@ -32,8 +31,7 @@ export function createDBIfNotExist(dbFilePath: string){
             path TEXT
         );
         CREATE TABLE IF NOT EXISTS assets(
-            uuid TEXT PRIMARY KEY,
-            fileId TEXT,
+            fileId TEXT PRIMARY KEY,
             hash TEXT,
             type TEXT,
             name TEXT,
@@ -75,43 +73,41 @@ export function createDBIfNotExist(dbFilePath: string){
     }
 
     const assetsQuery: {
-        gets: Statement,
+        gets: Statement<[], AssetRow>,
         getByFileId: Statement<[string], AssetRow>,
-        getById: Statement<[string], AssetRow>,
         getByType: Statement<[string], AssetRow>,
-        delete: Statement,
-        deletesTransaction: Transaction,
-        insert: Statement<[string, string, string, string, string, number, string], RunResult>,
-        updateHash: Statement,
-        updateName: Statement,
+        insert: Statement<[string, string, string, string, number, string], RunResult>,
+        updateType: Statement<[string, string], RunResult>,
+        updateHash: Statement<[string, string], RunResult>,
+        updateName: Statement<[string, string], RunResult>,
         updateProperty: Statement<[string, string], RunResult>
     } = {
         gets: db.prepare("SELECT * FROM assets"),
         getByFileId: db.prepare("SELECT * FROM assets WHERE fileId = ?"),
-        getById: db.prepare("SELECT * FROM assets WHERE uuid = ?"),
         getByType: db.prepare("SELECT * FROM assets WHERE type = ?"),
-        delete: db.prepare("DELETE FROM assets WHERE uuid = ?"),
-        deletesTransaction: db.transaction((ids: string[]) => {
-            for(const id of ids) assetsQuery.delete.run(id);
-        }),
         insert: db.prepare(`
-            INSERT INTO assets (uuid, fileId, hash, type, name, modifiable, property)
-            VALUES (?, ?, ?, ?, ?, ?, ?);    
+            INSERT INTO assets (fileId, hash, type, name, modifiable, property)
+            VALUES (?, ?, ?, ?, ?, ?);    
+        `),
+        updateType: db.prepare(`
+            UPDATE assets
+            SET type = ?
+            WHERE fileId = ?
         `),
         updateHash: db.prepare(`
             UPDATE assets
             SET hash = ?
-            WHERE uuid = ?
+            WHERE fileId = ?
         `),
         updateName: db.prepare(`
             UPDATE assets
             SET name = ?
-            WHERE uuid = ?
+            WHERE fileId = ?
         `),
         updateProperty: db.prepare(`
             UPDATE assets
             SET property = ?
-            WHERE uuid = ?
+            WHERE fileId = ?
         `)
     }
 

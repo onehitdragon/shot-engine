@@ -2,20 +2,11 @@ import type * as ShotEngineType from "@shot-engine/types";
 import * as math from "@shot-engine/math";
 import {
     Vec3, Vec4,
-    SceneNode, GameObject, GameObjectPrefab, Component, Transform, Mesh,
-    SimpleShading, PhongShading, PointLight, DirectionalLight,
+    SceneNode, GameObject, GameObjectPrefab, Component, Transform, MeshRenderer, SkinnedMeshRenderer,
+    PointLight, DirectionalLight,
     TransformEditor,
-    PbrShading,
     SkyBox,
     SpotLight,
-    ImageOrColor,
-    Image,
-    Color,
-    Value,
-    ImageOrValue,
-    OptionalImage,
-    None,
-    Emissive,
     LightShadow,
     Skeleton,
     UILayout,
@@ -73,173 +64,44 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             componentOffset = Transform.endTransform(builder);
             componentTypeOffsets.push(Component.Transform);
         }
-        else if(component.type === "Mesh"){
+        else if(component.type === "MeshRenderer"){
             const idOffset = builder.createString(component.id);
             const meshRefOffset = builder.createString(component.meshRef);
-            Mesh.startMesh(builder);
-            Mesh.addId(builder, idOffset);
-            Mesh.addMeshRef(builder, meshRefOffset);
-            componentOffset = Mesh.endMesh(builder);
-            componentTypeOffsets.push(Component.Mesh);
+            const materialRefOffsets: Offset[] = [];
+            for(const materialRef of component.materialRefs){
+                const materialRefOffset = builder.createString(materialRef);
+                materialRefOffsets.push(materialRefOffset);
+            }
+            const materialRefsOffset = MeshRenderer.createMaterialRefsVector(builder, materialRefOffsets);
+            MeshRenderer.startMeshRenderer(builder);
+            MeshRenderer.addId(builder, idOffset);
+            MeshRenderer.addMeshRef(builder, meshRefOffset);
+            MeshRenderer.addMaterialRefs(builder, materialRefsOffset);
+            componentOffset = MeshRenderer.endMeshRenderer(builder);
+            componentTypeOffsets.push(Component.MeshRenderer);
         }
-        else if(component.type === "Shading" && component.shaderType === "simple"){
+        else if(component.type === "SkinnedMeshRenderer"){
             const idOffset = builder.createString(component.id);
-            const colorOffset = buildVec4(builder, component.color);
-            SimpleShading.startSimpleShading(builder);
-            SimpleShading.addId(builder, idOffset);
-            SimpleShading.addCulling(builder, cullingToNum(component.culling));
-            SimpleShading.addTransparent(builder, component.transparent);
-            SimpleShading.addColor(builder, colorOffset);
-            componentOffset = SimpleShading.endSimpleShading(builder);
-            componentTypeOffsets.push(Component.SimpleShading);
-        }
-        else if(component.type === "Shading" && component.shaderType === "phong"){
-            const idOffset = builder.createString(component.id);
-            let imageOrColorOffset: number;
-            let imageOrColor: ImageOrColor;
-            if(component.diffuse.type === "image"){
-                const imageRefOffset = builder.createString(component.diffuse.imageRef);
-                Image.startImage(builder);
-                Image.addImageRef(builder, imageRefOffset);
-                imageOrColorOffset = Image.endImage(builder);
-                imageOrColor = ImageOrColor.Image;
+            const meshRefOffset = builder.createString(component.meshRef);
+            const materialRefOffsets: Offset[] = [];
+            for(const materialRef of component.materialRefs){
+                const materialRefOffset = builder.createString(materialRef);
+                materialRefOffsets.push(materialRefOffset);
             }
-            else{
-                const colorOffset = buildVec3(builder, component.diffuse.color);
-                Color.startColor(builder);
-                Color.addColor(builder, colorOffset);
-                imageOrColorOffset = Color.endColor(builder);
-                imageOrColor = ImageOrColor.Color;
+            const materialRefsOffset = SkinnedMeshRenderer.createMaterialRefsVector(builder, materialRefOffsets);
+            const jointRefOffsets: Offset[] = [];
+            for(const jointRef of component.jointRefs){
+                const jointRefOffset = builder.createString(jointRef);
+                jointRefOffsets.push(jointRefOffset);
             }
-            const specularOffset = buildVec3(builder, component.specular);
-            PhongShading.startPhongShading(builder);
-            PhongShading.addId(builder, idOffset);
-            PhongShading.addCulling(builder, cullingToNum(component.culling));
-            PhongShading.addTransparent(builder, component.transparent);
-            PhongShading.addDiffuse(builder, imageOrColorOffset);
-            PhongShading.addDiffuseType(builder, imageOrColor);
-            PhongShading.addSpecular(builder, specularOffset);
-            PhongShading.addShininess(builder, component.shininess);
-            componentOffset = PhongShading.endPhongShading(builder);
-            componentTypeOffsets.push(Component.PhongShading);
-        }
-        else if(component.type === "Shading" && component.shaderType === "pbr"){
-            const idOffset = builder.createString(component.id);
-            let imageOrColorOffset: number;
-            let imageOrColor: ImageOrColor;
-            if(component.diffuse.type === "image"){
-                const imageRefOffset = builder.createString(component.diffuse.imageRef);
-                Image.startImage(builder);
-                Image.addImageRef(builder, imageRefOffset);
-                imageOrColorOffset = Image.endImage(builder);
-                imageOrColor = ImageOrColor.Image;
-            }
-            else{
-                const colorOffset = buildVec3(builder, component.diffuse.color);
-                Color.startColor(builder);
-                Color.addColor(builder, colorOffset);
-                imageOrColorOffset = Color.endColor(builder);
-                imageOrColor = ImageOrColor.Color;
-            }
-            let imageOrValueOffset_metal: number;
-            let imageOrValue_metal: ImageOrValue;
-            if(component.metallic.type === "image"){
-                const imageRefOffset = builder.createString(component.metallic.imageRef);
-                Image.startImage(builder);
-                Image.addImageRef(builder, imageRefOffset);
-                imageOrValueOffset_metal = Image.endImage(builder);
-                imageOrValue_metal = ImageOrValue.Image;
-            }
-            else{
-                Value.startValue(builder);
-                Value.addValue(builder, component.metallic.value);
-                imageOrValueOffset_metal = Value.endValue(builder);
-                imageOrValue_metal = ImageOrValue.Value;
-            }
-            let imageOrValueOffset_roughness: number;
-            let imageOrValue_roughness: ImageOrValue;
-            if(component.roughness.type === "image"){
-                const imageRefOffset = builder.createString(component.roughness.imageRef);
-                Image.startImage(builder);
-                Image.addImageRef(builder, imageRefOffset);
-                imageOrValueOffset_roughness = Image.endImage(builder);
-                imageOrValue_roughness = ImageOrValue.Image;
-            }
-            else{
-                Value.startValue(builder);
-                Value.addValue(builder, component.roughness.value);
-                imageOrValueOffset_roughness = Value.endValue(builder);
-                imageOrValue_roughness = ImageOrValue.Value;
-            }
-
-            let imageOrColorOffset_emissive: number;
-            let imageOrColor_emissive: ImageOrColor;
-            if(component.emissive.color.type === "image"){
-                const imageRefOffset = builder.createString(component.emissive.color.imageRef);
-                Image.startImage(builder);
-                Image.addImageRef(builder, imageRefOffset);
-                imageOrColorOffset_emissive = Image.endImage(builder);
-                imageOrColor_emissive = ImageOrColor.Image;
-            }
-            else{
-                const colorOffset = buildVec3(builder, component.emissive.color.color);
-                Color.startColor(builder);
-                Color.addColor(builder, colorOffset);
-                imageOrColorOffset_emissive = Color.endColor(builder);
-                imageOrColor_emissive = ImageOrColor.Color;
-            }
-            Emissive.startEmissive(builder);
-            Emissive.addColor(builder, imageOrColorOffset_emissive);
-            Emissive.addColorType(builder, imageOrColor_emissive);
-            Emissive.addIntensity(builder, component.emissive.intensity);
-            const emissiveOffset = Emissive.endEmissive(builder);
-
-            let optionalImageOffset_normal: number;
-            let optionalImage_normal: OptionalImage;
-            if(component.normal.type === "image"){
-                const imageRefOffset = builder.createString(component.normal.imageRef);
-                Image.startImage(builder);
-                Image.addImageRef(builder, imageRefOffset);
-                optionalImageOffset_normal = Image.endImage(builder);
-                optionalImage_normal = OptionalImage.Image;
-            }
-            else{
-                None.startNone(builder);
-                optionalImageOffset_normal = None.endNone(builder);
-                optionalImage_normal = OptionalImage.None;
-            }
-            let optionalImageOffset_ao: number;
-            let optionalImage_ao: OptionalImage;
-            if(component.ao.type === "image"){
-                const imageRefOffset = builder.createString(component.ao.imageRef);
-                Image.startImage(builder);
-                Image.addImageRef(builder, imageRefOffset);
-                optionalImageOffset_ao = Image.endImage(builder);
-                optionalImage_ao = OptionalImage.Image;
-            }
-            else{
-                None.startNone(builder);
-                optionalImageOffset_ao = None.endNone(builder);
-                optionalImage_ao = OptionalImage.None;
-            }
-            PbrShading.startPbrShading(builder);
-            PbrShading.addId(builder, idOffset);
-            PbrShading.addCulling(builder, cullingToNum(component.culling));
-            PbrShading.addTransparent(builder, component.transparent);
-            PbrShading.addDiffuse(builder, imageOrColorOffset);
-            PbrShading.addDiffuseType(builder, imageOrColor);
-            PbrShading.addMetallic(builder, imageOrValueOffset_metal);
-            PbrShading.addMetallicType(builder, imageOrValue_metal);
-            PbrShading.addRoughness(builder, imageOrValueOffset_roughness);
-            PbrShading.addRoughnessType(builder, imageOrValue_roughness);
-            PbrShading.addReflectance(builder, component.reflectance);
-            PbrShading.addEmissive(builder, emissiveOffset);
-            PbrShading.addNormal(builder, optionalImageOffset_normal);
-            PbrShading.addNormalType(builder, optionalImage_normal);
-            PbrShading.addAo(builder, optionalImageOffset_ao);
-            PbrShading.addAoType(builder, optionalImage_ao);
-            componentOffset = PbrShading.endPbrShading(builder);
-            componentTypeOffsets.push(Component.PbrShading);
+            const jointRefsOffset = SkinnedMeshRenderer.createJointRefsVector(builder, jointRefOffsets);
+            SkinnedMeshRenderer.startSkinnedMeshRenderer(builder);
+            SkinnedMeshRenderer.addId(builder, idOffset);
+            SkinnedMeshRenderer.addMeshRef(builder, meshRefOffset);
+            SkinnedMeshRenderer.addMaterialRefs(builder, materialRefsOffset);
+            SkinnedMeshRenderer.addJointRefs(builder, jointRefsOffset);
+            componentOffset = SkinnedMeshRenderer.endSkinnedMeshRenderer(builder);
+            componentTypeOffsets.push(Component.SkinnedMeshRenderer);
         }
         else if(component.type === "Light" && component.lightType === "DirectionalLight"){
             const idOffset = builder.createString(component.id);
@@ -394,19 +256,6 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
     return goOffset;
 }
 
-function cullingToNum(culling: ShotEngineType.ShadingBase["culling"]){
-    if(culling === "none") return 0;
-    if(culling === "back") return 1;
-    if(culling === "front") return 2;
-    return 0;
-}
-function numToCulling(num: number): ShotEngineType.ShadingBase["culling"]{
-    if(num === 0) return "none";
-    if(num === 1) return "back";
-    if(num === 2) return "front";
-    return "none";
-}
-
 function buildLightShadow(builder: Builder, shadow: ShotEngineType.LightShadow){
     const softShadowOffset = builder.createString(shadow.softShadow);
     LightShadow.startLightShadow(builder);
@@ -441,175 +290,35 @@ export function readGameObject(gameObject: GameObject){
                 }
             });
         }
-        if(componentType === Component.Mesh){
-            const mesh = gameObject.components(i, new Mesh()) as Mesh;
+        if(componentType === Component.MeshRenderer){
+            const meshRenderer = gameObject.components(i, new MeshRenderer()) as MeshRenderer;
+            const materialRefs: (string | undefined)[] = [];
+            for(let i = 0; i < meshRenderer.materialRefsLength(); i++){
+                materialRefs.push(meshRenderer.materialRefs(i) || undefined);
+            }
             gameObjectResult.components.push({
-                type: "Mesh",
-                id: mesh.id() ?? "",
-                meshRef: mesh.meshRef() ?? ""
+                type: "MeshRenderer",
+                id: meshRenderer.id() ?? "",
+                meshRef: meshRenderer.meshRef() || undefined,
+                materialRefs,
             });
         }
-        if(componentType === Component.SimpleShading){
-            const simpleShading = gameObject.components(i, new SimpleShading()) as SimpleShading;
-            gameObjectResult.components.push({
-                type: "Shading",
-                shaderType: "simple",
-                id: simpleShading.id() ?? "",
-                culling: numToCulling(simpleShading.culling()),
-                transparent: simpleShading.transparent(),
-                color: getVec4(simpleShading.color())
-            });
-        }
-        if(componentType === Component.PhongShading){
-            const phongShading = gameObject.components(i, new PhongShading()) as PhongShading;
-            const diffuseType = phongShading.diffuseType();
-            let diffuse: Image | Color;
-            let diffuseOut: ShotEngineType.PhongShading["diffuse"];
-            if(diffuseType === ImageOrColor.Image){
-                diffuse = phongShading.diffuse(new Image()) as Image;
-                diffuseOut = {
-                    type: "image",
-                    imageRef: diffuse.imageRef() ?? ""
-                }
+        if(componentType === Component.SkinnedMeshRenderer){
+            const skinnedMeshRenderer = gameObject.components(i, new SkinnedMeshRenderer()) as SkinnedMeshRenderer;
+            const materialRefs: (string | undefined)[] = [];
+            for(let i = 0; i < skinnedMeshRenderer.materialRefsLength(); i++){
+                materialRefs.push(skinnedMeshRenderer.materialRefs(i) || undefined);
             }
-            else{
-                diffuse = phongShading.diffuse(new Color()) as Color;
-                diffuseOut = {
-                    type: "color",
-                    color: getVec3(diffuse.color())
-                }
+            const jointRefs: (string | undefined)[] = [];
+            for(let i = 0; i < skinnedMeshRenderer.jointRefsLength(); i++){
+                jointRefs.push(skinnedMeshRenderer.jointRefs(i) || undefined);
             }
             gameObjectResult.components.push({
-                type: "Shading",
-                shaderType: "phong",
-                id: phongShading.id() ?? "",
-                culling: numToCulling(phongShading.culling()),
-                transparent: phongShading.transparent(),
-                diffuse: diffuseOut,
-                specular: getVec3(phongShading.specular()),
-                shininess: phongShading.shininess(),
-            });
-        }
-        if(componentType === Component.PbrShading){
-            const pbrShading = gameObject.components(i, new PbrShading()) as PbrShading;
-            const diffuseType = pbrShading.diffuseType();
-            let diffuse: Image | Color;
-            let diffuseOut: ShotEngineType.PbrShading["diffuse"];
-            if(diffuseType === ImageOrColor.Image){
-                diffuse = pbrShading.diffuse(new Image()) as Image;
-                diffuseOut = {
-                    type: "image",
-                    imageRef: diffuse.imageRef() ?? ""
-                }
-            }
-            else{
-                diffuse = pbrShading.diffuse(new Color()) as Color;
-                diffuseOut = {
-                    type: "color",
-                    color: getVec3(diffuse.color())
-                }
-            }
-            const metalType = pbrShading.metallicType();
-            let metal: Image | Value;
-            let metalOut: ShotEngineType.PbrShading["metallic"];
-            if(metalType === ImageOrValue.Image){
-                metal = pbrShading.metallic(new Image()) as Image;
-                metalOut = {
-                    type: "image",
-                    imageRef: metal.imageRef() ?? ""
-                }
-            }
-            else{
-                metal = pbrShading.metallic(new Value()) as Value;
-                metalOut = {
-                    type: "value",
-                    value: metal.value()
-                }
-            }
-            const roughnessType = pbrShading.metallicType();
-            let roughness: Image | Value;
-            let roughnessOut: ShotEngineType.PbrShading["roughness"];
-            if(roughnessType === ImageOrValue.Image){
-                roughness = pbrShading.roughness(new Image()) as Image;
-                roughnessOut = {
-                    type: "image",
-                    imageRef: roughness.imageRef() ?? ""
-                }
-            }
-            else{
-                roughness = pbrShading.roughness(new Value()) as Value;
-                roughnessOut = {
-                    type: "value",
-                    value: roughness.value()
-                }
-            }
-
-            const emissive = pbrShading.emissive() as Emissive;
-            const emissiveColorType = emissive.colorType();
-            let emissiveColor: Image | Color;
-            let emissiveColorOut: ShotEngineType.PbrShading["emissive"]["color"];
-            if(emissiveColorType === ImageOrColor.Image){
-                emissiveColor = emissive.color(new Image()) as Image;
-                emissiveColorOut = {
-                    type: "image",
-                    imageRef: emissiveColor.imageRef() ?? ""
-                }
-            }
-            else{
-                emissiveColor = emissive.color(new Color()) as Color;
-                emissiveColorOut = {
-                    type: "color",
-                    color: getVec3(emissiveColor.color())
-                }
-            }
-            const emissiveOut: ShotEngineType.PbrShading["emissive"] = {
-                color: emissiveColorOut,
-                intensity: emissive.intensity(),
-            }
-
-            const normalType = pbrShading.normalType();
-            let normal: Image;
-            let normalOut: ShotEngineType.PbrShading["normal"];
-            if(normalType === OptionalImage.Image){
-                normal = pbrShading.normal(new Image()) as Image;
-                normalOut = {
-                    type: "image",
-                    imageRef: normal.imageRef() ?? ""
-                }
-            }
-            else{
-                normalOut = {
-                    type: "none"
-                }
-            }
-            const aoType = pbrShading.aoType();
-            let ao: Image;
-            let aoOut: ShotEngineType.PbrShading["ao"];
-            if(aoType === OptionalImage.Image){
-                ao = pbrShading.ao(new Image()) as Image;
-                aoOut = {
-                    type: "image",
-                    imageRef: ao.imageRef() ?? ""
-                }
-            }
-            else{
-                aoOut = {
-                    type: "none"
-                }
-            }
-            gameObjectResult.components.push({
-                type: "Shading",
-                shaderType: "pbr",
-                id: pbrShading.id() ?? "",
-                culling: numToCulling(pbrShading.culling()),
-                transparent: pbrShading.transparent(),
-                diffuse: diffuseOut,
-                metallic: metalOut,
-                roughness: roughnessOut,
-                reflectance: pbrShading.reflectance(),
-                emissive: emissiveOut,
-                normal: normalOut,
-                ao: aoOut
+                type: "SkinnedMeshRenderer",
+                id: skinnedMeshRenderer.id() ?? "",
+                meshRef: skinnedMeshRenderer.meshRef() || undefined,
+                materialRefs,
+                jointRefs,
             });
         }
         function readShawdowLight(lightShadow: LightShadow): ShotEngineType.LightShadow {

@@ -2,7 +2,7 @@ import { Builder, Offset, ByteBuffer } from "flatbuffers";
 import * as ShotEngineType from "@shot-engine/types";
 import fs from "fs-extra";
 import {
-    SceneNode, GameObject, GameObjectPrefab, Scene, Vec3,
+    SceneNode, GameObject, GameObjectPrefab, Scene,
 } from "../fbs-gen/fbsengine.js";
 import {
     ImageAsset, PrimitiveAttribute, Primitive, MeshAsset, PrefabAsset,
@@ -12,7 +12,6 @@ import {
     HdrAsset,
     PrefilterMap,
     AABB,
-    PrimitiveType,
     FontAsset,
     AtlasTexture,
     FontInfo,
@@ -20,21 +19,25 @@ import {
     FontInfoCommon,
     FontAssetBakeSetting,
     ProjectSettingAsset,
-    SceneSetting
+    SceneSetting,
+    MaterialAsset,
+    Material,
+    SimpleMaterial,
+    PbrMaterial,
+    GLTypeAndNormalized
 } from "../fbs-gen/fbsasset.js";
-import { buildSceneNode, buildVec3, getFloat32Array, getUint8Array, getVec3, readGameObject } from "./flatbfUtil.js";
+import { buildSceneNode, buildVec3, buildVec4, getFloat32Array, getUint8Array, getVec3, getVec4, readGameObject } from "./flatbfUtil.js";
 // import * as RTAsset from "./runtime-asset.js";
 import { RTImageAsset } from "../fbs-gen/fbsrtasset.js";
 
 export function saveImageAssetBinary(imageAsset: ShotEngineType.ImageAsset, filePath: string){
     const builder = new Builder(1024);
+    const originOffset = ImageAsset.createOriginVector(builder, imageAsset.origin);
     const ktx2Offset = ImageAsset.createKtx2Vector(builder, imageAsset.ktx2);
-    const ktx2NoFlipOffset = ImageAsset.createKtx2Vector(builder, imageAsset.ktx2NoFlip);
     ImageAsset.startImageAsset(builder);
+    ImageAsset.addOrigin(builder, originOffset);
     ImageAsset.addKtx2(builder, ktx2Offset);
-    ImageAsset.addKtx2NoFlip(builder, ktx2NoFlipOffset);
     ImageAsset.addHasAlpha(builder, imageAsset.hasAlpha);
-    ImageAsset.addAlphaType(builder, imageAsset.alphaType === "cutoff" ? 0 : 1);
     const offset = ImageAsset.endImageAsset(builder);
     builder.finish(offset);
 
@@ -58,26 +61,24 @@ export function saveMeshAssetBinary(meshAsset: ShotEngineType.MeshAsset, filePat
     const builder = new Builder(1024);
     const primitiveOffsets: Offset[] = [];
     for(const prim of meshAsset.primitives){
-        let primitiveType: PrimitiveType;
-        if(prim.type === "skin"){
-            primitiveType = PrimitiveType.SKIN;
-        }
-        else{
-            primitiveType = PrimitiveType.STATIC;
-        }
-
+        const positonOffset = buildGLTypeAndNormalized(builder, prim.attribute.position);
+        const normalOffset = buildGLTypeAndNormalized(builder, prim.attribute.normal);
+        const uvOffset = buildGLTypeAndNormalized(builder, prim.attribute.uv);
+        const tangentOffset = buildGLTypeAndNormalized(builder, prim.attribute.tangent);
+        const jointOffset = buildGLTypeAndNormalized(builder, prim.attribute.joint);
+        const weightOffset = buildGLTypeAndNormalized(builder, prim.attribute.weight);
         const interleaveArrayOffset = PrimitiveAttribute.createInterleaveArrayVector(builder, prim.attribute.interleaveArray);
         PrimitiveAttribute.startPrimitiveAttribute(builder);
         PrimitiveAttribute.addInterleaveArray(builder, interleaveArrayOffset);
+        PrimitiveAttribute.addPosition(builder, positonOffset);
+        PrimitiveAttribute.addNormal(builder, normalOffset);
+        PrimitiveAttribute.addUv(builder, uvOffset);
+        PrimitiveAttribute.addTangent(builder, tangentOffset);
+        PrimitiveAttribute.addJoint(builder, jointOffset);
+        PrimitiveAttribute.addWeight(builder, weightOffset);
         const attrOffset = PrimitiveAttribute.endPrimitiveAttribute(builder);
 
-        const indicesOffset = builder.createByteVector(
-            new Uint8Array(
-                prim.indices.buffer,
-                prim.indices.byteOffset,
-                prim.indices.byteLength
-            )
-        );
+        const indicesOffset = builder.createByteVector(prim.indices);
 
         const minOffset = buildVec3(builder, prim.aabb.min);
         const maxOffset = buildVec3(builder, prim.aabb.max);
@@ -86,22 +87,77 @@ export function saveMeshAssetBinary(meshAsset: ShotEngineType.MeshAsset, filePat
         AABB.addMax(builder, maxOffset);
         const aabbOffset = AABB.endAABB(builder);
 
-        const invBindPoseMatricesOffset = Primitive.createInvBindPoseMatricesVector(builder, prim.invBindPoseMatrices);
-
         Primitive.startPrimitive(builder);
-        Primitive.addType(builder, primitiveType);
         Primitive.addAttribute(builder, attrOffset);
         Primitive.addIndices(builder, indicesOffset);
+        Primitive.addIndexType(builder, prim.indexType);
         Primitive.addDrawMode(builder, prim.drawMode);
         Primitive.addAabb(builder, aabbOffset);
-        Primitive.addInvBindPoseMatrices(builder, invBindPoseMatricesOffset);
         primitiveOffsets.push(Primitive.endPrimitive(builder));
     }
     const primitivesOffset = MeshAsset.createPrimitivesVector(builder, primitiveOffsets);
+
+    const invBindPoseMatricesOffset = MeshAsset.createInvBindPoseMatricesVector(builder, meshAsset.invBindPoseMatrices);
+
     MeshAsset.startMeshAsset(builder);
     MeshAsset.addPrimitives(builder, primitivesOffset);
+    MeshAsset.addInvBindPoseMatrices(builder, invBindPoseMatricesOffset);
     const meshOffset = MeshAsset.endMeshAsset(builder);
     builder.finish(meshOffset);
+
+    const bytes = builder.asUint8Array();
+    fs.writeFileSync(filePath, bytes);
+}
+export function saveMaterialAssetBinary(matAsset: ShotEngineType.MaterialAsset, filePath: string){
+    const builder = new Builder(1024);
+    let materialOffset: number;
+    let materialType: Material;
+    if(matAsset.matType === "simple"){
+        const colorOffset = buildVec4(builder, matAsset.color);
+
+        SimpleMaterial.startSimpleMaterial(builder);
+        SimpleMaterial.addCulling(builder, cullingToNum(matAsset.culling));
+        SimpleMaterial.addTransparent(builder, transparentToNum(matAsset.transparent));
+        SimpleMaterial.addAlphaCutoff(builder, matAsset.alphaCutoff);
+        SimpleMaterial.addColor(builder, colorOffset);
+
+        materialOffset = SimpleMaterial.endSimpleMaterial(builder);
+        materialType = Material.SimpleMaterial;
+    }
+    else if(matAsset.matType === "pbr"){
+        const baseFactorOffset = buildVec4(builder, matAsset.baseFactor);
+        const baseTextureRefOffset = builder.createString(matAsset.baseTextureRef);
+        const metallicRoughnessTextureRefOffset = builder.createString(matAsset.metallicRoughnessTextureRef);
+        const normalTextureRefOffset = builder.createString(matAsset.normalTextureRef);
+        const emissiveFactorOffset = buildVec3(builder, matAsset.emissitveFactor);
+        const emissiveTextureRefOffset = builder.createString(matAsset.emissiveTextureRef);
+        const occlusionTextureRefOffset = builder.createString(matAsset.occlusionTextureRef);
+
+        PbrMaterial.startPbrMaterial(builder);
+        PbrMaterial.addCulling(builder, cullingToNum(matAsset.culling));
+        PbrMaterial.addTransparent(builder, transparentToNum(matAsset.transparent));
+        PbrMaterial.addAlphaCutoff(builder, matAsset.alphaCutoff);
+        PbrMaterial.addBaseFactor(builder, baseFactorOffset);
+        PbrMaterial.addBaseTextureRef(builder, baseTextureRefOffset);
+        PbrMaterial.addRoughnessFactor(builder, matAsset.roughnessFactor);
+        PbrMaterial.addMetallicFactor(builder, matAsset.metallicFactor);
+        PbrMaterial.addMetallicRoughnessTextureRef(builder, metallicRoughnessTextureRefOffset);
+        PbrMaterial.addNormalScale(builder, matAsset.normalScale);
+        PbrMaterial.addNormalTextureRef(builder, normalTextureRefOffset);
+        PbrMaterial.addEmissitveFactor(builder, emissiveFactorOffset);
+        PbrMaterial.addEmissiveTextureRef(builder, emissiveTextureRefOffset);
+        PbrMaterial.addOcclusionStrength(builder, matAsset.occlusionStrength);
+        PbrMaterial.addOcclusionTextureRef(builder, occlusionTextureRefOffset);
+
+        materialOffset = PbrMaterial.endPbrMaterial(builder);
+        materialType = Material.PbrMaterial;
+    }
+    else throw "mat type dont support";
+    MaterialAsset.startMaterialAsset(builder);
+    MaterialAsset.addMaterial(builder, materialOffset);
+    MaterialAsset.addMaterialType(builder, materialType);
+    const materialAssetOffset = MaterialAsset.endMaterialAsset(builder);
+    builder.finish(materialAssetOffset);
 
     const bytes = builder.asUint8Array();
     fs.writeFileSync(filePath, bytes);
@@ -289,10 +345,9 @@ export function readImageAsset(filePath: string): ShotEngineType.ImageAsset{
     const byteBuffer = new ByteBuffer(bytes);
     const image = ImageAsset.getRootAsImageAsset(byteBuffer);
     return {
+        origin: getUint8Array(image.originArray()),
         ktx2: getUint8Array(image.ktx2Array()),
-        ktx2NoFlip: getUint8Array(image.ktx2NoFlipArray()),
         hasAlpha: image.hasAlpha(),
-        alphaType: image.alphaType() === 0 ? "cutoff" : "smooth"
     };
 }
 export function readMeshAsset(filePath: string){
@@ -301,50 +356,75 @@ export function readMeshAsset(filePath: string){
     const mesh = MeshAsset.getRootAsMeshAsset(byteBuffer);
 
     const asset: ShotEngineType.MeshAsset = {
-        primitives: []
+        primitives: [],
+        invBindPoseMatrices: new Float32Array()
     }
     for(let i = 0; i < mesh.primitivesLength(); i++){
         const prim = mesh.primitives(i, new Primitive());
         if(!prim) continue;
         const attr = prim.attribute(new PrimitiveAttribute());
         if(!attr) continue;
-        const rawIndices = prim.indicesArray();
-        if(!rawIndices) continue;
-
-        let type = prim.type();
-        let primType: ShotEngineType.MeshAsset["primitives"][0]["type"];
-        if(type === PrimitiveType.STATIC){
-            primType = "static";
-        }
-        else if(type === PrimitiveType.SKIN){
-            primType = "skin"
-        }
-        else{
-            primType = "static";
-        }
-
-        let indices = new Uint32Array(
-            rawIndices.buffer,
-            rawIndices.byteOffset,
-            rawIndices.byteLength / 4
-        );
-        indices = new Uint32Array(indices); // copy array
 
         asset.primitives.push({
-            type: primType,
             attribute: {
-                interleaveArray: getUint8Array(attr.interleaveArrayArray())
+                interleaveArray: getUint8Array(attr.interleaveArrayArray()),
+                position: readGLTypeAndNormalized(attr.position()),
+                normal: readGLTypeAndNormalized(attr.normal()),
+                uv: readGLTypeAndNormalized(attr.uv()),
+                tangent: readGLTypeAndNormalized(attr.tangent()),
+                joint: readGLTypeAndNormalized(attr.joint()),
+                weight: readGLTypeAndNormalized(attr.weight()),
             },
-            indices,
+            indices: getUint8Array(prim.indicesArray()),
+            indexType: prim.indexType(),
             drawMode: prim.drawMode(),
             aabb: {
                 min: getVec3(prim.aabb()?.min()),
                 max: getVec3(prim.aabb()?.max()),
             },
-            invBindPoseMatrices: getFloat32Array(prim.invBindPoseMatricesArray())
         });
     }
+    asset.invBindPoseMatrices = getFloat32Array(mesh.invBindPoseMatricesArray());
     return asset;
+}
+export function readMaterialAsset(filePath: string): ShotEngineType.MaterialAsset{
+    const bytes = new Uint8Array(fs.readFileSync(filePath));
+    const byteBuffer = new ByteBuffer(bytes);
+    const material = MaterialAsset.getRootAsMaterialAsset(byteBuffer);
+
+    if(material.materialType() === Material.SimpleMaterial){
+        const simpleMaterial = material.material(new SimpleMaterial()) as SimpleMaterial;
+        const asset: ShotEngineType.MaterialAsset = {
+            matType: "simple",
+            culling: numToCulling(simpleMaterial.culling()),
+            transparent: numToTransparent(simpleMaterial.transparent()),
+            alphaCutoff: simpleMaterial.alphaCutoff(),
+            color: getVec4(simpleMaterial.color()),
+        }
+        return asset;
+    }
+    else if(material.materialType() === Material.PbrMaterial){
+        const pbrMaterial = material.material(new PbrMaterial()) as PbrMaterial;
+        const asset: ShotEngineType.MaterialAsset = {
+            matType: "pbr",
+            culling: numToCulling(pbrMaterial.culling()),
+            transparent: numToTransparent(pbrMaterial.transparent()),
+            alphaCutoff: pbrMaterial.alphaCutoff(),
+            baseFactor: getVec4(pbrMaterial.baseFactor()),
+            baseTextureRef: pbrMaterial.baseTextureRef() || undefined,
+            roughnessFactor: pbrMaterial.roughnessFactor(),
+            metallicFactor: pbrMaterial.metallicFactor(),
+            metallicRoughnessTextureRef: pbrMaterial.metallicRoughnessTextureRef() || undefined,
+            normalScale: pbrMaterial.normalScale(),
+            normalTextureRef: pbrMaterial.normalTextureRef() || undefined,
+            emissitveFactor: getVec3(pbrMaterial.emissitveFactor()),
+            emissiveTextureRef: pbrMaterial.emissiveTextureRef() || undefined,
+            occlusionStrength: pbrMaterial.occlusionStrength(),
+            occlusionTextureRef: pbrMaterial.occlusionTextureRef() || undefined,
+        }
+        return asset;
+    }
+    else throw "bad materialType"
 }
 export function readPrefabAsset(filePath: string){
     const bytes = new Uint8Array(fs.readFileSync(filePath));
@@ -541,3 +621,40 @@ export function readFontAsset(filePath: string){
 
     return asset;
 }
+
+//helper
+function buildGLTypeAndNormalized(builder: Builder, { type, normalized }: ShotEngineType.GLTypeAndNormalized){
+    GLTypeAndNormalized.startGLTypeAndNormalized(builder);
+    GLTypeAndNormalized.addType(builder, type);
+    GLTypeAndNormalized.addNormalized(builder, normalized);
+    return GLTypeAndNormalized.endGLTypeAndNormalized(builder);
+}
+function readGLTypeAndNormalized(obj?: GLTypeAndNormalized | null): ShotEngineType.GLTypeAndNormalized{
+    if(obj) return { type: obj.type(), normalized: obj.normalized() }
+    return { type: -1, normalized: false }
+}
+function cullingToNum(culling: ShotEngineType.MaterialAsset["culling"]){
+    if(culling === "none") return 0;
+    if(culling === "back") return 1;
+    if(culling === "front") return 2;
+    return 0;
+}
+function numToCulling(num: number): ShotEngineType.MaterialAsset["culling"]{
+    if(num === 0) return "none";
+    if(num === 1) return "back";
+    if(num === 2) return "front";
+    return "none";
+}
+function transparentToNum(transparent: ShotEngineType.MaterialAsset["transparent"]){
+    if(transparent === "opaque") return 0;
+    if(transparent === "mask") return 1;
+    if(transparent === "blend") return 2;
+    return 0;
+}
+function numToTransparent(num: number): ShotEngineType.MaterialAsset["transparent"]{
+    if(num === 0) return "opaque";
+    if(num === 1) return "mask";
+    if(num === 2) return "blend";
+    return "opaque";
+}
+

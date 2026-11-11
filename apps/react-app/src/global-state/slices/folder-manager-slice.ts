@@ -72,9 +72,10 @@ const slice = createSlice({
             addEntry(state, parentPath, dirCreated);
         });
         builder.addCase(fileImportedThunk.fulfilled, (state, action) => {
-            const { destFolder } = action.meta.arg;
-            const { copyCreated } = action.payload;
-            addEntry(state, destFolder, copyCreated);
+            adapter.removeAll(state);
+            adapter.addMany(state, action.payload.entries);
+            state.selectedPath = null;
+            state.focusedPath = null;
         });
         builder.addCase(entryDeletedThunk.fulfilled, (state, action) => {
             const { parentPath, entryPath } = action.meta.arg;

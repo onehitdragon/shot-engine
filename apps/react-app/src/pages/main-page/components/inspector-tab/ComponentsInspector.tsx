@@ -1,14 +1,14 @@
-import type { AssetManager, Camera, Component, Light, Mesh, PbrShading, PhongShading, PointLight, Shading, SimpleShading, Skeleton, SkyBox, SpotLight, Transform, UILayout } from "@shot-engine/types";
+import type { AssetManager, Camera, Component, Light, MeshRenderer, PointLight, Skeleton, SkinnedMeshRenderer, SkyBox, SpotLight, Transform, UILayout } from "@shot-engine/types";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { selectComponents } from "../../../../global-state/slices/inspector-components-slice";
 import { cloneDeep } from "lodash";
 import { componentUpdatedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
-import { ThreeValueRow, RGBValueRow, CheckBox, OneValueRow, Selection, TextRow, ImageOrColorSelection, ImageOrValueSelection, OptionalImageSelection, TextRowErr, TextOrStringSelection, RGBAValueRow } from "./components";
+import { ThreeValueRow, RGBValueRow, CheckBox, OneValueRow, Selection, TextRow, TextRowErr, TextOrStringSelection, MeshSelection, AssetSelectionList, GameObjectSelectionList } from "./components";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { selectNodeRecord } from "../../../../global-state/slices/go-tree-slice";
-import { ColorToVec3, ColorToVec4, ObjectToVec3, Vec3ToColor, Vec3ToObject, Vec4ToColor } from "./helper";
-import { Quat, Vec3 } from "@shot-engine/math";
+import { ColorToVec3, ObjectToVec3, Vec3ToColor, Vec3ToObject } from "./helper";
+import { Quat } from "@shot-engine/math";
 
 export function ComponentsInspector(){
     const components = useAppSelector(state => selectComponents(state));
@@ -23,11 +23,11 @@ export function ComponentsInspector(){
                             transform={component}
                         />;
                     }
-                    else if(component.type === "Mesh"){
-                        return <MeshSection key={component.id} mesh={component}/>;
+                    else if(component.type === "MeshRenderer"){
+                        return <MeshRenderer key={component.id} meshRenderer={component}/>;
                     }
-                    else if(component.type === "Shading"){
-                        return <ShadingSection key={component.id} shading={component}/>
+                    else if(component.type === "SkinnedMeshRenderer"){
+                        return <SkinnedMeshRenderer key={component.id} skinnedMeshRenderer={component}/>
                     }
                     else if(component.type === "Light"){
                         return <LightSection key={component.id} light={component}/>
@@ -92,290 +92,60 @@ function TransformSection(props: { transform: Transform }){
         </div>
     );
 }
-function MeshSection(props: { mesh: Mesh }){
-    const { mesh } = props;
-    const [assetInfo, setAssetInfo] = useState<AssetManager.AssetInfo>();
-    useEffect(() => {
-        let cancelled = false;
-        const load = async () => {
-            const assetInfo = await window.api.assetManager.getAssetInfoFromUuid(mesh.meshRef);
-            if(cancelled) return;
-            setAssetInfo(assetInfo);
-        }
-        load();
-
-        return () => {
-            cancelled = true;
-        }
-    }, [mesh.meshRef]);
+function MeshRenderer(props: { meshRenderer: MeshRenderer }){
+    const { meshRenderer } = props;
     
     return (
         <div className="flex flex-col gap-2">
-            <Header label="Mesh" component={mesh}/>
-            <TextRow label="ref" content={mesh.meshRef}/>
-            {
-                assetInfo &&
-                <TextRow label="name" content={assetInfo.name}/>
-            }
+            <Header label="Mesh Renderer" component={meshRenderer}/>
         </div>
     );
 }
-function ShadingSection(props: { shading: Shading }){
-    const { shading } = props;
+function SkinnedMeshRenderer(props: { skinnedMeshRenderer: SkinnedMeshRenderer }){
+    const { skinnedMeshRenderer } = props;
     const dispatch = useAppDispatch();
-    const shadingClone = cloneDeep(shading);
+    const skinnedMeshRendererClone = cloneDeep(skinnedMeshRenderer);
     const update = () => {
-        dispatch(componentUpdatedThunk({ component: shadingClone }));
+        dispatch(componentUpdatedThunk({ component: skinnedMeshRendererClone }));
     }
-
-    return (
-        <div className="flex flex-col">
-            <Header label="Shading" component={shading}/>
-            <div className="flex gap-2 mb-1">
-                <span className="select-none text-sm text-white">
-                    Shader type: {shading.shaderType}
-                </span>
-            </div>
-            <Selection
-                label="Culling"
-                value={shading.culling}
-                options={[
-                    { label: "None", value: "none" },
-                    { label: "Back", value: "back" },
-                    { label: "Front", value: "front" },
-                ]}
-                onChange={(value) => {
-                    shadingClone.culling = value;
-                    update();
-                }}
-            />
-            <CheckBox
-                label="Transparent"
-                value={shading.transparent}
-                onChange={(value) => {
-                    shadingClone.transparent = value;
-                    update();
-                }}
-            />
-            {
-                shading.shaderType === "simple" &&
-                <SimpleShadingEditor simpleShading={shading}/>
-            }
-            {
-                shading.shaderType === "phong" &&
-                <PhongShadingEditor phongShading={shading}/>
-            }
-            {
-                shading.shaderType === "pbr" &&
-                <PbrShadingEditor pbrShading={shading}/>
-            }
-        </div>
-    );
-}
-function SimpleShadingEditor(props: { simpleShading: SimpleShading }){
-    const { simpleShading } = props;
-    const dispatch = useAppDispatch();
-    const shadingClone = cloneDeep(simpleShading);
-    const update = () => {
-        dispatch(componentUpdatedThunk({ component: shadingClone }));
-    }
-    return (
-        <div className="flex flex-col">
-            <RGBAValueRow
-                label="Color"
-                value={Vec4ToColor(simpleShading.color)}
-                onChange={(value) => {
-                    shadingClone.color = ColorToVec4(value);
-                    update();
-                }}
-            />
-        </div>
-    );
-}
-function PhongShadingEditor(props: { phongShading: PhongShading }){
-    const { phongShading } = props;
-    const { diffuse, specular, shininess } = phongShading;
-    const dispatch = useAppDispatch();
-    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
-    const shadingClone = cloneDeep(phongShading);
-    const update = () => {
-        dispatch(componentUpdatedThunk({ component: shadingClone }));
-    }
-    useEffect(() => {
-        let cancelled = false;
-        const load = async () => {
-            if(diffuse.type === "color") setAssetInfos([]);
-            else{
-                const assetInfos = await window.api.assetManager.getAssetInfosFromType("image");
-                if(cancelled) return;
-                setAssetInfos(assetInfos);
-            }
-        }
-        load();
-        return () => {
-            cancelled = true;
-        }
-    }, [diffuse.type]);
-
-    return (
-        <div className="flex flex-col">
-            <Selection
-                label="Diffuse"
-                options={[
-                    { label: "image", value: "image" },
-                    { label: "color", value: "color" },
-                ]}
-                value={diffuse.type}
-                onChange={(value) => {
-                    shadingClone.diffuse.type = value;
-                    if(shadingClone.diffuse.type === "color"){
-                        shadingClone.diffuse.color = Vec3.FromValues(1, 1, 1);
-                    }
-                    if(shadingClone.diffuse.type === "image"){
-                        shadingClone.diffuse.imageRef = "";
-                    }
-                    update();
-                }}
-            />
-            {
-                diffuse.type === "color" &&
-                <RGBValueRow
-                    label="Color"
-                    value={Vec3ToColor(diffuse.color)}
-                    onChange={(value) => {
-                    if(shadingClone.diffuse.type === "color"){
-                        shadingClone.diffuse.color = ColorToVec3(value);;
-                        update();
-                    }
-                }}/>
-            }
-            {
-                diffuse.type === "image" &&
-                <Selection
-                    label="imageRef"
-                    options={
-                        assetInfos.map(e => {
-                            return {
-                                label: e.name,
-                                value: e.uuid
-                            }
-                        })
-                    }
-                    value={diffuse.imageRef}
-                    onChange={(value) => {
-                        if(shadingClone.diffuse.type === "image"){
-                            console.log("change", shadingClone.diffuse.imageRef, "->",  value);
-                            shadingClone.diffuse.imageRef = value;
-                            update();
-                        }
-                    }}
-                />
-            }
-            <RGBValueRow
-                label="Specular color"
-                value={Vec3ToColor(specular)}
-                onChange={(value) => {
-                    shadingClone.specular = ColorToVec3(value);;
-                    update();
-                }
-            }/>
-            <OneValueRow
-                label="Shininess"
-                value={shininess}
-                range={[1, Number.MAX_VALUE]}
-                onChange={(value) => {
-                    shadingClone.shininess = value;
-                    update();
-                }}
-            />
-        </div>
-    );
-}
-function PbrShadingEditor(props: { pbrShading: PbrShading }){
-    const { pbrShading } = props;
-    const { diffuse, metallic, roughness, reflectance, emissive, normal, ao } = pbrShading;
-    const dispatch = useAppDispatch();
     
-    const shadingClone = cloneDeep(pbrShading);
-    const update = () => {
-        dispatch(componentUpdatedThunk({ component: shadingClone }));
-    }
-
     return (
-        <div className="flex flex-col">
-            <ImageOrColorSelection
-                label="Diffuse"
-                imageOrColor={diffuse}
-                onChange={(imageOrColor) => {
-                    shadingClone.diffuse = imageOrColor;
-                    update();
-                }}
-            />
-            <ImageOrValueSelection
-                label="Metallic"
-                imageOrValue={metallic}
+        <div className="flex flex-col gap-2">
+            <Header label="Skinned Mesh Renderer" component={skinnedMeshRenderer}/>
+            <MeshSelection label="Mesh"
+                uuidRef={skinnedMeshRenderer.meshRef}
                 onChange={(value) => {
-                    shadingClone.metallic = value;
-                    update();
-                }}
-                valueConfig={{
-                    default: 0,
-                    range: [0, 1]
-                }}
-            />
-            <ImageOrValueSelection
-                label="Roughness"
-                imageOrValue={roughness}
-                onChange={(value) => {
-                    shadingClone.roughness = value;
-                    update();
-                }}
-                valueConfig={{
-                    default: 1,
-                    range: [0, 1]
-                }}
-            />
-            <OneValueRow
-                label="Reflectance"
-                value={reflectance}
-                range={[0, 1]}
-                onChange={(value) => {
-                    shadingClone.reflectance = value;
+                    skinnedMeshRendererClone.meshRef = value;
                     update();
                 }}
             />
-
-            <ImageOrColorSelection
-                label="Emissive"
-                imageOrColor={emissive.color}
-                onChange={(imageOrColor) => {
-                    shadingClone.emissive.color = imageOrColor;
+            <AssetSelectionList label="Materials" type="material"
+                uuidRefs={skinnedMeshRenderer.materialRefs}
+                onItemChange={(index, value) => {
+                    skinnedMeshRendererClone.materialRefs[index] = value;
+                    update();
+                }}
+                onItemAdd={() => {
+                    skinnedMeshRendererClone.materialRefs.push(undefined);
+                    update();
+                }}
+                onItemDelete={(index) => {
+                    skinnedMeshRendererClone.materialRefs.splice(index, 1);
                     update();
                 }}
             />
-            <OneValueRow
-                label="Emissive intensity"
-                value={emissive.intensity}
-                range={[0, Number.MAX_VALUE]}
-                onChange={(value) => {
-                    shadingClone.emissive.intensity = value;
+            <GameObjectSelectionList label="Joints" fiexed
+                uuidRefs={skinnedMeshRenderer.jointRefs}
+                onItemChange={(index, value) => {
+                    skinnedMeshRendererClone.jointRefs[index] = value;
                     update();
                 }}
-            />
-
-            <OptionalImageSelection
-                label="Normal"
-                optionalImage={normal}
-                onChange={(value) => {
-                    shadingClone.normal = value;
+                onItemAdd={() => {
+                    skinnedMeshRendererClone.jointRefs.push(undefined);
                     update();
                 }}
-            />
-            <OptionalImageSelection
-                label="AO"
-                optionalImage={ao}
-                onChange={(value) => {
-                    shadingClone.ao = value;
+                onItemDelete={(index) => {
+                    skinnedMeshRendererClone.jointRefs.splice(index, 1);
                     update();
                 }}
             />

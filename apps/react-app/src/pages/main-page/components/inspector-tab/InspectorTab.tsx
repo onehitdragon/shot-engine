@@ -1,6 +1,7 @@
 import { useAppSelector } from "../../../../global-state/hooks";
 import { OtherAssetInspector } from "./OtherAssetInspector";
 import { ImageAssetInspector } from "./ImageAssetInspector";
+import { MaterialAssetInspector } from "./MaterialAssetInspector";
 import { MeshAssetInspector } from "./MeshAssetInspector";
 import { ComponentsInspector } from "./ComponentsInspector";
 import { PrefabAssetInspector } from "./PrefabAssetInspector";
@@ -35,15 +36,16 @@ export function InspectorTab(){
                 </div>
                 :
                 inspector.type === "other" ? <OtherAssetInspector otherInspector={inspector}/> :
-                inspector.type === "image" ? <ImageAssetInspector inspector={inspector}/> :
-                inspector.type === "mesh" ? <MeshAssetInspector inspector={inspector}/> :
+                inspector.type === "image" ? <ImageAssetInspector key={inspector.assetInfo.uuid} inspector={inspector}/> :
+                inspector.type === "material" ? <MaterialAssetInspector key={inspector.assetInfo.uuid} inspector={inspector}/> :
+                inspector.type === "mesh" ? <MeshAssetInspector key={inspector.assetInfo.uuid} inspector={inspector}/> :
                 inspector.type === "components" ? <ComponentsInspector /> :
-                inspector.type === "prefab" ? <PrefabAssetInspector inspector={inspector}/> :
-                inspector.type === "scene" ? <SceneAssetInspector inspector={inspector}/> :
-                inspector.type === "hdr" ? <HdrAssetInspector inspector={inspector}/> :
-                inspector.type === "setting" ? <ProjectSettingAssetInspector inspector={inspector}/> :
-                inspector.type === "font" ? <FontAssetInspector inspector={inspector}/> :
-                inspector.type === "text" ? <TextAssetInspector inspector={inspector}/> :
+                inspector.type === "prefab" ? <PrefabAssetInspector key={inspector.assetInfo.uuid} inspector={inspector}/> :
+                inspector.type === "scene" ? <SceneAssetInspector key={inspector.assetInfo.uuid} inspector={inspector}/> :
+                inspector.type === "hdr" ? <HdrAssetInspector key={inspector.assetInfo.uuid} inspector={inspector}/> :
+                inspector.type === "setting" ? <ProjectSettingAssetInspector key={inspector.assetInfo.uuid} inspector={inspector}/> :
+                inspector.type === "font" ? <FontAssetInspector key={inspector.assetInfo.uuid} inspector={inspector}/> :
+                inspector.type === "text" ? <TextAssetInspector key={inspector.assetInfo.uuid} inspector={inspector}/> :
                 <div className="flex items-center justify-center flex-1 text-white text-sm">
                     This type is not supported in the inspector yet!
                 </div>

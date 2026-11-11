@@ -14,65 +14,17 @@ table Transform{
     editor: TransformEditor;
 }
 
-table Mesh{
+table MeshRenderer{
     id: string;
     mesh_ref: string;
+    material_refs: [string];
 }
 
-table SimpleShading{
+table SkinnedMeshRenderer{
     id: string;
-    culling: ubyte;
-    transparent: bool;
-    color: Vec4;
-}
-
-table Image{
-    image_ref: string;
-}
-table Color{
-    color: Vec3;
-}
-table Value{
-    value: double;
-}
-table None{}
-union ImageOrColor{
-    Image,
-    Color
-}
-union ImageOrValue{
-    Image,
-    Value
-}
-union OptionalImage{
-    Image,
-    None
-}
-table Emissive{
-    color: ImageOrColor;
-    intensity: double;
-}
-
-table PhongShading{
-    id: string;
-    culling: ubyte;
-    transparent: bool;
-    diffuse: ImageOrColor;
-    specular: Vec3;
-    shininess: double;
-}
-
-table PbrShading{
-    id: string;
-    culling: ubyte;
-    transparent: bool;
-    diffuse: ImageOrColor;
-    metallic: ImageOrValue;
-    roughness: ImageOrValue;
-    reflectance: double;
-    emissive: Emissive;
-    normal: OptionalImage;
-    ao: OptionalImage;
+    mesh_ref: string;
+    material_refs: [string];
+    joint_refs: [string];
 }
 
 table LightShadow{
@@ -142,10 +94,8 @@ table UILayout{
 
 union Component{
     Transform,
-    Mesh,
-    SimpleShading,
-    PhongShading,
-    PbrShading,
+    MeshRenderer,
+    SkinnedMeshRenderer,
     PointLight,
     DirectionalLight,
     SpotLight,

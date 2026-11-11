@@ -3,10 +3,9 @@ include "../engine.fbs";
 namespace FBSAsset;
 
 table ImageAsset{
+  origin: [ubyte];
   ktx2: [ubyte];
-  ktx2_no_flip: [ubyte];
   has_alpha: bool;
-  alpha_type: ubyte; // 0-cutoff 1-smooth
 }
 
 root_type ImageAsset;

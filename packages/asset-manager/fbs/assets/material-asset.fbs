@@ -1,0 +1,41 @@
+include "../engine.fbs";
+
+namespace FBSAsset;
+
+table SimpleMaterial{
+  culling: ubyte;
+  transparent: ubyte;
+  alphaCutoff: double;
+
+  color: FBSEngine.Vec4;
+}
+table PbrMaterial{
+  culling: ubyte;
+  transparent: ubyte;
+  alphaCutoff: double;
+
+  base_factor: FBSEngine.Vec4;
+  base_texture_ref: string;
+
+  metallic_factor: double;
+  roughness_factor: double;
+  metallic_roughness_texture_ref: string;
+
+  normal_scale: double;
+  normal_texture_ref: string;
+
+  emissitve_factor: FBSEngine.Vec3;
+  emissive_texture_ref: string;
+  
+  occlusion_strength: double;
+  occlusion_texture_ref: string;
+}
+union Material{
+  SimpleMaterial,
+  PbrMaterial
+}
+table MaterialAsset{
+  material: Material;
+}
+
+root_type MaterialAsset;

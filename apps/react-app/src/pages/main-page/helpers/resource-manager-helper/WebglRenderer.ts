@@ -45,11 +45,6 @@ export class WebglRenderer{
         if(shaderType === "simple"){
             webglMeshs.forEach(e => e.renderWithSimpleShader(mvpMat4, vpMat4, jointMatrices, shadingComponent));
         }
-        else if(shaderType === "phong"){
-            webglMeshs.forEach(
-                e => e.renderWithPhongShader(mvpMat4, modelMat4, normalMat3, camPos, shadingComponent)
-            );
-        }
         else if(shaderType === "pbr"){
             webglMeshs.forEach(
                 e => e.renderWithPbrShader(mvpMat4, modelMat4, viewMat4, normalMat3, camPos, shadingComponent)

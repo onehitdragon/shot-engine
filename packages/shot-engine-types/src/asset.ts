@@ -1,28 +1,62 @@
 import { GameObject, Scene, AABB } from "./engine.js"
+import { Vec3, Vec4 } from "@shot-engine/math";
 
 export type OtherAsset = {
     content: string
 }
 export type ImageAsset = {
-    ktx2: Uint8Array, // for webgl with flipY
-    ktx2NoFlip: Uint8Array, // for sdl3
-    hasAlpha: boolean,
-    alphaType: "cutoff" | "smooth", // cutoff - all alphas is 0 or 1
+    origin: Uint8Array, // for icon, for glb
+    ktx2: Uint8Array,
+    hasAlpha: boolean, // for transcoder
+}
+export type GLTypeAndNormalized = {
+    type: number, // WebGL enum value
+    normalized: boolean
 }
 export type MeshAsset = {
     primitives: {
-        type: "static" | "skin",
         attribute: {
-            // vertex(3) 12 bytes, normal(3) 12 bytes, uv(2) 8 bytes, tangent(3) 12 bytes
-            // weight(4) 16 bytes, joint(4 uint) 4 bytes
-            interleaveArray: Uint8Array,
+            // vertex(3) 12 bytes, normal(3) 12 bytes, uv(2) 8 bytes, tangent(4) 16 bytes
+            // joint(4 uint) 4 bytes, weight(4) 16 bytes,
+            interleaveArray: Uint8Array, // raw buffer
+            position: GLTypeAndNormalized,
+            normal: GLTypeAndNormalized,
+            uv: GLTypeAndNormalized,
+            tangent: GLTypeAndNormalized,
+            joint: GLTypeAndNormalized,
+            weight: GLTypeAndNormalized,
         },
-        indices: Uint32Array,
-        drawMode: number, // 4-triangles
-        aabb: AABB,
-        invBindPoseMatrices: Float32Array
-    }[]
+        indices: Uint8Array, // raw buffer
+        indexType: number, // WebGL enum value
+        drawMode: number, // WebGL enum value
+        aabb: AABB
+    }[],
+    invBindPoseMatrices: Float32Array // only valid for skined mesh
 }
+export type BaseMaterialAsset = {
+    culling: "none" | "back" | "front",
+    transparent: "opaque" | "mask" | "blend",
+    alphaCutoff: number // valid for transparent mode is mask
+}
+export type SimpleMaterialAsset = BaseMaterialAsset & {
+    matType: "simple",
+    color: Vec4,
+}
+export type PbrMaterialAsset = BaseMaterialAsset & {
+    matType: "pbr",
+    baseFactor: Vec4,
+    baseTextureRef?: string,
+    metallicFactor: number, // 0 -> 1
+    roughnessFactor: number, // 0 -> 1
+    metallicRoughnessTextureRef?: string, // g-roughness b-metalness
+    normalScale: number, // 0 -> 1
+    normalTextureRef?: string,
+    emissitveFactor: Vec3,
+    emissiveTextureRef?: string,
+    occlusionStrength: number, // 0 -> 1
+    occlusionTextureRef?: string,
+}
+export type MaterialAsset = SimpleMaterialAsset | PbrMaterialAsset;
 export type PrefabAsset = {
     root: GameObject
 }
@@ -84,15 +118,15 @@ export type FontAsset = {
 export type TextAsset = {
     text: string
 }
-export type Asset = OtherAsset | ImageAsset | MeshAsset | PrefabAsset | SceneAsset | HdrAsset | 
-    ProjectSettingAsset |
-    FontAsset | TextAsset;
+export type Asset = OtherAsset | ImageAsset | MaterialAsset | MeshAsset | PrefabAsset |
+    SceneAsset | HdrAsset | ProjectSettingAsset | FontAsset | TextAsset;
 export function isPrefabAsset(asset?: Asset | null): asset is PrefabAsset{
     if(!asset) return false;
     return "root" in asset;
 }
 
-export type AssetType = "other" | "image" | "mesh" | "prefab" | "scene" | "hdr" | "setting" | "font" | "text";
+export type AssetType = "other" | "image" | "material" | "mesh" | "prefab" | "scene" |
+    "hdr" | "setting" | "font" | "text";
 export function assetTypeToNum(type: AssetType): number{
     enum AssetTypeEnum{
         other, image, mesh, prefab, scene, hdr, setting, font, text
@@ -115,6 +149,7 @@ export namespace AssetProperty{
 
     export type TextureBase = {
         type: "image",
+        flipY: boolean,
         generateMipmaps: boolean,
         wrapMode: "REPEAT" | "MIRROR" | "CLAMP",
         filterMode: "NONE" | "BILINEAR" | "TRILINEAR",
@@ -130,6 +165,10 @@ export namespace AssetProperty{
 
     export type Mesh = {
         type: "mesh"
+    }
+
+    export type Material = {
+        type: "material"
     }
 
     export type Prefab = {
@@ -156,5 +195,6 @@ export namespace AssetProperty{
         type: "text"
     }
 
-    export type AssetProperty = Other | Image | Mesh | Prefab | Scene | Hdr | Setting | Font | Text;
+    export type AssetProperty = Other | Image | Mesh | Material
+        | Prefab | Scene | Hdr | Setting | Font | Text;
 }

@@ -1,31 +1,33 @@
-import { NodeIO, Node, Texture, Mesh, Accessor } from '@gltf-transform/core';
+import { NodeIO, Node, Texture, Mesh, Accessor, Material, vec4, vec3, GLTF, Primitive, Skin } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
-import { unweld, tangents, weld } from "@gltf-transform/functions";
+import { normals, unweld, tangents, weld } from "@gltf-transform/functions";
 import { generateTangents } from 'mikktspace';
 import path from "node:path";
 import * as ShotEngineType from "@shot-engine/types";
 import { v4 as uuidv4 } from "uuid";
-import { defaultImageAsset } from './schema.js';
 import * as math from "@shot-engine/math";
-import { createKTXImageAsset } from './helpers/create-ktx-image-asset.js';
 
 type GLB = {
-    textures: GLBTexture[],
-    meshes: GLBMesh[],
-    prefabAssets: ShotEngineType.PrefabAsset[],
-    mats: MatInfo[]
-}
-type GLBTexture = {
-    name: string,
-    imageAsset: ShotEngineType.ImageAsset
+    meshAssets: Map<string, GLBMesh>,
+    imageAssets: Map<string, GLBImage>,
+    materialAssets: Map<string, GLBMaterial>,
+    prefabAssets: GLBPrefab[],
 }
 type GLBMesh = {
     name: string,
-    meshAsset: ShotEngineType.MeshAsset
+    meshAsset: ShotEngineType.MeshAsset,
 }
-type MatInfo = {
+type GLBImage = {
     name: string,
-    info: string
+    raw: Uint8Array<ArrayBufferLike>,
+}
+type GLBMaterial = {
+    name: string,
+    materialAsset: ShotEngineType.MaterialAsset,
+}
+type GLBPrefab = {
+    name: string,
+    prefabAsset: ShotEngineType.PrefabAsset
 }
 
 // readGLBFile(path.join(process.cwd(), "test", "Cube.glb"));
@@ -35,6 +37,7 @@ export async function readGLBFile(filePath: string){
     .registerDependencies({});
 
     const document = await io.read(filePath);
+    await document.transform(normals({ overwrite: false }));
     await document.transform(unweld());
     await document.transform(
         tangents({generateTangents})
@@ -42,311 +45,202 @@ export async function readGLBFile(filePath: string){
     await document.transform(weld());
     const root = document.getRoot();
     
-    // set id for all node
+    // set ids
     for(const node of root.listNodes()){
-        node.setExtras({ id: uuidv4() })
-    }
-
-    // for(const skin of root.listSkins()){
-    //     console.log(`--- Skin: ${skin.getName()} ---`);
-
-    //     const joints = skin.listJoints();
-    //     console.log(joints);
-
-        // const rootJoint = skin.getSkeleton() || joints[0];
-        // if(!rootJoint) continue;
-        // console.log(`Skeleton Root: ${rootJoint.getName()}`);
-        
-        // for (const joint of joints) {
-        //     console.log(`Bone Node: ${joint.getName()}`);
-        // }
-    // }
-
-    // function getNodePath(nodeIn?: Node | null){
-    //     const names: string[] = [];
-    //     let isSkin = false;
-    //     function recur(node?: Node | null){
-    //         if(!node) return;
-    //         const skin = node.getSkin();
-    //         if(skin){
-    //             console.log("aa");
-    //             isSkin = true;
-    //             return;
-    //         }
-    //         names.unshift(node.getName());
-    //         recur(node.getParentNode());
-    //     }
-    //     recur(nodeIn);
-    //     if(!isSkin) return "/";
-    //     return "/" + names.join("/");
-    // }
-    // for(const ani of root.listAnimations()){
-    //     console.log(`--- Animation: ${ani.getName()} ---`);
-    //     for(const channel of ani.listChannels()){
-    //         const targetNode = channel.getTargetNode();
-    //         console.log("child path: ", targetNode?.getName());
-
-    //         const targetPath = channel.getTargetPath();
-    //         // console.log(`Target: ${targetNode ? targetNode.getName() : 'Unknown'} | Path: ${targetPath}`);
-    //         const sampler = channel.getSampler();
-    //         const times = sampler?.getInput()?.getArray();
-    //         const values = sampler?.getOutput()?.getArray();
-    //         // console.log(times, values);
-    //     }
-    // }
-    
-    const glb: GLB = {
-        textures: [],
-        meshes: [],
-        prefabAssets: [],
-        mats: []
-    };
-    const textureNameMap = new Map<Texture, string>();
-    for(let i = 0; i < root.listTextures().length; i++){
-        const texture = root.listTextures()[i];
-        const image = texture.getImage(); // png, jpg... not rgba
-        if(!image) continue;
-        const textureName = "tex" + i;
-        textureNameMap.set(texture, textureName);
-
-        glb.textures.push({
-            name: textureName,
-            imageAsset: await createKTXImageAsset(image, defaultImageAsset)
-        });
-    }
-    for(const material of root.listMaterials()){
-        let info = "";
-        const baseColor = material.getBaseColorTexture();
-        const normal = material.getNormalTexture();
-        const metallicRoughness = material.getMetallicRoughnessTexture();
-        const emissive = material.getEmissiveTexture();
-        const occlusion = material.getOcclusionTexture();
-        if(baseColor && textureNameMap.has(baseColor)){
-            info += `baseColor: ${textureNameMap.get(baseColor)}\n`;
-        }
-        if(metallicRoughness && textureNameMap.has(metallicRoughness)){
-            info += `metallicRoughness: ${textureNameMap.get(metallicRoughness)}\n`;
-        }
-        if(emissive && textureNameMap.has(emissive)){
-            info += `emissive: ${textureNameMap.get(emissive)}\n`;
-        }
-        if(occlusion && textureNameMap.has(occlusion)){
-            info += `occlusion: ${textureNameMap.get(occlusion)}\n`;
-        }
-        if(normal && textureNameMap.has(normal)){
-            info += `normal: ${textureNameMap.get(normal)}\n`;
-        }
-        glb.mats.push({
-            name: material.getName(),
-            info
-        });
+        node.setExtras({ id: uuidv4() });
     }
     for(const mesh of root.listMeshes()){
-        const primitives = mesh.listPrimitives().map((e => {
-            let indices = getIndices(e.getIndices());
-            indices = new Uint32Array(indices);
-
-            const positions = getAttr(e.getAttribute("POSITION")); // vec3
-            const normals = getAttr(e.getAttribute("NORMAL")); // vec3
-            const uvs = getAttr(e.getAttribute("TEXCOORD_0")); // vec2
-            const tangents = getAttr(e.getAttribute("TANGENT")); // vec4
-
-            const weights = getAttr(e.getAttribute("WEIGHTS_0")); // vec4
-            const joints = getAttrUint8(e.getAttribute("JOINTS_0")); // vec4
-            let invBindPoseMatrices: Float32Array = new Float32Array();
-            // many nodes use 1 mesh, those node share same skin
-            const parentNode = mesh.listParents().find(p => p instanceof Node);
-            const skin = parentNode?.getSkin();
-            if(skin){
-                invBindPoseMatrices = getAttr(skin.getInverseBindMatrices());
-            }
-            
-            const interleaveArray = createInterleaveArr(positions, normals, uvs, tangents);
-            const interleaveArrayWithJoint = extendInterleaveArr(
-                interleaveArray, weights, joints
-            );
-
-            const primitive: ShotEngineType.MeshAsset["primitives"][0] = {
-                type: joints.length === 0 ? "static" : "skin",
-                attribute: {
-                    interleaveArray: interleaveArrayWithJoint
-                },
-                indices,
-                drawMode: e.getMode(),
-                aabb: ShotEngineType.AABB.FromVertices([...positions]),
-                invBindPoseMatrices
-            }
-            return primitive;
-        }));
-        glb.meshes.push({
-            name: mesh.getName(),
-            meshAsset: { primitives } 
-        });
+        mesh.setExtras({ id: uuidv4() });
     }
-
-    const textureMap = new Map<Texture, number>(root.listTextures().map((e, idx) => [e, idx]));
-    const meshMap = new Map<Mesh, number>(root.listMeshes().map((e, idx) => [e, idx]));
-    const scene = root.getDefaultScene();
-    if(!scene) return glb;
-    for(const node of scene.listChildren()){
-        const prefabAsset: ShotEngineType.PrefabAsset = {
-            root: createGameObject(node, meshMap)
-        }
-        glb.prefabAssets.push(prefabAsset);
+    for(const material of root.listMaterials()){
+        material.setExtras({ id: uuidv4() });
     }
-
-    return glb;
-}
-export async function getImageFromGLB(filePath: string, imageName: string){
-     const io = new NodeIO()
-    .registerExtensions(ALL_EXTENSIONS)
-    .registerDependencies({});
-
-    const document = await io.read(filePath);
-    const root = document.getRoot();
-
-    for(let i = 0; i < root.listTextures().length; i++){
-        const texture = root.listTextures()[i];
-        const textureName = path.basename(filePath) + "/" + "tex" + i;
-        if(textureName === imageName){
-            const image = texture.getImage();
-            if(image) return image;
-        }
+    for(const texture of root.listTextures()){
+        texture.setExtras({ id: uuidv4() });
     }
-}
-function getAttr(attr?: Accessor | null){
-    const array = attr?.getArray();
-    let result: Float32Array;
-    if(!array){
-        result = new Float32Array();
-    }
-    else{
-        if(array instanceof Float32Array){
-            result = array;
-        }
-        else{
-            result = new Float32Array();
-        }
-    }
-    return result;
-}
-function getAttrUint8(attr?: Accessor | null){
-    const array = attr?.getArray();
-    let result: Uint8Array;
-    if(!array){
-        result = new Uint8Array();
-    }
-    else{
-        if(array instanceof Uint8Array){
-            result = array;
-        }
-        else{
-            result = new Uint8Array();
-        }
-    }
-    return result;
-}
-function getIndices(attr?: Accessor | null){
-    const array = attr?.getArray();
-    let result: Uint8Array | Uint16Array | Uint32Array;
-    if(!array){
-        result = new Uint32Array();
-    }
-    else{
-        if(
-            array instanceof Uint8Array ||
-            array instanceof Uint16Array ||
-            array instanceof Uint32Array
-        ){
-            result = array;
-        }
-        else{
-            result = new Uint32Array();
-        }
-    }
-    return result;
-}
-function createInterleaveArr(
-    positions: Float32Array, normals: Float32Array, uvs: Float32Array, tangents: Float32Array
-){
-    const vertexCount = positions.length / 3;
-    const normalCount = normals.length / 3;
-    const uvCount = uvs.length / 2;
-    const tangentCount = tangents.length / 4;
-    if(normalCount !== vertexCount) throw "normal count mismatch";
-    if(uvCount !== vertexCount) throw "uv count mismatch";
-    if(tangentCount !== vertexCount) throw "tangent count mismatch";
-
-    const interleaveBuffer = new Float32Array(vertexCount * (3 + 3 + 2 + 4));
-    for(let i = 0; i < vertexCount; i++){
-        const i3 = i * 3;
-        const i2 = i * 2;
-        const i4 = i * 4;
-        const i12 = i * 12;
-        interleaveBuffer[i12 + 0] = positions[i3 + 0];
-        interleaveBuffer[i12 + 1] = positions[i3 + 1];
-        interleaveBuffer[i12 + 2] = positions[i3 + 2];
-
-        interleaveBuffer[i12 + 3] = normals[i3 + 0];
-        interleaveBuffer[i12 + 4] = normals[i3 + 1];
-        interleaveBuffer[i12 + 5] = normals[i3 + 2];
-
-        interleaveBuffer[i12 + 6] = uvs[i2 + 0];
-        interleaveBuffer[i12 + 7] = uvs[i2 + 1];
-
-        interleaveBuffer[i12 + 8]  = tangents[i4 + 0];
-        interleaveBuffer[i12 + 9]  = tangents[i4 + 1];
-        interleaveBuffer[i12 + 10] = tangents[i4 + 2];
-        interleaveBuffer[i12 + 11] = tangents[i4 + 3];
-    }
-    return interleaveBuffer;
-}
-function extendInterleaveArr(
-    interleaveArray: Float32Array, // pos 3, normal 3, uv 2, tangent 4
-    weights: Float32Array, joints: Uint8Array // weight 4 float joint 4 uint
-){
-    if(joints.length === 0) return new Uint8Array(interleaveArray.buffer);
-    // create interleaveBuffer
-    // (pos 12bytes + normal 12bytes + uv 8bytes + tangent 16bytes) 48
-    // (weights 16bytes joint 4bytes) 20
-    const vertexCount = Math.floor(interleaveArray.length / 12);
-    const buffer = new ArrayBuffer(68 * vertexCount);
-    const floatView = new Float32Array(buffer);
-    const uint8View = new Uint8Array(buffer);
-    let floatIdx = 0;
-    let interleaveArrayIdx = 0;
-    let weightIdx = 0;
-    let jointIdx = 0;
-    for(let i = 0; i < vertexCount; i++){
-        floatView.set(
-            interleaveArray.subarray(interleaveArrayIdx, interleaveArrayIdx + 12),
-            floatIdx
-        );
-        interleaveArrayIdx += 12;
-        floatIdx += 12;
-
-        floatView.set(weights.subarray(weightIdx, weightIdx + 4), floatIdx);
-        weightIdx += 4;
-        floatIdx += 4;
-
-        uint8View.set(joints.subarray(jointIdx, jointIdx + 4), floatIdx * 4);
-        jointIdx += 4;
-        floatIdx += 1;
-    }
-    return new Uint8Array(buffer);
-}
-function createGameObject(node: Node, meshMap: Map<Mesh, number>){
-    node.getRotation()
-    let gameObject: ShotEngineType.GameObject = {
-        id: node.getExtras()["id"] as string,
-        name: node.getName(),
-        components: [],
-        childs: []
+    
+    // glb
+    const glb: GLB = {
+        meshAssets: new Map(),
+        materialAssets: new Map(),
+        imageAssets: new Map(),
+        prefabAssets: [],
     };
-    gameObject.components.push(
-        {
+
+    // helpers
+    let iTexName = 0;
+    let iMatName = 0;
+    let iMeshName = 0;
+    const getImage = async (texture: Texture) => {
+        const image = texture.getImage();
+        if(!image) throw "bad glb: missing texture image";
+        return image;
+    }
+    const getTextureName = (texture: Texture) => {
+        let name = texture.getName();
+        const ext = path.basename(texture.getMimeType());
+        if(name) return `${name}.${ext}`;
+        name = `image-${iTexName}.${ext}`;
+        iTexName++;
+        return name;
+    }
+    const tryCreateGLBImageAsset = async (texture?: Texture | null) => {
+        if(!texture) return;
+        const assetId = texture.getExtras()["id"] as string;
+        if(glb.imageAssets.has(assetId)) return assetId;
+        glb.imageAssets.set(assetId, {
+            name: getTextureName(texture),
+            raw: await getImage(texture)
+        });
+        return assetId;
+    }
+    const createMaterialAsset = async (material: Material) => {
+        const materialAsset: ShotEngineType.MaterialAsset = {
+            matType: "pbr",
+            culling: material.getDoubleSided() ? "none" : "back",
+            transparent: getTransparent(material.getAlphaMode()),
+            alphaCutoff: material.getAlphaCutoff(),
+            baseFactor: getVec4(material.getBaseColorFactor()),
+            baseTextureRef: await tryCreateGLBImageAsset(
+                material.getBaseColorTexture()
+            ),
+            roughnessFactor: material.getRoughnessFactor(),
+            metallicFactor: material.getMetallicFactor(),
+            metallicRoughnessTextureRef: await tryCreateGLBImageAsset(
+                material.getMetallicRoughnessTexture()
+            ),
+            normalScale: material.getNormalScale(),
+            normalTextureRef: await tryCreateGLBImageAsset(
+                material.getNormalTexture()
+            ),
+            emissitveFactor: getVec3(material.getEmissiveFactor()),
+            emissiveTextureRef: await tryCreateGLBImageAsset(
+                material.getEmissiveTexture()
+            ),
+            occlusionStrength: material.getOcclusionStrength(),
+            occlusionTextureRef: await tryCreateGLBImageAsset(
+                material.getOcclusionTexture()
+            ),
+        }
+        return materialAsset;
+    }
+    const getMaterialName = (material: Material) => {
+        let name = material.getName();
+        if(name) return `${name}.mat`;
+        name = `mat-${iMatName}.mat`;
+        iMatName++;
+        return name;
+    }
+    const tryCreateGLBMaterialAsset = async (material: Material) => {
+        const assetId = material.getExtras()["id"] as string;
+        if(glb.materialAssets.has(assetId)) return assetId;
+        glb.materialAssets.set(assetId, {
+            name: getMaterialName(material),
+            materialAsset: await createMaterialAsset(material),
+        });
+        return assetId;
+    }
+    const materialRefsFromMesh = async (mesh: Mesh) => {
+        const materialRefs: string[] = [];
+        for(const primitive of mesh.listPrimitives()){
+            const material = primitive.getMaterial();
+            if(!material) continue;
+            materialRefs.push(
+                await tryCreateGLBMaterialAsset(material)
+            );
+        }
+        return materialRefs;
+    }
+    const createMeshAsset = (mesh: Mesh, skin?: Skin | null) => {
+        const meshAsset: ShotEngineType.MeshAsset = {
+            primitives: [],
+            invBindPoseMatrices: new Float32Array()
+        }
+        for(const primitive of mesh.listPrimitives()){
+            const [indices, indexType] = getIndices(primitive);
+            const positions = getAttribute(primitive, "POSITION"); // vec3
+            const normals = getAttribute(primitive, "NORMAL"); // vec3
+            const uvs = getAttribute(primitive, "TEXCOORD_0"); // vec2
+            const tangents = getAttribute(primitive, "TANGENT"); // vec4
+            let attribute: ShotEngineType.MeshAsset["primitives"][0]["attribute"];
+            if(!skin){
+                const interleaveArray = createInterleaveArr(positions, normals, uvs, tangents);
+                attribute = {
+                    interleaveArray,
+                    position: positions,
+                    normal: normals,
+                    uv: uvs,
+                    tangent: tangents,
+                    joint: { type: -1, normalized: false },
+                    weight: { type: -1, normalized: false },
+                }
+            }
+            else{
+                const joints = getAttribute(primitive, "JOINTS_0"); // vec4
+                const weights = getAttribute(primitive, "WEIGHTS_0"); // vec4
+                const interleaveArray = createSkinInterleaveArr(
+                    positions, normals, uvs, tangents, joints, weights
+                );
+                attribute = {
+                    interleaveArray,
+                    position: positions,
+                    normal: normals,
+                    uv: uvs,
+                    tangent: tangents,
+                    joint: joints,
+                    weight: weights,
+                }
+            }
+            meshAsset.primitives.push({
+                indices,
+                attribute,
+                indexType,
+                drawMode: primitive.getMode(),
+                aabb: ShotEngineType.AABB.FromVertices([...new Float32Array(positions.buffer)]),
+            });
+        }
+        if(skin){
+            const invBindPoseMatrices = skin.getInverseBindMatrices()?.getArray();
+            if(!invBindPoseMatrices) throw "bad glb: missing invBindPoseMatrices"
+            meshAsset.invBindPoseMatrices = new Float32Array(invBindPoseMatrices); // copy
+        }
+        return meshAsset;
+    }
+    const getMeshName = (mesh: Mesh) => {
+        let name = mesh.getName();
+        if(name) return `${name}.mesh`;
+        name = `mesh-${iMeshName}.mesh`;
+        iMeshName++;
+        return name;
+    }
+    const tryCreateGLBMeshAsset = (mesh: Mesh, skin?: Skin | null) => {
+        const assetId = mesh.getExtras()["id"] as string;
+        if(glb.meshAssets.has(assetId)) return assetId;
+        glb.meshAssets.set(assetId, {
+            name: getMeshName(mesh),
+            meshAsset: createMeshAsset(mesh, skin),
+        });
+        return assetId;
+    }
+
+    // create components + gameobjects
+    const createDefaultTransformComponent = () => {
+        const transformComponent: ShotEngineType.Transform = {
             type: "Transform",
-            id: "",
+            id: uuidv4(),
+            pos: math.Vec3.FromValues(0, 0, 0),
+            rot: math.Quat.FromValues(0, 0, 0, 1),
+            scale: math.Vec3.FromValues(1, 1, 1),
+            editor: {
+                euler: quatToEulerYXZ([0, 0, 0, 1])
+            }
+        }
+        return transformComponent;
+    }
+    const createTransformComponent = (node: Node) => {
+        const transformComponent: ShotEngineType.Transform = {
+            type: "Transform",
+            id: uuidv4(),
             pos: math.Vec3.FromValues(
                 node.getTranslation()[0],
                 node.getTranslation()[1],
@@ -367,47 +261,201 @@ function createGameObject(node: Node, meshMap: Map<Mesh, number>){
                 euler: quatToEulerYXZ(node.getRotation())
             }
         }
-    );
-    const mesh = node.getMesh();
-    const skin = node.getSkin();
-    if(mesh && skin){
-        const rootJoint = skin.listJoints()[0];
-        if(rootJoint){
-            gameObject.components.push({
-                type: "Skeleton",
-                id: uuidv4(),
-                rootJointId: rootJoint.getExtras()["id"] as string
-            });
+        return transformComponent;
+    }
+    const createMeshRendererComponent = async (mesh: Mesh) => {
+        const meshRendererComponent: ShotEngineType.MeshRenderer = {
+            id: uuidv4(),
+            type: "MeshRenderer",
+            meshRef: tryCreateGLBMeshAsset(mesh),
+            materialRefs: await materialRefsFromMesh(mesh),
         }
+        return meshRendererComponent;
     }
-    if(mesh){
-        let meshIndex = meshMap.get(mesh);
-        if(meshIndex === undefined) meshIndex = -1;
-        gameObject.components.push(
-            {
-                type: "Mesh",
-                id: uuidv4(),
-                meshRef: meshIndex as any
-            },
-            {
-                type: "Shading",
-                shaderType: "simple",
-                id: uuidv4(),
-                culling: "none",
-                transparent: false,
-                color: math.Vec4.FromValues(1, 1, 1, 1)
-            }
-        );
+    const createSkinnedMeshRendererComponent = async (mesh: Mesh, skin: Skin) => {
+        const skinnedMeshRendererComponent: ShotEngineType.SkinnedMeshRenderer = {
+            id: uuidv4(),
+            type: "SkinnedMeshRenderer",
+            meshRef: tryCreateGLBMeshAsset(mesh, skin),
+            materialRefs: await materialRefsFromMesh(mesh),
+            jointRefs: skin.listJoints().map(j => j.getExtras()["id"] as string),
+        }
+        return skinnedMeshRendererComponent;
     }
-    for(const child of node.listChildren()){
-        gameObject.childs.push(
-            createGameObject(child, meshMap)
-        );
+    const createGameObject = async (node: Node) => {
+        const go: ShotEngineType.GameObject = {
+            id: node.getExtras()["id"] as string,
+            name: node.getName(),
+            components: [createTransformComponent(node)],
+            childs: []
+        }
+
+        // add mesh component
+        const mesh = node.getMesh();
+        if(mesh){
+            const skin = node.getSkin();
+            if(!skin) go.components.push(await createMeshRendererComponent(mesh));
+            else go.components.push(await createSkinnedMeshRendererComponent(mesh, skin));
+        }
+
+        // recursive
+        for(const childNode of node.listChildren()){
+            go.childs.push(await createGameObject(childNode));
+        }
+        return go;
     }
 
-    return gameObject;
+    // each scene -> one prefab
+    for(const scene of root.listScenes()){
+        const prefabAsset: ShotEngineType.PrefabAsset = {
+            root: {
+                id: uuidv4(),
+                name: scene.getName() || path.parse(filePath).name,
+                components: [createDefaultTransformComponent()],
+                childs: []
+            }
+        }
+        for(const node of scene.listChildren()){
+            const child = await createGameObject(node);
+            prefabAsset.root.childs.push(child);
+        }
+        glb.prefabAssets.push({
+            name: prefabAsset.root.name + ".prefab",
+            prefabAsset
+        });
+    }
+
+    return glb;
 }
 
+function getVec4(vec4: vec4){
+    return math.Vec4.FromValues(vec4[0], vec4[1], vec4[2], vec4[3]);
+}
+function getVec3(vec3: vec3){
+    return math.Vec3.FromValues(vec3[0], vec3[1], vec3[2]);
+}
+function getTransparent(alphaMode: GLTF.MaterialAlphaMode): ShotEngineType.BaseMaterialAsset["transparent"]{
+    if(alphaMode === "OPAQUE") return "opaque";
+    if(alphaMode === "MASK") return "mask";
+    if(alphaMode === "BLEND") return "blend";
+    return "opaque";
+}
+function getIndices(primitive: Primitive){
+    const accessor = primitive.getIndices();
+    if(!accessor) throw `bad glb: missing indices`;
+    const indices = accessor.getArray();
+    if(!indices) throw `bad glb: missing indices`;
+    return [new Uint8Array(indices), accessor.getComponentType() as number] as const;
+}
+function getAttribute(primitive: Primitive, name: string){
+    const accessor = primitive.getAttribute(name);
+    if(!accessor) throw `bad glb: missing attribute ${name}`;
+    const array = accessor.getArray();
+    if(!array) throw `bad glb: missing attribute ${name}`;
+    return {
+        buffer: new Uint8Array(array.buffer),
+        itemSize: accessor.getElementSize() * accessor.getComponentSize(),
+        type: accessor.getComponentType() as number,
+        normalized: accessor.getNormalized()
+    };
+}
+function createInterleaveArr(
+    positions: ReturnType<typeof getAttribute>,
+    normals: ReturnType<typeof getAttribute>,
+    uvs: ReturnType<typeof getAttribute>,
+    tangents: ReturnType<typeof getAttribute>,
+){
+    const vertexCount = positions.buffer.byteLength / positions.itemSize;
+    const normalCount = normals.buffer.byteLength / normals.itemSize;
+    const uvCount = uvs.buffer.byteLength / uvs.itemSize;
+    const tangentCount = tangents.buffer.byteLength / tangents.itemSize;
+    if(normalCount !== vertexCount) throw "normal count mismatch";
+    if(uvCount !== vertexCount) throw "uv count mismatch";
+    if(tangentCount !== vertexCount) throw "tangent count mismatch";
+
+    const buffer = new ArrayBuffer(
+        positions.buffer.byteLength + normals.buffer.byteLength + 
+        uvs.buffer.byteLength + tangents.buffer.byteLength
+    );
+    const interleaveBuffer = new Uint8Array(buffer);
+    let itemOffset = 0;
+    let posOffset = 0;
+    let normalOffset = 0;
+    let uvOffset = 0;
+    let tangentOffset = 0;
+    for(let i = 0; i < vertexCount; i++){
+        interleaveBuffer.set(positions.buffer.subarray(posOffset, posOffset + positions.itemSize), itemOffset);
+        itemOffset += positions.itemSize;
+        interleaveBuffer.set(normals.buffer.subarray(normalOffset, normalOffset + normals.itemSize), itemOffset);
+        itemOffset += normals.itemSize;
+        interleaveBuffer.set(uvs.buffer.subarray(uvOffset, uvOffset + uvs.itemSize), itemOffset);
+        itemOffset += uvs.itemSize;
+        interleaveBuffer.set(tangents.buffer.subarray(tangentOffset, tangentOffset + tangents.itemSize), itemOffset);
+        itemOffset += tangents.itemSize;
+
+        posOffset += positions.itemSize;
+        normalOffset += normals.itemSize;
+        uvOffset += uvs.itemSize;
+        tangentOffset += tangents.itemSize;
+    }
+    return interleaveBuffer;
+}
+function createSkinInterleaveArr(
+    positions: ReturnType<typeof getAttribute>,
+    normals: ReturnType<typeof getAttribute>,
+    uvs: ReturnType<typeof getAttribute>,
+    tangents: ReturnType<typeof getAttribute>,
+    joints: ReturnType<typeof getAttribute>,
+    weights: ReturnType<typeof getAttribute>,
+){
+    const vertexCount = positions.buffer.byteLength / positions.itemSize;
+    const normalCount = normals.buffer.byteLength / normals.itemSize;
+    const uvCount = uvs.buffer.byteLength / uvs.itemSize;
+    const tangentCount = tangents.buffer.byteLength / tangents.itemSize;
+    const jointCount = joints.buffer.byteLength / joints.itemSize;
+    const weightCount = weights.buffer.byteLength / weights.itemSize;
+    if(normalCount !== vertexCount) throw "normal count mismatch";
+    if(uvCount !== vertexCount) throw "uv count mismatch";
+    if(tangentCount !== vertexCount) throw "tangent count mismatch";
+    if(jointCount !== vertexCount) throw "joint count mismatch";
+    if(weightCount !== vertexCount) throw "weight count mismatch";
+
+    const buffer = new ArrayBuffer(
+        positions.buffer.byteLength + normals.buffer.byteLength + 
+        uvs.buffer.byteLength + tangents.buffer.byteLength +
+        joints.buffer.byteLength + weights.buffer.byteLength
+    );
+    const interleaveBuffer = new Uint8Array(buffer);
+    let itemOffset = 0;
+    let posOffset = 0;
+    let normalOffset = 0;
+    let uvOffset = 0;
+    let tangentOffset = 0;
+    let jointOffset = 0;
+    let weightOffset = 0;
+    for(let i = 0; i < vertexCount; i++){
+        interleaveBuffer.set(positions.buffer.subarray(posOffset, posOffset + positions.itemSize), itemOffset);
+        itemOffset += positions.itemSize;
+        interleaveBuffer.set(normals.buffer.subarray(normalOffset, normalOffset + normals.itemSize), itemOffset);
+        itemOffset += normals.itemSize;
+        interleaveBuffer.set(uvs.buffer.subarray(uvOffset, uvOffset + uvs.itemSize), itemOffset);
+        itemOffset += uvs.itemSize;
+        interleaveBuffer.set(tangents.buffer.subarray(tangentOffset, tangentOffset + tangents.itemSize), itemOffset);
+        itemOffset += tangents.itemSize;
+        interleaveBuffer.set(joints.buffer.subarray(jointOffset, jointOffset + joints.itemSize), itemOffset);
+        itemOffset += joints.itemSize;
+        interleaveBuffer.set(weights.buffer.subarray(weightOffset, weightOffset + weights.itemSize), itemOffset);
+        itemOffset += weights.itemSize;
+
+        posOffset += positions.itemSize;
+        normalOffset += normals.itemSize;
+        uvOffset += uvs.itemSize;
+        tangentOffset += tangents.itemSize;
+        jointOffset += joints.itemSize;
+        weightOffset += weights.itemSize;
+    }
+    return interleaveBuffer;
+}
 function quatToEulerYXZ(q: [number, number, number, number]) {
   const [x, y, z, w] = q;
 

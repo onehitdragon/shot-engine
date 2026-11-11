@@ -3,7 +3,7 @@ import { useAppSelector } from "../../../../global-state/hooks";
 import { getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
 import { WebglRenderer } from "../../helpers/resource-manager-helper/WebglRenderer";
 import { selectNodeRecord, selectNodes, type NodeState } from "../../../../global-state/slices/go-tree-slice";
-import { ComponentHelper, type Component, type Mesh, type MeshAsset, type Shading } from "@shot-engine/types";
+import { ComponentHelper, type Component, type MeshAsset } from "@shot-engine/types";
 import { AssetCache } from "../../helpers/asset-cache/asset-cache";
 import { LightInfo } from "../../helpers/asset-cache/LightInfo";
 import { SkyBoxInfo } from "../../helpers/asset-cache/SkyBoxInfo";

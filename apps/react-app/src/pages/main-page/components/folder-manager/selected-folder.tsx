@@ -1,9 +1,10 @@
 import { FolderPlusIcon, FolderIcon, DocumentTextIcon,
     ArrowDownOnSquareIcon, PhotoIcon, LanguageIcon,
     GlobeAltIcon,
-    TruckIcon, XCircleIcon,
-    ArrowTurnDownRightIcon, PuzzlePieceIcon,
-    Square3Stack3DIcon, AdjustmentsVerticalIcon
+    XCircleIcon,
+    PuzzlePieceIcon,
+    Square3Stack3DIcon, AdjustmentsVerticalIcon,
+    LifebuoyIcon
  } from "@heroicons/react/24/solid";
 import { chooseEntry, selectFocusedEntry, toggleExpandDirectory, unfocusEntry, focusEntry, type FolderManager, selectEntryByPath, selectSelectedEntry } from "../../../../global-state/slices/folder-manager-slice";
 import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
@@ -97,15 +98,14 @@ type FileEntryProps = {
 }
 function FileEntry(props: FileEntryProps){
     const { file, isFoucused } = props;
-    const [assetInfos, setAssetInfos] = useState<AssetManager.AssetInfo[]>([]);
-    const [expand, setExpand] = useState(false);
+    const [assetInfo, setAssetInfo] = useState<AssetManager.AssetInfo>();
 
     useEffect(() => {
         let cancelled = false;
         const load = async () => {
-            const assetInfos = await window.api.assetManager.getAssetInfos(file.path);
+            const assetInfo = await window.api.assetManager.getAssetInfoFromPath(file.path);
             if(cancelled) return;
-            setAssetInfos(assetInfos);
+            setAssetInfo(assetInfo);
         }
         load();
         return () => {
@@ -116,6 +116,9 @@ function FileEntry(props: FileEntryProps){
     function iconFromType(type: AssetType){
         if(type === "image"){
             return <PhotoIcon className='size-4 text-white'/>
+        }
+        if(type === "material"){
+            return <LifebuoyIcon className='size-4 text-pink-500'/>
         }
         else if(type === "mesh"){
             return <GlobeAltIcon className='size-4 text-green-500'/>
@@ -134,14 +137,11 @@ function FileEntry(props: FileEntryProps){
         }
     }
     const iconGenerator = () => {
-        if(assetInfos.length === 0){
+        if(assetInfo){
+            return iconFromType(assetInfo.type);
+        }
+        else{
             return <XCircleIcon className='size-4 text-red-400'/>
-        }
-        if(assetInfos.length === 1){
-            return iconFromType(assetInfos[0].type);
-        }
-        if(assetInfos.length > 1){
-            return <TruckIcon className='size-4 text-green-500'/> 
         }
     }
 
@@ -149,36 +149,13 @@ function FileEntry(props: FileEntryProps){
         <div className="flex flex-1 flex-col">
             <div className={`flex ${!isFoucused ? "hover:opacity-70" : "bg-gray-600"}`}
                 onClick={() => {
-                    setExpand(!expand);
-                    if(assetInfos.length === 1) props.onClick(assetInfos[0]);
+                    if(assetInfo) props.onClick(assetInfo);
                 }}>
                 {iconGenerator()}
                 <span className="text-sm ml-2 text-white select-none">
                     {file.name}
                 </span>
             </div>
-            {
-                assetInfos.length > 1 && expand &&
-                <div className="flex flex-col ml-2">
-                    {
-                        assetInfos.map((assetInfo) => {
-                            return <div
-                                key={assetInfo.uuid}
-                                className={`flex hover:opacity-70`}
-                                onClick={() => {
-                                    props.onClick(assetInfo);
-                                }}
-                            >
-                                <ArrowTurnDownRightIcon className='size-4 text-white'/>
-                                {iconFromType(assetInfo.type)}
-                                <span className="text-sm ml-2 text-white select-none">
-                                    {assetInfo.name}
-                                </span>
-                            </div>
-                        })
-                    }
-                </div>
-            }
         </div>
     );
 }

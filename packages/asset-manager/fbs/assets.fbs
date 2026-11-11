@@ -1,5 +1,6 @@
 include "assets/image-asset.fbs";
 include "assets/mesh-asset.fbs";
+include "assets/material-asset.fbs";
 include "assets/prefab-asset.fbs";
 include "assets/scene-asset.fbs";
 include "assets/hdr-asset.fbs";

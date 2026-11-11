@@ -95,7 +95,7 @@ export class AABB{
         this.min = min;
         this.max = max;
     }
-    public static FromVertices(values: number[]){
+    public static FromVertices(values: Float32Array | number[]){
         if(values.length % 3 !== 0) throw "values is multiply of 3";
         const min = Vec3.FromValues(Infinity, Infinity, Infinity);
         const max = Vec3.FromValues(-Infinity, -Infinity, -Infinity);
@@ -149,10 +149,18 @@ export type GizmoTransform = {
     rot: Quat,
     scale: Vec3
 }
-export type Mesh = {
-    type: "Mesh",
+export type MeshRenderer = {
+    type: "MeshRenderer",
     id: string,
-    meshRef: string
+    meshRef?: string, // mesh asset
+    materialRefs: (string | undefined)[], // mat assets
+}
+export type SkinnedMeshRenderer = {
+    type: "SkinnedMeshRenderer",
+    id: string,
+    meshRef?: string, // mesh asset
+    materialRefs: (string | undefined)[], // mat assets
+    jointRefs: (string | undefined)[], // joint gameobjects
 }
 export class MeshHelper{
     private static GetTangent(
@@ -256,50 +264,6 @@ export class MeshHelper{
         return newInterleaveArray;
     }
 }
-export type ShadingBase = {
-    type: "Shading",
-    id: string,
-    culling: "none" | "back" | "front",
-    transparent: boolean
-}
-export type SimpleShading = ShadingBase & {
-    shaderType: "simple",
-    color: Vec4
-}
-export type PhongShading = ShadingBase & {
-    shaderType: "phong",
-    diffuse: {
-        type: "image",
-        imageRef: string
-    } | {
-        type: "color",
-        color: Vec3
-    },
-    specular: Vec3,
-    shininess: number
-}
-export type ImageOrColor = { type: "image"; imageRef: string } | { type: "color"; color: Vec3 };
-export type ImageOrValue = { type: "image"; imageRef: string } | { type: "value"; value: number };
-export type OptionalImage = { type: "image"; imageRef: string } | { type: "none" };
-export type Emissive = {
-    color: ImageOrColor,
-    intensity: number
-}
-export type PbrShading = ShadingBase & {
-    shaderType: "pbr",
-    diffuse: ImageOrColor,
-    metallic: ImageOrValue,
-    roughness: ImageOrValue,
-    reflectance: number,
-    emissive: Emissive,
-    normal: OptionalImage,
-    ao: OptionalImage
-}
-export type GizmoShading = ShadingBase & {
-    shaderType: "gizmo",
-    color: Vec3
-}
-export type Shading = SimpleShading | PhongShading | PbrShading | GizmoShading;
 export type LightShadow = {
     enable: boolean,
     bias: number,
@@ -354,8 +318,8 @@ export type UILayout = {
     css: TextOrString,
     js: TextOrString
 }
-export type Component = Transform | GizmoTransform | Mesh | Shading | Light | Camera | 
-    SkyBox | Skeleton | UILayout;
+export type Component = Transform | GizmoTransform | MeshRenderer | SkinnedMeshRenderer | 
+    Light | Camera | SkyBox | Skeleton | UILayout;
 export class ComponentHelper{
     public static FindComponentByType<T extends Component["type"]>(
         components: Component[],

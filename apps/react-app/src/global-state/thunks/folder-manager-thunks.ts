@@ -159,7 +159,7 @@ export const folderCreatedThunk = createAsyncThunk
 export const fileImportedThunk = createAsyncThunk
 <
     {
-        copyCreated: DirectoryTree.File
+        entries: DirectoryTree.Entry[]
     },
     { destFolder: string },
     {
@@ -179,19 +179,11 @@ export const fileImportedThunk = createAsyncThunk
             const importPath = await window.api.file.open();
             if(!importPath) throw "need an import path";
 
-            const importName = await window.fsPath.basename(importPath);
-            const destPath = await window.fsPath.join(destFolder, importName);
-            await window.api.file.copy(importPath, destPath);
-            const copyCreated: DirectoryTree.File = {
-                type: "File",
-                name: importName,
-                path: destPath
-            }
-
-            await window.api.assetManager.rescan();
+            await window.api.assetManager.importFile(importPath, destFolder);
+            const entries = await window.api.folder.load(projectPaths.project);
 
             return {
-                copyCreated
+                entries
             }
         }
         catch(err){

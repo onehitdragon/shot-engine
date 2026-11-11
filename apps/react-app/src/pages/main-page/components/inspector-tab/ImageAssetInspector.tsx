@@ -26,6 +26,7 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
             return {
                 type: "image",
                 imageType: "NormalMap",
+                flipY: false,
                 wrapMode: "REPEAT",
                 filterMode: "BILINEAR",
                 generateMipmaps: true,
@@ -34,6 +35,7 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
         return {
             type: "image",
             imageType: "Texture",
+            flipY: false,
             wrapMode: "REPEAT",
             filterMode: "BILINEAR",
             generateMipmaps: true,
@@ -144,6 +146,14 @@ function TextureModifier(props: {
                 }}
             />
             <CheckBox
+                label="Flip Y"
+                value={textureProperty.flipY}
+                onChange={(value) => {
+                    texturePropertyClone.flipY = value;
+                    onChange(texturePropertyClone);
+                }}
+            />
+            <CheckBox
                 label="Generate mipmaps"
                 value={textureProperty.generateMipmaps}
                 onChange={(value) => {
@@ -160,7 +170,7 @@ function TextureModifier(props: {
                 }}
             />
             <TextRow label="Has alpha"
-                content={`${imageAsset.hasAlpha && imageAsset.alphaType}`}
+                content={`${imageAsset.hasAlpha}`}
             />
         </>
     );
@@ -198,6 +208,14 @@ function NormalMapModifier(props: {
                 ]}
                 onChange={(value) => {
                     texturePropertyClone.filterMode = value;
+                    onChange(texturePropertyClone);
+                }}
+            />
+            <CheckBox
+                label="Flip Y"
+                value={textureProperty.flipY}
+                onChange={(value) => {
+                    texturePropertyClone.flipY = value;
                     onChange(texturePropertyClone);
                 }}
             />

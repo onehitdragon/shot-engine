@@ -36,30 +36,31 @@ export async function pack(projectSettingAssetUuid: string){
       nodeRecur(prefabAsset.root);
     }
     else{
-      for(const component of node.components){
-        if(component.type === "Mesh"){
-          const { meshRef } = component;
-          addDependency(meshRef, "mesh");
-        }
-        if(component.type === "Shading" && component.shaderType === "pbr"){
-          const { diffuse, metallic, roughness, normal, ao } = component;
-          if(diffuse.type === "image"){
-            addDependency(diffuse.imageRef, "image");
-          }
-          if(metallic.type === "image"){
-            addDependency(metallic.imageRef, "image");
-          }
-          if(roughness.type === "image"){
-            addDependency(roughness.imageRef, "image");
-          }
-          if(normal.type === "image"){
-            addDependency(normal.imageRef, "image");
-          }
-          if(ao.type === "image"){
-            addDependency(ao.imageRef, "image");
-          }
-        }
-      }
+      // todo
+      // for(const component of node.components){
+      //   if(component.type === "Mesh"){
+      //     const { meshRef } = component;
+      //     addDependency(meshRef, "mesh");
+      //   }
+      //   if(component.type === "Shading" && component.shaderType === "pbr"){
+      //     const { diffuse, metallic, roughness, normal, ao } = component;
+      //     if(diffuse.type === "image"){
+      //       addDependency(diffuse.imageRef, "image");
+      //     }
+      //     if(metallic.type === "image"){
+      //       addDependency(metallic.imageRef, "image");
+      //     }
+      //     if(roughness.type === "image"){
+      //       addDependency(roughness.imageRef, "image");
+      //     }
+      //     if(normal.type === "image"){
+      //       addDependency(normal.imageRef, "image");
+      //     }
+      //     if(ao.type === "image"){
+      //       addDependency(ao.imageRef, "image");
+      //     }
+      //   }
+      // }
       for(const child of node.childs){
         nodeRecur(child);
       }

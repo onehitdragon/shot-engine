@@ -7,9 +7,9 @@ import * as schema from "./schema.js";
 import { createDBIfNotExist, FileRow, AssetRow, closeDB } from "./db.js";
 import * as ShotEngineType from "@shot-engine/types";
 import { AssetManager } from "@shot-engine/types";
-import { getImageFromGLB, readGLBFile } from './glb.js';
-import { readFontAsset, readHdrAsset, readImageAsset, readMeshAsset, readPrefabAsset, readProjectSettingAsset, readSceneAsset, saveFontAssetBinary, saveHdrAssetBinary, saveImageAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf.js';
-import { createDefaultConeAssetMesh, createDefaultCubeAssetMesh, createDefaultCylinderAssetMesh, createDefaultSphereAssetMesh } from './createDefaultAssetMesh.js';
+import { readGLBFile } from './glb.js';
+import { readFontAsset, readHdrAsset, readImageAsset, readMaterialAsset, readMeshAsset, readPrefabAsset, readProjectSettingAsset, readSceneAsset, saveFontAssetBinary, saveHdrAssetBinary, saveImageAssetBinary, saveMaterialAssetBinary, saveMeshAssetBinary, savePrefabAssetBinary } from './flatbf.js';
+import { createDefaultConeAssetMesh, createDefaultCubeAssetMesh, createDefaultCylinderAssetMesh, createDefaultSimpleMaterialAsset, createDefaultSphereAssetMesh } from './createDefaultAssetMesh.js';
 import * as assetBakers from './assetBakers.js';
 import { createKTXImageAsset } from './helpers/create-ktx-image-asset.js';
 
@@ -35,62 +35,63 @@ export function config(config: AssetManager.Config){
     assetsQuery = assetsQ;
     configed = true;
 }
-
 export function getConfig(){
     return {
         ASSET_DIR, ASSET_DEFAULT_DIR, ASSET_GENERATED_DIR, BUILD_DIR
     }
 }
-
 export function close(){
     closeDB();
 }
 
+// path helpers
+function getAssetGenPath(assetUuid: string){
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetUuid);
+    return genAssetPath;
+}
+
 export function query(){
-    function getAssetInfosFromPath(filePath: string){
+    function getFileIdFromPath(filePath: string){
         const relativePath = path.relative(ASSET_DIR, filePath);
-        const assetInfos: AssetManager.AssetInfo[] = [];
         const fileRow = filesQuery.getByPath.get(relativePath);
-        if(!fileRow){
-            return assetInfos;
-        };
-        const assetRows = assetsQuery.getByFileId.all(fileRow.uuid);
-        for(const assetRow of assetRows){
-            assetInfos.push({
-                uuid: assetRow.uuid,
-                name: assetRow.name,
-                type: assetRow.type,
-                hash: assetRow.hash,
-                property: assetRow.property,
-                allowModify: assetRow.modifiable > 0
-            });
-        }
-        return assetInfos;
+        return fileRow?.uuid;
     }
-    function getAssetInfosFromRelativePath(relativePath: string){
-        const assetInfos: AssetManager.AssetInfo[] = [];
+    function getAssetInfoFromPath(filePath: string){
+        const relativePath = path.relative(ASSET_DIR, filePath);
         const fileRow = filesQuery.getByPath.get(relativePath);
-        if(!fileRow){
-            return assetInfos;
-        };
-        const assetRows = assetsQuery.getByFileId.all(fileRow.uuid);
-        for(const assetRow of assetRows){
-            assetInfos.push({
-                uuid: assetRow.uuid,
-                name: assetRow.name,
-                type: assetRow.type,
-                hash: assetRow.hash,
-                property: assetRow.property,
-                allowModify: assetRow.modifiable > 0
-            });
-        }
-        return assetInfos;
-    }
-    function getAssetInfoFromUuid(uuid: string){
-        const assetRow = assetsQuery.getById.get(uuid);
+        if(!fileRow) return;
+        const assetRow = assetsQuery.getByFileId.get(fileRow.uuid);
         if(!assetRow) return;
         const assetInfo: AssetManager.AssetInfo = {
-            uuid: assetRow.uuid,
+            uuid: assetRow.fileId,
+            name: assetRow.name,
+            type: assetRow.type,
+            hash: assetRow.hash,
+            property: assetRow.property,
+            allowModify: assetRow.modifiable > 0
+        }
+        return assetInfo;
+    }
+    function getAssetInfoFromRelativePath(relativePath: string){
+        const fileRow = filesQuery.getByPath.get(relativePath);
+        if(!fileRow) return;
+        const assetRow = assetsQuery.getByFileId.get(fileRow.uuid);
+        if(!assetRow) return;
+        const assetInfo: AssetManager.AssetInfo = {
+            uuid: assetRow.fileId,
+            name: assetRow.name,
+            type: assetRow.type,
+            hash: assetRow.hash,
+            property: assetRow.property,
+            allowModify: assetRow.modifiable > 0
+        }
+        return assetInfo;
+    }
+    function getAssetInfoFromUuid(uuid: string){
+        const assetRow = assetsQuery.getByFileId.get(uuid);
+        if(!assetRow) return;
+        const assetInfo: AssetManager.AssetInfo = {
+            uuid: assetRow.fileId,
             name: assetRow.name,
             type: assetRow.type,
             hash: assetRow.hash,
@@ -104,7 +105,7 @@ export function query(){
         const assetRows = assetsQuery.getByType.all(type);
         for(const assetRow of assetRows){
             assetInfos.push({
-                uuid: assetRow.uuid,
+                uuid: assetRow.fileId,
                 name: assetRow.name,
                 type: assetRow.type,
                 hash: assetRow.hash,
@@ -121,6 +122,9 @@ export function query(){
         }
         if(type === "image"){
             return readImageAsset(filePath);
+        }
+        if(type === "material"){
+            return readMaterialAsset(filePath);
         }
         if(type === "mesh"){
             return readMeshAsset(filePath);
@@ -146,14 +150,14 @@ export function query(){
     }
     async function updateAssetPropertyByUuid(uuid: string, property: string){
         assetsQuery.updateProperty.run(property, uuid);
-        const assetRow = assetsQuery.getById.get(uuid);
+        const assetRow = assetsQuery.getByFileId.get(uuid);
         if(!assetRow) throw "missing assetRow";
         const fileRow = filesQuery.getById.get(assetRow.fileId);
         if(!fileRow) throw "missing fileRow";
         await genAssetWithFile(fileRow, assetRow, assetRow.type);
     }
     function getFilePathFromAssetId(uuid: string){
-        const assetRow = assetsQuery.getById.get(uuid);
+        const assetRow = assetsQuery.getByFileId.get(uuid);
         if(!assetRow) return;
         const fileRow = filesQuery.getById.get(assetRow.fileId);
         if(!fileRow) return;
@@ -162,12 +166,12 @@ export function query(){
         return fullPath;
     }
     function addBakedHdrAsset(uuid: string, hdrAsset: ShotEngineType.HdrAsset){
-        const assetRow = assetsQuery.getById.get(uuid);
+        const assetRow = assetsQuery.getByFileId.get(uuid);
         if(!assetRow || assetRow.type !== "hdr") return;
         genHdrAsset(assetRow, hdrAsset);
     }
     async function bakeFontAsset(uuid: string, fontAssetBakeSetting: ShotEngineType.FontAssetBakeSetting){
-        const assetRow = assetsQuery.getById.get(uuid);
+        const assetRow = assetsQuery.getByFileId.get(uuid);
         if(!assetRow || assetRow.type !== "font") throw "bad asset";
         const filePath = getFilePathFromAssetId(uuid);
         if(!filePath) throw "cant find file path"
@@ -175,8 +179,9 @@ export function query(){
         genFontAsset(assetRow, fontAsset);
     }
     return {
-        getAssetInfosFromPath,
-        getAssetInfosFromRelativePath,
+        getFileIdFromPath,
+        getAssetInfoFromPath,
+        getAssetInfoFromRelativePath,
         getAssetInfoFromUuid,
         getAssetInfosFromType,
         getAssetFromUuid,
@@ -187,10 +192,94 @@ export function query(){
     }
 }
 
+export function tool(){
+    async function importFile(importPath: string, destFolder: string){
+        if(isGLBFile(importPath)){
+            const destGlbFolder = path.join(destFolder, path.parse(importPath).name + "-glb");
+            await fs.ensureDir(destGlbFolder);
+
+            // extract files from glb and save
+            const glb = await readGLBFile(importPath);
+            const { imageAssets, materialAssets, meshAssets, prefabAssets } = glb;
+            const glbIdToPath = new Map<string, string>();
+            for(const [glbId, glbImage] of imageAssets){
+                const imagePath = path.join(destGlbFolder, glbImage.name);
+                await fs.writeFile(imagePath, glbImage.raw);
+                glbIdToPath.set(glbId, imagePath);
+            }
+            for(const [glbId, glbMat] of materialAssets){
+                const materialPath = path.join(destGlbFolder, glbMat.name);
+                saveMaterialAssetBinary(glbMat.materialAsset, materialPath);
+                glbIdToPath.set(glbId, materialPath);
+            }
+            for(const [glbId, glbMesh] of meshAssets){
+                const meshPath = path.join(destGlbFolder, glbMesh.name);
+                saveMeshAssetBinary(glbMesh.meshAsset, meshPath);
+                glbIdToPath.set(glbId, meshPath);
+            }
+            for(const glbPrefab of prefabAssets){
+                const prefabPath = path.join(destGlbFolder, glbPrefab.name);
+                savePrefabAssetBinary(glbPrefab.prefabAsset, prefabPath);
+            }
+            await rescan();
+
+            // link assets
+            const glbIdToFileId = (glbId?: string) => {
+                if(!glbId) return glbId;
+                const filePath = glbIdToPath.get(glbId);
+                if(!filePath) return;
+                return query().getFileIdFromPath(filePath);
+            }
+            for(const [_, glbMat] of materialAssets){
+                const { materialAsset } = glbMat;
+                if(materialAsset.matType === "pbr"){
+                    materialAsset.baseTextureRef = glbIdToFileId(materialAsset.baseTextureRef);
+                    materialAsset.metallicRoughnessTextureRef = glbIdToFileId(materialAsset.metallicRoughnessTextureRef);
+                    materialAsset.normalTextureRef = glbIdToFileId(materialAsset.normalTextureRef);
+                    materialAsset.emissiveTextureRef = glbIdToFileId(materialAsset.emissiveTextureRef);
+                    materialAsset.occlusionTextureRef = glbIdToFileId(materialAsset.occlusionTextureRef);
+                }
+                const materialPath = path.join(destGlbFolder, glbMat.name);
+                saveMaterialAssetBinary(glbMat.materialAsset, materialPath);
+            }
+            const goLooper = (go: ShotEngineType.GameObject) => {
+                for(const component of go.components){
+                    if(component.type === "MeshRenderer" || component.type === "SkinnedMeshRenderer"){
+                        component.meshRef = glbIdToFileId(component.meshRef);
+                        for(let i = 0; i < component.materialRefs.length; i++){
+                            component.materialRefs[i] = glbIdToFileId(component.materialRefs[i]);
+                        }
+                    }
+                }
+                for(const child of go.childs){
+                    if(ShotEngineType.isGameObjectPrefab(child)) continue;
+                    goLooper(child);
+                }
+            }
+            for(const glbPrefab of prefabAssets){
+                goLooper(glbPrefab.prefabAsset.root);
+                const prefabPath = path.join(destGlbFolder, glbPrefab.name);
+                savePrefabAssetBinary(glbPrefab.prefabAsset, prefabPath);
+            }
+            await rescan();
+        }
+        else{
+            const importName = path.basename(importPath);
+            const destPath = path.join(destFolder, importName);
+            await fs.copyFile(importPath, destPath);
+            await rescan();
+        }
+    }
+    return {
+        importFile
+    }
+}
+
 export async function rescan(){
     if(!configed) return;
     await ensureDefaultFiles();
 
+    // using (path and hash) to scan folder
     /** check db first
      * loop db files
      * check the db path vs the real path(exist or not)
@@ -222,6 +311,7 @@ export async function rescan(){
 
     /** group db files with hash
      * now fileRowsDB is (real hash, real path)
+     * many files -> one hash
      */
     const hashToFileRows = new Map<string, FileRow[]>();
     for(const fileRow of fileRowsDB){
@@ -234,12 +324,13 @@ export async function rescan(){
     const entries = fsWalk.walkSync(ASSET_DIR);
     for(const entry of entries){
         if(entry.dirent.isDirectory()) continue;
+        const isDefaultFile = entry.path.startsWith(ASSET_DEFAULT_DIR);
         const entryRelativePath = path.relative(ASSET_DIR, entry.path);
         const hash = hashCache.get(entry.path) || await hashFile(entry.path);
         let fileRows = hashToFileRows.get(hash);
-        if(!fileRows){
+        if(!fileRows){ // is new hash or new file
             const fileRow: FileRow = {
-                uuid: uuidv4(),
+                uuid: isDefaultFile ? path.basename(entry.path) : uuidv4(),
                 hash,
                 path: entryRelativePath,
                 dirty: true
@@ -251,7 +342,7 @@ export async function rescan(){
         else if(!fileRows.some(e => e.path === entryRelativePath)){
             let updated = false;
             for(const fileRow of fileRows){
-                if(!fileRow.path){
+                if(!fileRow.path){ // rename case, move case
                     filesQuery.updatePath.run(entryRelativePath, fileRow.uuid);
                     fileRow.path = entryRelativePath;
                     fileRow.dirty = true;
@@ -259,9 +350,9 @@ export async function rescan(){
                     break;
                 }
             }
-            if(!updated){
+            if(!updated){ // new file
                 const fileRow: FileRow = {
-                    uuid: uuidv4(),
+                    uuid: isDefaultFile ? path.basename(entry.path) : uuidv4(),
                     hash,
                     path: entryRelativePath,
                     dirty: true
@@ -276,60 +367,97 @@ export async function rescan(){
     // console.log(performance.now() - now, "ms");
     // now = performance.now();
 
-    const assetRowsDB = assetsQuery.gets.all() as AssetRow[];
-    const fileIdToAssetRows = new Map<string, AssetRow[]>();
+    const assetRowsDB = assetsQuery.gets.all();
+    const fileIdToAssetRow = new Map<string, AssetRow>(); // one file -> one asset
     for(const assetRow of assetRowsDB){
-        const exist = fileIdToAssetRows.get(assetRow.fileId);
-        if(!exist) fileIdToAssetRows.set(assetRow.fileId, [assetRow]);
-        else exist.push(assetRow);
+        fileIdToAssetRow.set(assetRow.fileId, assetRow);
     }
     
     for(const fileRow of fileRowsDB){
-        const assetRows = fileIdToAssetRows.get(fileRow.uuid) || [];
-        if(!fileRow.path){
-            filesQuery.delete.run(fileRow.uuid);
-            for(const assetRow of assetRows) deleteGenAsset(assetRow.uuid);
+        let assetRow = fileIdToAssetRow.get(fileRow.uuid); // asset of this file
+        if(!fileRow.path){ // file removed
+            filesQuery.delete.run(fileRow.uuid); // also auto delete asset row link to this file
+            if(assetRow) deleteGenAsset(assetRow.fileId); // delete generated resource
+            continue;
         }
-        else if(fileRow.dirty){
+        if(fileRow.dirty){
+            // sync asset rows
             if(isImageFile(fileRow.path)){
-                await syncNotContainer(fileRow, assetRows, "image");
+                assetRow = await syncAssetRow(fileRow, assetRow, "image");
             }
-            else if(isGLBFile(fileRow.path)){
-                await syncGLBContainer(fileRow, assetRows);
+            else if(isMaterialFile(fileRow.path)){
+                assetRow = await syncAssetRow(fileRow, assetRow, "material");
             }
             else if(isMeshFile(fileRow.path)){
-                await syncNotContainer(fileRow, assetRows, "mesh");
+                assetRow = await syncAssetRow(fileRow, assetRow, "mesh");
             }
             else if(isPrefabFile(fileRow.path)){
-                await syncNotContainer(fileRow, assetRows, "prefab");
+                assetRow = await syncAssetRow(fileRow, assetRow, "prefab");
             }
             else if(isSceneFile(fileRow.path)){
-                await syncNotContainer(fileRow, assetRows, "scene");
+                assetRow = await syncAssetRow(fileRow, assetRow, "scene");
             }
             else if(isHdrFile(fileRow.path)){
-                await syncNotContainer(fileRow, assetRows, "hdr");
+                assetRow = await syncAssetRow(fileRow, assetRow, "hdr");
             }
             else if(isSettingFile(fileRow.path)){
-                await syncNotContainer(fileRow, assetRows, "setting");
+                assetRow = await syncAssetRow(fileRow, assetRow, "setting");
             }
             else if(isFontFile(fileRow.path)){
-                await syncNotContainer(fileRow, assetRows, "font");
+                assetRow = await syncAssetRow(fileRow, assetRow, "font");
             }
             else if(isTextFile(fileRow.path)){
-                await syncNotContainer(fileRow, assetRows, "text");
+                assetRow = await syncAssetRow(fileRow, assetRow, "text");
             }
             else{
-                await syncNotContainer(fileRow, assetRows, "other");
+                assetRow = await syncAssetRow(fileRow, assetRow, "other");
             }
+            // file is dirty -> delete generated resource
+            deleteGenAsset(assetRow.fileId);
+        }
+        // check missing resource and regenerate
+        if(!assetRow) throw "missing assetRow";
+        if(fs.existsSync(getAssetGenPath(assetRow.fileId))) continue;
+        if(isImageFile(fileRow.path)){
+            await genAssetWithFile(fileRow, assetRow, "image");
+        }
+        else if(isMaterialFile(fileRow.path)){
+            await genAssetWithFile(fileRow, assetRow, "material");
+        }
+        else if(isMeshFile(fileRow.path)){
+            await genAssetWithFile(fileRow, assetRow, "mesh");
+        }
+        else if(isPrefabFile(fileRow.path)){
+            await genAssetWithFile(fileRow, assetRow, "prefab");
+        }
+        else if(isSceneFile(fileRow.path)){
+            await genAssetWithFile(fileRow, assetRow, "scene");
+        }
+        else if(isHdrFile(fileRow.path)){
+            await genAssetWithFile(fileRow, assetRow, "hdr");
+        }
+        else if(isSettingFile(fileRow.path)){
+            await genAssetWithFile(fileRow, assetRow, "setting");
+        }
+        else if(isFontFile(fileRow.path)){
+            await genAssetWithFile(fileRow, assetRow, "font");
+        }
+        else if(isTextFile(fileRow.path)){
+            await genAssetWithFile(fileRow, assetRow, "text");
+        }
+        else{
+            await genAssetWithFile(fileRow, assetRow, "other");
         }
     }
 
     // console.log(performance.now() - now, "ms");
     // now = performance.now();
 }
-
 async function ensureDefaultFiles(){
+    // just create default asset file not resources
     fs.ensureDirSync(ASSET_DEFAULT_DIR);
+
+    // mesh
     const cubeAssetMeshPath = path.join(ASSET_DEFAULT_DIR, "cube-engine.mesh");
     if(!fs.existsSync(cubeAssetMeshPath)){
         const cubeAssetMesh = await createDefaultCubeAssetMesh();
@@ -337,26 +465,34 @@ async function ensureDefaultFiles(){
     }
     const sphereAssetMeshPath = path.join(ASSET_DEFAULT_DIR, "sphere-engine.mesh");
     if(!fs.existsSync(sphereAssetMeshPath)){
-        const sphereAssetMesh = createDefaultSphereAssetMesh();
+        const sphereAssetMesh = await createDefaultSphereAssetMesh();
         saveMeshAssetBinary(sphereAssetMesh, sphereAssetMeshPath);
     }
     const cylinderAssetMeshPath = path.join(ASSET_DEFAULT_DIR, "cylinder-engine.mesh");
     if(!fs.existsSync(cylinderAssetMeshPath)){
-        const cylinderAssetMesh = createDefaultCylinderAssetMesh();
+        const cylinderAssetMesh = await createDefaultCylinderAssetMesh();
         saveMeshAssetBinary(cylinderAssetMesh, cylinderAssetMeshPath);
     }
     const coneAssetMeshPath = path.join(ASSET_DEFAULT_DIR, "cone-engine.mesh");
     if(!fs.existsSync(coneAssetMeshPath)){
-        const assetMesh = createDefaultConeAssetMesh();
+        const assetMesh = await createDefaultConeAssetMesh();
         saveMeshAssetBinary(assetMesh, coneAssetMeshPath);
+    }
+
+    // material
+    const simpleMaterialAssetPath = path.join(ASSET_DEFAULT_DIR, "simple-material-engine.mat");
+    if(!fs.existsSync(simpleMaterialAssetPath)){
+        const materialAsset = createDefaultSimpleMaterialAsset();
+        saveMaterialAssetBinary(materialAsset, simpleMaterialAssetPath);
     }
 
     // remove other files in ASSET_DEFAULT_DIR
     const set = new Set<string>([
-        cubeAssetMeshPath,
+        cubeAssetMeshPath, // mesh
         sphereAssetMeshPath,
         cylinderAssetMeshPath,
-        coneAssetMeshPath
+        coneAssetMeshPath,
+        simpleMaterialAssetPath // material
     ]);
     const entries = fsWalk.walkSync(ASSET_DEFAULT_DIR);
     for(const entry of entries){
@@ -364,6 +500,7 @@ async function ensureDefaultFiles(){
     }
 }
 
+// hash helpers
 let xxHashAPI: XXHashAPI | undefined;
 export async function hashFile(filePath: string){
     if(!xxHashAPI) xxHashAPI = await xxhash();
@@ -376,77 +513,24 @@ export async function hashFile(filePath: string){
         stream.on("error", reject);
     });
 }
-async function hashImageAsset(imageAsset: ShotEngineType.ImageAsset) {
-    if(!xxHashAPI) xxHashAPI = await xxhash();
-    const hash = xxHashAPI.create64();
-    
-    hash.update(imageAsset.ktx2);
-    hash.update(imageAsset.ktx2NoFlip);
-    return hash.digest().toString();
-}
-async function hashMeshAsset(meshAsset: ShotEngineType.MeshAsset) {
-    if(!xxHashAPI) xxHashAPI = await xxhash();
-    const hash = xxHashAPI.create64();
-    
-    hash.update(new Uint8Array(Uint32Array.of(meshAsset.primitives.length).buffer));
-    for(const prim of meshAsset.primitives){
-        const { attribute, indices } = prim;
-        const { interleaveArray } = attribute;
 
-        hash.update(new Uint8Array(Uint32Array.of(interleaveArray.length).buffer));
-        hash.update(new Uint8Array(interleaveArray.buffer, interleaveArray.byteOffset, interleaveArray.byteLength));
-
-        hash.update(new Uint8Array(Uint32Array.of(indices.length).buffer));
-        hash.update(new Uint8Array(indices.buffer, indices.byteOffset, indices.byteLength));
-    }
-    return hash.digest().toString();
-}
-async function hashObject(object: Object) {
-    if(!xxHashAPI) xxHashAPI = await xxhash();
-    const hash = xxHashAPI.create64();
-    
-    hash.update(JSON.stringify(object));
-    return hash.digest().toString(); 
-}
-
-async function syncNotContainer(fileRow: FileRow, assetRows: AssetRow[], type: AssetRow["type"]){
-    // every db file can have many assetRows
-    // but this function keep assetRows.length is 1
-    if(!fileRow.path) return;
+/**
+ * @param assetRows assets of the file row, this function can add to it, not remove from it
+ */
+async function syncAssetRow(fileRow: FileRow, assetRow: AssetRow | undefined, type: AssetRow["type"]){
+    if(!fileRow.path) throw "missing fileRow.path";
     const fullPath = path.join(ASSET_DIR, fileRow.path);
     const isDefaultFile = fullPath.startsWith(ASSET_DEFAULT_DIR);
-    const usedSet = new Set<string>();
-    for(const assetRow of assetRows){
-        if(assetRow.type !== type) continue;
-        usedSet.add(assetRow.uuid);
-        // check asset is dirty, needing recreate
-        if(assetRow.hash !== fileRow.hash){
-            assetsQuery.updateHash.run(fileRow.hash, assetRow.uuid);
-            assetRow.hash = fileRow.hash;
-            await genAssetWithFile(fileRow, assetRow, type);
-        }
-        // update asset name if fileRow have changed path
-        const name = path.basename(fullPath || "");
-        if(assetRow.name !== name){
-            assetsQuery.updateName.run(name, assetRow.uuid);
-            assetRow.name = name;
-        }
-        break; // keep assetRows only 1 element
-    }
-    // case assetRows.length === 0, create new assetRow, create new asset
-    if(usedSet.size === 0){
-        const uuid = isDefaultFile ? path.basename(fullPath) : uuidv4();
-        const assetRow: AssetRow = {
-            uuid,
+    if(!assetRow){
+        assetRow = {
             fileId: fileRow.uuid,
             hash: fileRow.hash,
             type,
             name: path.basename(fileRow.path || ""),
-            modifiable: 1,
+            modifiable: isDefaultFile ? 0 : 1,
             property: createAssetDefaultProterpty(type)
         };
         assetsQuery.insert.run(
-            assetRow.uuid,
             assetRow.fileId,
             assetRow.hash,
             assetRow.type,
@@ -454,169 +538,31 @@ async function syncNotContainer(fileRow: FileRow, assetRows: AssetRow[], type: A
             assetRow.modifiable,
             assetRow.property
         );
-        usedSet.add(assetRow.uuid);
-        assetRows.push(assetRow);
-        await genAssetWithFile(fileRow, assetRow, type);
     }
-    // delete all bad assetRows
-    const uuids = assetRows.filter(e => !usedSet.has(e.uuid)).map(e => e.uuid);
-    assetsQuery.deletesTransaction(uuids);
-    uuids.forEach(e => deleteGenAsset(e));
-}
-async function syncGLBContainer(fileRow: FileRow, assetRows: AssetRow[]){
-    if(!fileRow.path) return;
-    const fullPath = path.join(ASSET_DIR, fileRow.path);
-    const glb = await readGLBFile(fullPath);
-    const usedSet = new Set<string>();
-    const { textures, meshes, prefabAssets, mats } = glb;
-    const textureAssetRows: AssetRow[] = [];
-    const matAssetRows: AssetRow[] = [];
-    const meshAssetRows: AssetRow[] = [];
-    for(const texture of textures){
-        const hash = await hashImageAsset(texture.imageAsset);
-        const assetRow = assetRows.find(e => e.hash === hash);
-        if(assetRow){
-            usedSet.add(assetRow.uuid);
-            textureAssetRows.push(assetRow);
+    else{
+        if(assetRow.type !== type){
+            assetsQuery.updateType.run(fileRow.hash, assetRow.fileId);
+            assetRow.hash = fileRow.hash;
         }
-        else{
-            const assetRow: AssetRow = {
-                uuid: uuidv4(),
-                fileId: fileRow.uuid,
-                hash,
-                type: "image",
-                name: path.basename(fileRow.path) + "/" + texture.name,
-                modifiable: 0,
-                property: createAssetDefaultProterpty("image")
-            };
-            assetsQuery.insert.run(
-                assetRow.uuid,
-                assetRow.fileId,
-                assetRow.hash,
-                assetRow.type,
-                assetRow.name,
-                assetRow.modifiable,
-                assetRow.property
-            );
-            usedSet.add(assetRow.uuid);
-            textureAssetRows.push(assetRow);
-            assetRows.push(assetRow);
-            genImageAsset(assetRow, texture.imageAsset);
+        if(assetRow.hash !== fileRow.hash){
+            assetsQuery.updateHash.run(fileRow.hash, assetRow.fileId);
+            assetRow.hash = fileRow.hash;
+        }
+        // update asset name if fileRow have changed path
+        const name = path.basename(fullPath || "");
+        if(assetRow.name !== name){
+            assetsQuery.updateName.run(name, assetRow.fileId);
+            assetRow.name = name;
         }
     }
-    for(const mat of mats){
-        const hash = await hashObject(mat);
-        const assetRow = assetRows.find(e => e.hash === hash);
-        if(assetRow){
-            usedSet.add(assetRow.uuid);
-            matAssetRows.push(assetRow);
-        }
-        else{
-            const assetRow: AssetRow = {
-                uuid: uuidv4(),
-                fileId: fileRow.uuid,
-                hash,
-                type: "other",
-                name: path.basename(fileRow.path) + "/" + mat.name,
-                modifiable: 0,
-                property: createAssetDefaultProterpty("other")
-            };
-            assetsQuery.insert.run(
-                assetRow.uuid,
-                assetRow.fileId,
-                assetRow.hash,
-                assetRow.type,
-                assetRow.name,
-                assetRow.modifiable,
-                assetRow.property
-            );
-            usedSet.add(assetRow.uuid);
-            matAssetRows.push(assetRow);
-            assetRows.push(assetRow);
-            genTextAsset(assetRow, mat.info);
-        }
-    }
-    for(const mesh of meshes){
-        const hash = await hashMeshAsset(mesh.meshAsset);
-        const assetRow = assetRows.find(e => e.hash === hash);
-        if(assetRow){
-            usedSet.add(assetRow.uuid);
-            meshAssetRows.push(assetRow);
-        }
-        else{
-            const assetRow: AssetRow = {
-                uuid: uuidv4(),
-                fileId: fileRow.uuid,
-                hash,
-                type: "mesh",
-                name: path.basename(fileRow.path) + "/" + mesh.name,
-                modifiable: 0,
-                property: createAssetDefaultProterpty("mesh")
-            };
-            assetsQuery.insert.run(
-                assetRow.uuid,
-                assetRow.fileId,
-                assetRow.hash,
-                assetRow.type,
-                assetRow.name,
-                assetRow.modifiable,
-                assetRow.property
-            );
-            usedSet.add(assetRow.uuid);
-            meshAssetRows.push(assetRow);
-            assetRows.push(assetRow);
-            genMeshAsset(assetRow, mesh.meshAsset);
-        }
-    }
-    function updateGameObjectDependency(go: ShotEngineType.GameObject){
-        for(const component of go.components){
-            if(component.type === "Mesh"){
-                component.meshRef = meshAssetRows[Number(component.meshRef)].uuid;
-            }
-        }
-        for(const child of go.childs) updateGameObjectDependency(child as ShotEngineType.GameObject);
-    }
-    for(const prefabAsset of prefabAssets){
-        updateGameObjectDependency(prefabAsset.root);
-    }
-    for(const prefabAsset of prefabAssets){
-        const hash = await hashObject(prefabAsset);
-        const assetRow = assetRows.find(e => e.hash === hash);
-        if(assetRow){
-            usedSet.add(assetRow.uuid);
-        }
-        else{
-            const assetRow: AssetRow = {
-                uuid: uuidv4(),
-                fileId: fileRow.uuid,
-                hash,
-                type: "prefab",
-                name: path.basename(fileRow.path) + "/" + prefabAsset.root.name,
-                modifiable: 0,
-                property: createAssetDefaultProterpty("prefab")
-            };
-            assetsQuery.insert.run(
-                assetRow.uuid,
-                assetRow.fileId,
-                assetRow.hash,
-                assetRow.type,
-                assetRow.name,
-                assetRow.modifiable,
-                assetRow.property
-            );
-            usedSet.add(assetRow.uuid);
-            assetRows.push(assetRow);
-            genPrefabAsset(assetRow, prefabAsset);
-        }
-    }
-
-    const uuids = assetRows.filter(e => !usedSet.has(e.uuid)).map(e => e.uuid);
-    assetsQuery.deletesTransaction(uuids);
-    uuids.forEach(e => deleteGenAsset(e))
+    return assetRow;
 }
 function createAssetDefaultProterpty(type: AssetRow["type"]): string{
     if(type === "image"){
         return schema.defaultImageAssetJSON;
+    }
+    if(type === "material"){
+        return schema.defaultMaterialAssetJSON;
     }
     else if(type === "mesh"){
         return schema.defaultMeshAssetJSON;
@@ -650,9 +596,9 @@ function isImageFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return IMAGE_EXTS.has(ext);
 }
-function isGLBFile(filePath: string){
+function isMaterialFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
-    return ext === ".glb";
+    return ext === ".mat";
 }
 function isMeshFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
@@ -682,21 +628,23 @@ function isTextFile(filePath: string){
     const ext = path.extname(filePath).toLowerCase();
     return TEXT_EXTS.has(ext);
 }
+function isGLBFile(filePath: string){
+    const ext = path.extname(filePath).toLowerCase();
+    return ext === ".glb";
+}
 
-async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: AssetRow["type"]) {
+// call when update asset property, change file, new file
+async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: AssetRow["type"]){
     if(!fileRow.path) return;
     const fullPath = path.join(ASSET_DIR, fileRow.path);
     if(type === "image"){
-        let imageAsset: ShotEngineType.ImageAsset
-        if(isGLBFile(fullPath)){
-            const raw = await getImageFromGLB(fullPath, assetRow.name);
-            if(!raw) throw "cant find image in glb";
-            imageAsset = await createKTXImageAsset(raw, JSON.parse(assetRow.property));
-        }
-        else{
-            imageAsset = await createKTXImageAsset(fullPath, JSON.parse(assetRow.property));
-        }
+        const imageAsset = await createKTXImageAsset(fullPath, JSON.parse(assetRow.property));
         genImageAsset(assetRow, imageAsset);
+    }
+    else if(type === "material"){
+        // client using assetManager.saveMaterialAssetBinary to change .mat file
+        // and call rescan to active this function
+        genAssetFromFile(fileRow, assetRow);
     }
     else if(type === "mesh"){
         genAssetFromFile(fileRow, assetRow);
@@ -723,16 +671,22 @@ async function genAssetWithFile(fileRow: FileRow, assetRow: AssetRow, type: Asse
     }
     else genDefaultAsset(fileRow, assetRow);
 }
+
+// gen asset helpers
+// just copy origin file
 function genAssetFromFile(fileRow: FileRow, assetRow: AssetRow){
     if(!fileRow.path) return;
     const fullPath = path.join(ASSET_DIR, fileRow.path);
     fs.ensureDirSync(ASSET_GENERATED_DIR);
-    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.fileId);
     fs.copyFileSync(fullPath, genAssetPath);
+    // update time of generated file
+    const now = new Date();
+    fs.utimesSync(genAssetPath, now, now);
 }
 function genDefaultAsset(fileRow: FileRow, assetRow: AssetRow){
     fs.ensureDirSync(ASSET_GENERATED_DIR);
-    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.fileId);
     const file = fs.openSync(genAssetPath, "w");
     fs.writeSync(file, `
         ${new Date().toLocaleTimeString()} \r\n todo: content of file ${fileRow.path}
@@ -742,32 +696,37 @@ function genDefaultAsset(fileRow: FileRow, assetRow: AssetRow){
 }
 function genImageAsset(assetRow: AssetRow, imageAsset: ShotEngineType.ImageAsset){
     fs.ensureDirSync(ASSET_GENERATED_DIR);
-    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.fileId);
     saveImageAssetBinary(imageAsset, genAssetPath);
+}
+function genMaterialAsset(assetRow: AssetRow, matAsset: ShotEngineType.MaterialAsset){
+    fs.ensureDirSync(ASSET_GENERATED_DIR);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.fileId);
+    saveMaterialAssetBinary(matAsset, genAssetPath);
 }
 function genMeshAsset(assetRow: AssetRow, meshAsset: ShotEngineType.MeshAsset){
     fs.ensureDirSync(ASSET_GENERATED_DIR);
-    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.fileId);
     saveMeshAssetBinary(meshAsset, genAssetPath);
 }
 function genPrefabAsset(assetRow: AssetRow, prefabAsset: ShotEngineType.PrefabAsset){
     fs.ensureDirSync(ASSET_GENERATED_DIR);
-    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.fileId);
     savePrefabAssetBinary(prefabAsset, genAssetPath);
 }
 function genHdrAsset(assetRow: AssetRow, hdrAsset: ShotEngineType.HdrAsset){
     fs.ensureDirSync(ASSET_GENERATED_DIR);
-    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.fileId);
     saveHdrAssetBinary(hdrAsset, genAssetPath);
 }
 function genFontAsset(assetRow: AssetRow, fontAsset: ShotEngineType.FontAsset){
     fs.ensureDirSync(ASSET_GENERATED_DIR);
-    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.fileId);
     saveFontAssetBinary(fontAsset, genAssetPath);
 }
 function genTextAsset(assetRow: AssetRow, text: string){
     fs.ensureDirSync(ASSET_GENERATED_DIR);
-    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.uuid);
+    const genAssetPath = path.join(ASSET_GENERATED_DIR, assetRow.fileId);
     const file = fs.openSync(genAssetPath, "w");
     fs.writeSync(file, text);
     fs.closeSync(file);
