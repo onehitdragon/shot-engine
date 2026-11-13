@@ -130,7 +130,7 @@ export const componentAddedThunk = createAsyncThunk
         }
     }
 );
-const COMPONENT_TYPE_CANT_DELETE = new Set<Component["type"]>(["Transform", "Mesh"]);
+const COMPONENT_TYPE_CANT_DELETE = new Set<Component["type"]>(["Transform"]);
 export const componentRemovedThunk = createAsyncThunk
 <
     void,

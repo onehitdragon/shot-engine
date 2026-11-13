@@ -157,7 +157,7 @@ export async function readGLBFile(filePath: string){
             invBindPoseMatrices: new Float32Array()
         }
         for(const primitive of mesh.listPrimitives()){
-            const [indices, indexType] = getIndices(primitive);
+            const [indices, indexType, indexCount] = getIndices(primitive);
             const positions = getAttribute(primitive, "POSITION"); // vec3
             const normals = getAttribute(primitive, "NORMAL"); // vec3
             const uvs = getAttribute(primitive, "TEXCOORD_0"); // vec2
@@ -171,8 +171,8 @@ export async function readGLBFile(filePath: string){
                     normal: normals,
                     uv: uvs,
                     tangent: tangents,
-                    joint: { type: -1, normalized: false },
-                    weight: { type: -1, normalized: false },
+                    joint: { type: -1, normalized: false, itemSize: 0, count: 0 },
+                    weight: { type: -1, normalized: false, itemSize: 0, count: 0 },
                 }
             }
             else{
@@ -195,8 +195,9 @@ export async function readGLBFile(filePath: string){
                 indices,
                 attribute,
                 indexType,
+                indexCount,
                 drawMode: primitive.getMode(),
-                aabb: ShotEngineType.AABB.FromVertices([...new Float32Array(positions.buffer)]),
+                aabb: ShotEngineType.AABB.FromVertices([...new Float32Array(positions.buffer.buffer)]),
             });
         }
         if(skin){
@@ -343,20 +344,27 @@ function getTransparent(alphaMode: GLTF.MaterialAlphaMode): ShotEngineType.BaseM
 function getIndices(primitive: Primitive){
     const accessor = primitive.getIndices();
     if(!accessor) throw `bad glb: missing indices`;
-    const indices = accessor.getArray();
-    if(!indices) throw `bad glb: missing indices`;
-    return [new Uint8Array(indices), accessor.getComponentType() as number] as const;
+    const array = accessor.getArray();
+    if(!array) throw `bad glb: missing indices`;
+    // copy
+    const indices = new Uint8Array(array.byteLength);
+    indices.set(new Uint8Array(array.buffer));
+    return [indices, accessor.getComponentType() as number, accessor.getCount()] as const;
 }
 function getAttribute(primitive: Primitive, name: string){
     const accessor = primitive.getAttribute(name);
     if(!accessor) throw `bad glb: missing attribute ${name}`;
     const array = accessor.getArray();
     if(!array) throw `bad glb: missing attribute ${name}`;
+    // copy
+    const buffer = new Uint8Array(array.byteLength);
+    buffer.set(new Uint8Array(array.buffer));
     return {
-        buffer: new Uint8Array(array.buffer),
+        buffer,
         itemSize: accessor.getElementSize() * accessor.getComponentSize(),
         type: accessor.getComponentType() as number,
-        normalized: accessor.getNormalized()
+        normalized: accessor.getNormalized(),
+        count: accessor.getCount(),
     };
 }
 function createInterleaveArr(

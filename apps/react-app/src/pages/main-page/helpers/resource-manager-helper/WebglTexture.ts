@@ -19,10 +19,10 @@ export class WebglTexture{
         const webglTexture = instance._webglTexture;
         const { webglFormat, stringFormat } = WebglTexture.compressedTextureFormat(gl, imageAsset, property);
 
-        const { ktx2, ktx2NoFlip } = imageAsset;
+        const { ktx2 } = imageAsset;
         const ktxTranscoder = KTXTranscoder.getInstance();
         await ktxTranscoder.init();
-        const transcodeInfos = await ktxTranscoder.transcode(ktx2NoFlip, stringFormat);
+        const transcodeInfos = await ktxTranscoder.transcode(ktx2, stringFormat);
         
         // upload to gpu
         gl.bindTexture(gl.TEXTURE_2D, webglTexture);
@@ -97,8 +97,7 @@ export class WebglTexture{
 
         gl.bindTexture(gl.TEXTURE_2D, webglTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, colorData);
-
-        instance.setWrapMode("CLAMP");
+        instance.setWrapMode("REPEAT");
         instance.setFilterMode(false, "NONE");
         gl.bindTexture(gl.TEXTURE_2D, null);
 

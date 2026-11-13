@@ -91,6 +91,7 @@ export function saveMeshAssetBinary(meshAsset: ShotEngineType.MeshAsset, filePat
         Primitive.addAttribute(builder, attrOffset);
         Primitive.addIndices(builder, indicesOffset);
         Primitive.addIndexType(builder, prim.indexType);
+        Primitive.addIndexCount(builder, prim.indexCount);
         Primitive.addDrawMode(builder, prim.drawMode);
         Primitive.addAabb(builder, aabbOffset);
         primitiveOffsets.push(Primitive.endPrimitive(builder));
@@ -377,6 +378,7 @@ export function readMeshAsset(filePath: string){
             },
             indices: getUint8Array(prim.indicesArray()),
             indexType: prim.indexType(),
+            indexCount: prim.indexCount(),
             drawMode: prim.drawMode(),
             aabb: {
                 min: getVec3(prim.aabb()?.min()),
@@ -623,15 +625,17 @@ export function readFontAsset(filePath: string){
 }
 
 //helper
-function buildGLTypeAndNormalized(builder: Builder, { type, normalized }: ShotEngineType.GLTypeAndNormalized){
+function buildGLTypeAndNormalized(builder: Builder, { type, normalized, itemSize, count }: ShotEngineType.GLTypeAndNormalized){
     GLTypeAndNormalized.startGLTypeAndNormalized(builder);
     GLTypeAndNormalized.addType(builder, type);
     GLTypeAndNormalized.addNormalized(builder, normalized);
+    GLTypeAndNormalized.addItemSize(builder, itemSize);
+    GLTypeAndNormalized.addCount(builder, count);
     return GLTypeAndNormalized.endGLTypeAndNormalized(builder);
 }
 function readGLTypeAndNormalized(obj?: GLTypeAndNormalized | null): ShotEngineType.GLTypeAndNormalized{
-    if(obj) return { type: obj.type(), normalized: obj.normalized() }
-    return { type: -1, normalized: false }
+    if(obj) return { type: obj.type(), normalized: obj.normalized(), itemSize: obj.itemSize(), count: obj.count() }
+    return { type: -1, normalized: false, itemSize: 0, count: 0 }
 }
 function cullingToNum(culling: ShotEngineType.MaterialAsset["culling"]){
     if(culling === "none") return 0;

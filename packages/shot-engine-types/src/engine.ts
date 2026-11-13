@@ -302,11 +302,6 @@ export type SkyBox = {
     id: string,
     hdrRef: string,
 }
-export type Skeleton = {
-    type: "Skeleton",
-    id: string,
-    rootJointId: string,
-}
 export type TextOrString = { type: "text"; textRef: string } | { type: "string"; value: string };
 export type UILayoutAsset = {
     imageRefs: string[]
@@ -319,7 +314,7 @@ export type UILayout = {
     js: TextOrString
 }
 export type Component = Transform | GizmoTransform | MeshRenderer | SkinnedMeshRenderer | 
-    Light | Camera | SkyBox | Skeleton | UILayout;
+    Light | Camera | SkyBox | UILayout;
 export class ComponentHelper{
     public static FindComponentByType<T extends Component["type"]>(
         components: Component[],

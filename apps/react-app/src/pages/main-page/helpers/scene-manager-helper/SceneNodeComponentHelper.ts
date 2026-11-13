@@ -1,5 +1,5 @@
-import type { Camera, Light, PbrShading, PhongShading, SimpleShading, SkyBox, Transform } from '@shot-engine/types';
-import { Quat, Vec3, Vec4 } from '@shot-engine/math';
+import type { Camera, Light, SkyBox, Transform, MeshRenderer } from '@shot-engine/types';
+import { Quat, Vec3 } from '@shot-engine/math';
 
 export function createTransformComponent(){
     const transform: Transform = {
@@ -14,66 +14,11 @@ export function createTransformComponent(){
     }
     return transform;
 }
-export function createSimpleShadingComponent(){
-    const component: SimpleShading = {
+export function createMeshRendererComponent(){
+    const component: MeshRenderer = {
         id: "",
-        type: "Shading",
-        shaderType: "simple",
-        culling: "none",
-        transparent: false,
-        color: Vec4.FromValues(1, 1, 1 ,1)
-    }
-    return component;
-}
-export function createPhongShadingComponent(){
-    const component: PhongShading = {
-        id: "",
-        type: "Shading",
-        culling: "none",
-        transparent: false,
-        shaderType: "phong",
-        diffuse: {
-            type: "color",
-            color: Vec3.FromValues(1, 1, 1)
-        },
-        specular: Vec3.FromValues(0, 0, 0),
-        shininess: 1
-    }
-    return component;
-}
-export function createPbrShadingComponent(){
-    const component: PbrShading = {
-        id: "",
-        type: "Shading",
-        culling: "none",
-        transparent: false,
-        shaderType: "pbr",
-        diffuse: {
-            type: "color",
-            color: Vec3.FromValues(1, 1, 1)
-        },
-        metallic: {
-            type: "value",
-            value: 0
-        },
-        roughness: {
-            type: "value",
-            value: 0.01
-        },
-        reflectance: 0.5, // F0 = 0.04,
-        emissive: {
-            color: {
-                type: "color",
-                color: Vec3.FromValues(0, 0, 0)
-            },
-            intensity: 0
-        },
-        normal: {
-            type: "none"
-        },
-        ao: {
-            type: "none"
-        }
+        type: "MeshRenderer",
+        materialRefs: []
     }
     return component;
 }

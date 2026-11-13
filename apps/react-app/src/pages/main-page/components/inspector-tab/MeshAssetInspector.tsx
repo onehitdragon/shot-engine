@@ -66,8 +66,8 @@ function Mesh(props: { inspector: MeshAssetInspector }){
             <span className="text-white text-sm font-bold">Mesh</span>
             {
                 primitives.map((prim, index) => {
-                    const { interleaveArray, position, normal, uv, tangent, weight, joint } = prim.attribute;
-                    const { indices, indexType, drawMode, aabb } = prim;
+                    const { position, normal, uv, tangent, weight, joint } = prim.attribute;
+                    const { indexType, indexCount, drawMode, aabb } = prim;
                     return <div key={index} className="flex flex-col ml-2">
                         <span className="text-white text-sm">Primitive index: {index}</span>
                         <div key={index} className="flex flex-col ml-2">
@@ -91,7 +91,8 @@ function Mesh(props: { inspector: MeshAssetInspector }){
                                 - joint: {numberToGLString(joint.type)} ({joint.normalized ? "normalized" : "not normalized"})
                             </span>
                         </div>
-                        <span className="text-white text-sm">- indices: {indices.length}</span>
+                        <span className="text-white text-sm">- vertexCount: {position.count}</span>
+                        <span className="text-white text-sm">- indexCount: {indexCount}</span>
                         <span className="text-white text-sm">- indexType: {numberToGLString(indexType)}</span>
                         <span className="text-white text-sm">- drawMode: {numberToGLString(drawMode)}</span>
                         <span className="text-white text-sm">- aabb: {JSON.stringify(aabb)}</span>

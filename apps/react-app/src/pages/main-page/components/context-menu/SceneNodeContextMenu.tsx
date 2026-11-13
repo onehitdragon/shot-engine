@@ -1,7 +1,7 @@
 import { useAppDispatch } from "../../../../global-state/hooks";
 import type { NodeContextMenu } from "../../../../global-state/slices/context-menu-slice";
 import { createConeNode, createCubeNode, createCylinderNode, createEmptyNode, createPbrTest, createSphereNode } from "../../helpers/scene-manager-helper/SceneNodeHelper";
-import { createCameraComponent, createDirectionalLightComponent, createPbrShadingComponent, createPointLightComponent, createSimpleShadingComponent, createSkyBoxComponent, createSpotLightComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
+import { createCameraComponent, createDirectionalLightComponent, createPointLightComponent, createMeshRendererComponent, createSkyBoxComponent, createSpotLightComponent } from "../../helpers/scene-manager-helper/SceneNodeComponentHelper";
 import { goAddedThunk, goRemovedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 import { componentAddedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
 
@@ -46,21 +46,9 @@ export function SceneNodeContextMenu(
             node: newNode
         }));
     }
-    const addSimpleShadingComponent = () => {
+    const addMeshRendererComponent = () => {
         dispatch(componentAddedThunk({
-            component: createSimpleShadingComponent(),
-            unique: true,
-        }));
-    }
-    // const addPhongShadingComponent = () => {
-    //     dispatch(componentAddedThunk({
-    //         component: createPhongShadingComponent(),
-    //         unique: true,
-    //     }));
-    // }
-    const addPbrShadingComponent = () => {
-        dispatch(componentAddedThunk({
-            component: createPbrShadingComponent(),
+            component: createMeshRendererComponent(),
             unique: true,
         }));
     }
@@ -176,21 +164,9 @@ export function SceneNodeContextMenu(
                 </li>
                 <li className='text-xs text-white select-none cursor-pointer transition
                     hover:bg-blue-500 px-2 py-1 rounded-sm'
-                    onMouseDown={addSimpleShadingComponent}
+                    onMouseDown={addMeshRendererComponent}
                 >
-                    Add Simple Shading
-                </li>
-                {/* <li className='text-xs text-white select-none cursor-pointer transition
-                    hover:bg-blue-500 px-2 py-1 rounded-sm'
-                    onMouseDown={addPhongShadingComponent}
-                >
-                    Add Phong Shading
-                </li> */}
-                <li className='text-xs text-white select-none cursor-pointer transition
-                    hover:bg-blue-500 px-2 py-1 rounded-sm'
-                    onMouseDown={addPbrShadingComponent}
-                >
-                    Add PBR Shading
+                    Add Mesh Renderer
                 </li>
                 <li className='text-xs text-white select-none cursor-pointer transition
                     hover:bg-blue-500 px-2 py-1 rounded-sm'

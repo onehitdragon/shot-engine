@@ -1,4 +1,4 @@
-import type { Asset, AssetManager, AssetType, FontAsset, HdrAsset, ImageAsset, MeshAsset } from "@shot-engine/types";
+import type { Asset, AssetManager, AssetType, FontAsset, HdrAsset, ImageAsset, MaterialAsset, MeshAsset } from "@shot-engine/types";
 import { WebglMesh } from "../resource-manager-helper/WebglMesh";
 import { WebglTexture } from "../resource-manager-helper/WebglTexture";
 import { getSceneWebglContext } from "../resource-manager-helper/CanvasHelper";
@@ -10,7 +10,7 @@ type AssetCacheItem = {
     assetInfo: AssetManager.AssetInfo,
     asset?: Asset,
     webglResource?: {
-        webglMeshes?: WebglMesh[],
+        webglMeshes?: WebglMesh[], // per primitive per webglMesh
         webglTexture?: WebglTexture,
         hdr?: {
             enviromentMap?: WebglTextureCube,
@@ -232,7 +232,12 @@ export class AssetCache{
         if(!asset) return;
         return asset as MeshAsset;
     }
-     public getFontAssetCache(uuid: string){
+    public getMaterialAssetCache(uuid: string){
+        const asset = this.map.get(uuid)?.asset;
+        if(!asset) return;
+        return asset as MaterialAsset;
+    }
+    public getFontAssetCache(uuid: string){
         const asset = this.map.get(uuid)?.asset;
         if(!asset) return;
         return asset as FontAsset;

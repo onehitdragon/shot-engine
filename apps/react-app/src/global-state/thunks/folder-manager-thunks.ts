@@ -7,6 +7,7 @@ import { createEmptyPrefab } from "../../pages/main-page/helpers/scene-manager-h
 import { showInspector } from "../slices/inspector-slice";
 import { goTreeClosedThunk } from "./go-tree-thunks";
 import type { PrefabAsset } from "@shot-engine/types";
+import { Vec4 } from "@shot-engine/math";
 
 export const projectOpenedThunk = createAsyncThunk
 <
@@ -367,6 +368,55 @@ export const sceneFileCreatedThunk = createAsyncThunk
                         name: "EmptyScene",
                         roots: []
                     }
+                },
+                path
+            );
+
+            await window.api.assetManager.rescan();
+
+            return {
+                fileCreated: {
+                    type: "File",
+                    name,
+                    path
+                }
+            }
+        }
+        catch(err){
+            await window.api.showError(String(err));
+            return rejectWithValue(err);
+        }
+    }
+);
+export const materialFileCreatedThunk = createAsyncThunk
+<
+    {
+        fileCreated: DirectoryTree.File
+    },
+    { parentPath: string, name: string },
+    {
+        dispatch: AppDispatch,
+        state: RootState
+    }
+>
+(
+    "folder-manager/materialFileCreated",
+    async ({ parentPath, name }, { getState, rejectWithValue }) => {
+        try{
+            const projectPaths = getState().folderManager.projectPaths;
+            if(!projectPaths) throw "no project has been opened yet";
+            
+            if(parentPath.startsWith(projectPaths.assetDefault)) throw "Dont create inside default";
+            if(!parentPath.startsWith(projectPaths.asset)) throw "Dont create outside asset folder";
+
+            const path = await window.fsPath.join(parentPath, name);
+            await window.api.assetManager.saveMaterialAssetBinary(
+                {
+                    matType: "simple",
+                    culling: "none",
+                    transparent: "opaque",
+                    alphaCutoff: 0,
+                    color: Vec4.FromValues(1, 1 ,1 ,1)
                 },
                 path
             );

@@ -24,6 +24,15 @@ export class WebglHelper{
         }
         return shader;
     }
+    static injectShaderDefine(source: string, defineMacro: string){
+        const versionToken = "#version 300 es";
+        const index = source.indexOf(versionToken);
+        if(index !== -1){
+            const insertPos = index + versionToken.length;
+            return source.slice(0, insertPos) + "\n" + defineMacro + "\n" + source.slice(insertPos);
+        }
+        return defineMacro + "\n" + source;
+    }
     static getUniformLocation(gl: WebGL2RenderingContext, program: WebGLProgram, name: string){
         const u_Loc = gl.getUniformLocation(program, name);
         if(!u_Loc) throw `uniform ${name} dont exist`;

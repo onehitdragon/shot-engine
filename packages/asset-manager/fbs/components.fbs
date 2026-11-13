@@ -70,11 +70,6 @@ table SkyBox{
     hdrRef: string;
 }
 
-table Skeleton{
-    id: string;
-    rootJointId: string;
-}
-
 table Text{
     text_ref: string;
 }
@@ -101,6 +96,5 @@ union Component{
     SpotLight,
     Camera,
     SkyBox,
-    Skeleton,
     UILayout
 }

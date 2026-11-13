@@ -8,7 +8,6 @@ import {
     SkyBox,
     SpotLight,
     LightShadow,
-    Skeleton,
     UILayout,
     TextOrString,
     Text,
@@ -159,15 +158,6 @@ export function buildSceneNode(builder: Builder, sceneNode: ShotEngineType.Scene
             SkyBox.addHdrRef(builder, hdrRefOffset);
             componentOffset = SkyBox.endSkyBox(builder);
             componentTypeOffsets.push(Component.SkyBox);
-        }
-        else if(component.type === "Skeleton"){
-            const idOffset = builder.createString(component.id);
-            const rootJointIdOffset = builder.createString(component.rootJointId);
-            Skeleton.startSkeleton(builder);
-            Skeleton.addId(builder, idOffset);
-            Skeleton.addRootJointId(builder, rootJointIdOffset);
-            componentOffset = Skeleton.endSkeleton(builder);
-            componentTypeOffsets.push(Component.Skeleton);
         }
         else if(component.type === "UILayout"){
             const idOffset = builder.createString(component.id);
@@ -388,14 +378,6 @@ export function readGameObject(gameObject: GameObject){
                 type: "SkyBox",
                 id: skyBox.id() ?? "",
                 hdrRef: skyBox.hdrRef() ?? ""
-            });
-        }
-        if(componentType === Component.Skeleton){
-            const skeleton = gameObject.components(i, new Skeleton()) as Skeleton;
-            gameObjectResult.components.push({
-                type: "Skeleton",
-                id: skeleton.id() ?? "",
-                rootJointId: skeleton.rootJointId() ?? ""
             });
         }
         if(componentType === Component.UILayout){

@@ -69,11 +69,11 @@ export async function createDefaultCubeAssetMesh(){
 //     return cubeAssetMesh;
 // }
 export async function createDefaultSphereAssetMesh(){
-    const glb = await readGLBFile(path.join(import.meta.dirname, "glb-default-files", "Cube.glb"));
+    const glb = await readGLBFile(path.join(import.meta.dirname, "glb-default-files", "Sphere.glb"));
     for(const [_, meshAsset] of glb.meshAssets){
         return meshAsset.meshAsset;
     }
-    throw "bad default Cube.glb";
+    throw "bad default Sphere.glb";
 }
 // function _createDefaultSphereAssetMesh(){
 //     const radius = 1;
@@ -163,11 +163,11 @@ export async function createDefaultSphereAssetMesh(){
 //     return sphereAssetMesh;
 // }
 export async function createDefaultCylinderAssetMesh(){
-    const glb = await readGLBFile(path.join(import.meta.dirname, "glb-default-files", "Cube.glb"));
+    const glb = await readGLBFile(path.join(import.meta.dirname, "glb-default-files", "Cylinder.glb"));
     for(const [_, meshAsset] of glb.meshAssets){
         return meshAsset.meshAsset;
     }
-    throw "bad default Cube.glb";
+    throw "bad default Cylinder.glb";
 }
 // function _createDefaultCylinderAssetMesh(){
 //     const nSegment = 64;
@@ -293,11 +293,11 @@ export async function createDefaultCylinderAssetMesh(){
 //     return assetMesh;
 // }
 export async function createDefaultConeAssetMesh(){
-    const glb = await readGLBFile(path.join(import.meta.dirname, "glb-default-files", "Cube.glb"));
+    const glb = await readGLBFile(path.join(import.meta.dirname, "glb-default-files", "Cone.glb"));
     for(const [_, meshAsset] of glb.meshAssets){
         return meshAsset.meshAsset;
     }
-    throw "bad default Cube.glb";
+    throw "bad default Cone.glb";
 }
 // function _createDefaultConeAssetMesh(){
 //     const nSegment = 64;
@@ -407,13 +407,13 @@ export async function createDefaultConeAssetMesh(){
 //     return assetMesh;
 // }
 
-export function createDefaultSimpleMaterialAsset(){
+export function createDefaultSimpleMaterialAsset(color: [number, number, number]){
     const simpleMaterialAsset: ShotEngineType.SimpleMaterialAsset = {
         matType: "simple",
         culling: "none",
         transparent: "opaque",
         alphaCutoff: 0,
-        color: Vec4.FromValues(1, 1, 1, 1)
+        color: Vec4.FromValues(color[0], color[1], color[2], 1)
     }
     return simpleMaterialAsset;
 }

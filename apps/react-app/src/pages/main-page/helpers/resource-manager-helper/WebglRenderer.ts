@@ -1,10 +1,12 @@
 import { WebglGridShader } from "./WebglGridShader";
-import type { Mesh, Shading } from "@shot-engine/types";
 import { getSceneWebglContext } from "./CanvasHelper";
-import { AssetCache } from "../asset-cache/asset-cache";
 import { WebglSkyBoxShader } from "./WebglSkyBoxShader";
 import { WebglAxisShader } from "./WebglAxisShader";
-import { Mat3, Mat4, Vec3 } from "@shot-engine/math";
+import { Mat4 } from "@shot-engine/math";
+import type { RenderNodeData } from "../../components/scene-tab/SceneRenderer";
+import type { MaterialAsset } from "@shot-engine/types";
+import { WebglSimpleShader } from "./WebglSimpleShader";
+import { WebglPbrShader } from "./WebglPbrShader";
 
 export class WebglRenderer{
     private static _instance: WebglRenderer;
@@ -24,41 +26,31 @@ export class WebglRenderer{
         this._webglSkyBoxShader = WebglSkyBoxShader.getInstance(gl);
         this._webglAxisShader = WebglAxisShader.getInstance(gl);
     }
-    render(
-        shadingComponent: Shading,
-        meshComponent: Mesh,
-        mvpMat4: Mat4,
-        modelMat4: Mat4,
-        viewMat4: Mat4,
-        normalMat3: Mat3,
-        camPos: Vec3,
-        vpMat4: Mat4,
-        jointMatrices: Float32Array
-    ){
-        const { shaderType, culling } = shadingComponent;
+    render(renderNodeData: RenderNodeData){
+        const { node, materialAsset, gpuResource } = renderNodeData;
+        const { culling, matType } = materialAsset;
+
+        // culling
         this.culling(culling);
-        const webglMeshs = AssetCache.getInstance().getWebglMeshes(meshComponent.meshRef);
-        if(!webglMeshs){
-            console.warn("error while get webglmesh cache");
-            return;
+
+        // distable depth test if gizmo
+        const gl = this._gl;
+        if(node.id.startsWith("gizmo-")){
+            gl.disable(gl.DEPTH_TEST);
         }
-        if(shaderType === "simple"){
-            webglMeshs.forEach(e => e.renderWithSimpleShader(mvpMat4, vpMat4, jointMatrices, shadingComponent));
+
+        // render
+        if(matType === "simple"){
+            WebglSimpleShader.getInstance(this._gl).render(renderNodeData, gpuResource.webglMesh);
         }
-        else if(shaderType === "pbr"){
-            webglMeshs.forEach(
-                e => e.renderWithPbrShader(mvpMat4, modelMat4, viewMat4, normalMat3, camPos, shadingComponent)
-            );
+        if(matType === "pbr"){
+            WebglPbrShader.getInstance(this._gl).render(renderNodeData, gpuResource.webglMesh);
         }
-        else if(shaderType === "gizmo"){
-            webglMeshs.forEach(
-                e => e.renderWithGizmoShader(mvpMat4, shadingComponent)
-            );
-        }
-        else{
-            console.warn(`dont support shaderType: ${shaderType}`);
-        }
-        this.culling("none"); // reset
+
+        // reset culling
+        this.culling("none");
+        // reset depth test
+        gl.enable(gl.DEPTH_TEST);
     }
     renderSkyBox(viewMat4: Mat4, clipMat4: Mat4){
         this._webglSkyBoxShader.render(viewMat4, clipMat4);
@@ -83,7 +75,7 @@ export class WebglRenderer{
         // gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
         // console.log(pixels);
     }
-    private culling(culling: Shading["culling"]){
+    private culling(culling: MaterialAsset["culling"]){
         const gl = this._gl;
         if(culling === "back"){
             gl.enable(gl.CULL_FACE);

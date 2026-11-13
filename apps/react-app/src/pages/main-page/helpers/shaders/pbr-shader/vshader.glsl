@@ -3,12 +3,11 @@
 uniform mat4 u_MvpMatrix;
 uniform mat4 u_ModelMatrix;
 uniform mat3 u_NormalMatrix;
-in vec3 a_Position;
-in vec3 a_Normal;
-in vec2 a_TextCoord;
-in vec4 a_Tangent;
+layout (location = 0) in vec3 a_Position;
+layout (location = 1) in vec3 a_Normal;
+layout (location = 2) in vec2 a_TextCoord;
+layout (location = 3) in vec4 a_Tangent;
 out vec3 v_WorldPos;
-out vec3 v_WorldNormal;
 out vec2 v_TextCoord;
 out mat3 v_WorldTBN;
 void main(){
@@ -24,7 +23,6 @@ void main(){
     mat3 TBN = mat3(T, B, N);
 
     v_WorldPos = vec3(worldPos);
-    v_WorldNormal = N;
     v_TextCoord = a_TextCoord;
     v_WorldTBN = TBN;
 }

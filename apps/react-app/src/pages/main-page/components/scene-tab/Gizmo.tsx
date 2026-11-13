@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { GizmoOrbitCameraInfo } from "../../../../global-state/thunks/gizmo-orbit-camera-thunk";
 import { nodeFocusedThunk, NodesInfo, nodeUnfocusedThunk } from "../../../../global-state/thunks/go-tree-thunks";
 import { GlobalSceneNodeRenderer } from "./SceneRenderer";
-import { ComponentHelper, Ray } from "@shot-engine/types";
+import { ComponentHelper, MeshAssetHelper, Ray } from "@shot-engine/types";
 import { getSceneCanvas } from "../../helpers/resource-manager-helper/CanvasHelper";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { selectNodeRecord } from "../../../../global-state/slices/go-tree-slice";
@@ -157,28 +157,31 @@ export function rayPick(
     if(!modelMat4) continue;
     const localRay = Ray.TransformSpace(viewRay, modelMat4);
 
-    for(const { type, aabb, indices, attribute } of meshAsset.primitives){
-      const interleaveArray = new Float32Array(attribute.interleaveArray.buffer);
+    for(const { indices, indexType, aabb, attribute } of meshAsset.primitives){
+      const { position, normal, uv, tangent, joint, weight } = attribute;
+      const indicesTyped = MeshAssetHelper.getIndicesTypedArray(indices, indexType);
+      const itemSizeInByte = position.itemSize + normal.itemSize + uv.itemSize + tangent.itemSize + joint.itemSize + weight.itemSize;
+      const interleaveView = new DataView(attribute.interleaveArray.buffer);
+      const littleEndian = true;
       if(!localRay.aabbIntersect(aabb)){
         continue;
       }
-      for(let i = 0; i < indices.length; i += 3){
-        const amountFloat = type === "static" ? 12 : 16;
-        const v0_index = indices[i] * amountFloat; // (3 verter, 3 normal, 2 uv, 3 tangent)
-        const v1_index = indices[i + 1] * amountFloat;
-        const v2_index = indices[i + 2] * amountFloat;
+      for(let i = 0; i < indicesTyped.length; i += 3){
+        const v0_offset = indicesTyped[i] * itemSizeInByte;
+        const v1_offset = indicesTyped[i + 1] * itemSizeInByte;
+        const v2_offset = indicesTyped[i + 2] * itemSizeInByte;
         const v0 = new Vec3();
-        v0.values[0] = interleaveArray[v0_index];
-        v0.values[1] = interleaveArray[v0_index + 1];
-        v0.values[2] = interleaveArray[v0_index + 2];
+        v0.values[0] = interleaveView.getFloat32(v0_offset, littleEndian);
+        v0.values[1] = interleaveView.getFloat32(v0_offset + 4, littleEndian);
+        v0.values[2] = interleaveView.getFloat32(v0_offset + 8, littleEndian);
         const v1 = new Vec3();
-        v1.values[0] = interleaveArray[v1_index];
-        v1.values[1] = interleaveArray[v1_index + 1];
-        v1.values[2] = interleaveArray[v1_index + 2];
+        v1.values[0] = interleaveView.getFloat32(v1_offset, littleEndian);
+        v1.values[1] = interleaveView.getFloat32(v1_offset + 4, littleEndian);
+        v1.values[2] = interleaveView.getFloat32(v1_offset + 8, littleEndian);
         const v2 = new Vec3();
-        v2.values[0] = interleaveArray[v2_index];
-        v2.values[1] = interleaveArray[v2_index + 1];
-        v2.values[2] = interleaveArray[v2_index + 2];
+        v2.values[0] = interleaveView.getFloat32(v2_offset, littleEndian);
+        v2.values[1] = interleaveView.getFloat32(v2_offset + 4, littleEndian);
+        v2.values[2] = interleaveView.getFloat32(v2_offset + 8, littleEndian);
         const distance = localRay.trigIntersect(v0, v1, v2);
         if(distance === false) continue;
 

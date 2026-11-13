@@ -482,8 +482,23 @@ async function ensureDefaultFiles(){
     // material
     const simpleMaterialAssetPath = path.join(ASSET_DEFAULT_DIR, "simple-material-engine.mat");
     if(!fs.existsSync(simpleMaterialAssetPath)){
-        const materialAsset = createDefaultSimpleMaterialAsset();
+        const materialAsset = createDefaultSimpleMaterialAsset([1, 1, 1]);
         saveMaterialAssetBinary(materialAsset, simpleMaterialAssetPath);
+    }
+    const redSimpleMaterialAssetPath = path.join(ASSET_DEFAULT_DIR, "red-simple-material-engine.mat");
+    if(!fs.existsSync(redSimpleMaterialAssetPath)){
+        const materialAsset = createDefaultSimpleMaterialAsset([1, 0, 0]);
+        saveMaterialAssetBinary(materialAsset, redSimpleMaterialAssetPath);
+    }
+    const greenSimpleMaterialAssetPath = path.join(ASSET_DEFAULT_DIR, "green-simple-material-engine.mat");
+    if(!fs.existsSync(greenSimpleMaterialAssetPath)){
+        const materialAsset = createDefaultSimpleMaterialAsset([0, 1, 0]);
+        saveMaterialAssetBinary(materialAsset, greenSimpleMaterialAssetPath);
+    }
+    const blueSimpleMaterialAssetPath = path.join(ASSET_DEFAULT_DIR, "blue-simple-material-engine.mat");
+    if(!fs.existsSync(blueSimpleMaterialAssetPath)){
+        const materialAsset = createDefaultSimpleMaterialAsset([0, 0, 1]);
+        saveMaterialAssetBinary(materialAsset, blueSimpleMaterialAssetPath);
     }
 
     // remove other files in ASSET_DEFAULT_DIR
@@ -492,7 +507,10 @@ async function ensureDefaultFiles(){
         sphereAssetMeshPath,
         cylinderAssetMeshPath,
         coneAssetMeshPath,
-        simpleMaterialAssetPath // material
+        simpleMaterialAssetPath, // material
+        redSimpleMaterialAssetPath,
+        greenSimpleMaterialAssetPath,
+        blueSimpleMaterialAssetPath,
     ]);
     const entries = fsWalk.walkSync(ASSET_DEFAULT_DIR);
     for(const entry of entries){

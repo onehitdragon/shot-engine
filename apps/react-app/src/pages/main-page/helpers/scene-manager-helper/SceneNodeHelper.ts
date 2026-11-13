@@ -1,6 +1,5 @@
-import type { GameObject, Mesh, PbrShading, Shading } from '@shot-engine/types';
+import type { GameObject, MeshRenderer } from '@shot-engine/types';
 import type { NodeState } from '../../../../global-state/slices/go-tree-slice';
-import { Vec3, Vec4 } from '@shot-engine/math';
 import { createTransformComponent } from './SceneNodeComponentHelper';
 
 export function createEmptyNode(){
@@ -16,23 +15,16 @@ export function createEmptyNode(){
 }
 export function createCubeNode(){
     const transform = createTransformComponent();
-    const mesh: Mesh = {
+    const meshRenderer: MeshRenderer = {
         id: "",
-        type: "Mesh",
-        meshRef: "cube-engine.mesh"
-    }
-    const shading: Shading = {
-        id: "",
-        type: "Shading",
-        shaderType: "simple",
-        transparent: false,
-        culling: "none",
-        color: Vec4.FromValues(1, 1, 1 ,1)
+        type: "MeshRenderer",
+        meshRef: "cube-engine.mesh",
+        materialRefs: ["simple-material-engine.mat"],
     }
     const sceneNode: NodeState = {
         name: "CubeNode",
         id: "",
-        components: [transform, mesh, shading],
+        components: [transform, meshRenderer],
         childs: []
     }
 
@@ -40,23 +32,16 @@ export function createCubeNode(){
 }
 export function createSphereNode(){
     const transform = createTransformComponent();
-    const mesh: Mesh = {
+    const meshRenderer: MeshRenderer = {
         id: "",
-        type: "Mesh",
-        meshRef: "sphere-engine.mesh"
-    }
-    const shading: Shading = {
-        id: "",
-        type: "Shading",
-        shaderType: "simple",
-        transparent: false,
-        culling: "none",
-        color: Vec4.FromValues(1, 1, 1 ,1)
+        type: "MeshRenderer",
+        meshRef: "sphere-engine.mesh",
+        materialRefs: ["simple-material-engine.mat"],
     }
     const sceneNode: NodeState = {
         name: "SphereNode",
         id: "",
-        components: [transform, mesh, shading],
+        components: [transform, meshRenderer],
         childs: []
     }
 
@@ -64,23 +49,16 @@ export function createSphereNode(){
 }
 export function createCylinderNode(){
     const transform = createTransformComponent();
-    const mesh: Mesh = {
+    const meshRenderer: MeshRenderer = {
         id: "",
-        type: "Mesh",
-        meshRef: "cylinder-engine.mesh"
-    }
-    const shading: Shading = {
-        id: "",
-        type: "Shading",
-        shaderType: "simple",
-        transparent: false,
-        culling: "none",
-        color: Vec4.FromValues(1, 1, 1 ,1)
+        type: "MeshRenderer",
+        meshRef: "cylinder-engine.mesh",
+        materialRefs: ["simple-material-engine.mat"],
     }
     const sceneNode: NodeState = {
         name: "CylinderNode",
         id: "",
-        components: [transform, mesh, shading],
+        components: [transform, meshRenderer],
         childs: []
     }
 
@@ -88,23 +66,16 @@ export function createCylinderNode(){
 }
 export function createConeNode(){
     const transform = createTransformComponent();
-    const mesh: Mesh = {
+    const meshRenderer: MeshRenderer = {
         id: "",
-        type: "Mesh",
-        meshRef: "cone-engine.mesh"
-    }
-    const shading: Shading = {
-        id: "",
-        type: "Shading",
-        shaderType: "simple",
-        transparent: false,
-        culling: "none",
-        color: Vec4.FromValues(1, 1, 1 ,1)
+        type: "MeshRenderer",
+        meshRef: "cone-engine.mesh",
+        materialRefs: ["simple-material-engine.mat"],
     }
     const sceneNode: NodeState = {
         name: "ConeNode",
         id: "",
-        components: [transform, mesh, shading],
+        components: [transform, meshRenderer],
         childs: []
     }
 
@@ -197,48 +168,49 @@ export function createPbrTest(){
         baseColor: number[], metallic: number, roughness: number, reflectance: number
     ){
         const transform = createTransformComponent();
-        const mesh: Mesh = {
-            id: "",
-            type: "Mesh",
-            meshRef: "sphere-engine.mesh"
-        }
-        const shading: PbrShading = {
-            id: "",
-            type: "Shading",
-            shaderType: "pbr",
-            transparent: false,
-            culling: "none",
-            diffuse: {
-                type: "color",
-                color: Vec3.FromValues(baseColor[0] / 255, baseColor[1] / 255, baseColor[2] / 255)
-            },
-            metallic: {
-                type: "value",
-                value: metallic
-            },
-            roughness: {
-                type: "value",
-                value: roughness
-            },
-            reflectance,
-            emissive: {
-                color: {
-                    type: "color",
-                    color: Vec3.FromValues(0, 0, 0)
-                },
-                intensity: 0
-            },
-            normal: {
-                type: "none"
-            },
-            ao: {
-                type: "none"
-            }
-        }
+        // using mat asset so this can't
+        // const mesh: Mesh = {
+        //     id: "",
+        //     type: "Mesh",
+        //     meshRef: "sphere-engine.mesh"
+        // }
+        // const shading: PbrShading = {
+        //     id: "",
+        //     type: "Shading",
+        //     shaderType: "pbr",
+        //     transparent: false,
+        //     culling: "none",
+        //     diffuse: {
+        //         type: "color",
+        //         color: Vec3.FromValues(baseColor[0] / 255, baseColor[1] / 255, baseColor[2] / 255)
+        //     },
+        //     metallic: {
+        //         type: "value",
+        //         value: metallic
+        //     },
+        //     roughness: {
+        //         type: "value",
+        //         value: roughness
+        //     },
+        //     reflectance,
+        //     emissive: {
+        //         color: {
+        //             type: "color",
+        //             color: Vec3.FromValues(0, 0, 0)
+        //         },
+        //         intensity: 0
+        //     },
+        //     normal: {
+        //         type: "none"
+        //     },
+        //     ao: {
+        //         type: "none"
+        //     }
+        // }
         const sceneNode: NodeState = {
             name: name,
             id: "",
-            components: [transform, mesh, shading],
+            components: [transform],
             childs: []
         }
 

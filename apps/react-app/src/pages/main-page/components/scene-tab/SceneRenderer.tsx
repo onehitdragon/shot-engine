@@ -3,16 +3,16 @@ import { useAppSelector } from "../../../../global-state/hooks";
 import { getSceneWebglContext } from "../../helpers/resource-manager-helper/CanvasHelper";
 import { WebglRenderer } from "../../helpers/resource-manager-helper/WebglRenderer";
 import { selectNodeRecord, selectNodes, type NodeState } from "../../../../global-state/slices/go-tree-slice";
-import { ComponentHelper, type Component, type MeshAsset } from "@shot-engine/types";
+import { ComponentHelper, type Component, type MaterialAsset, type MeshAsset, type MeshRenderer, type SkinnedMeshRenderer } from "@shot-engine/types";
 import { AssetCache } from "../../helpers/asset-cache/asset-cache";
 import { LightInfo } from "../../helpers/asset-cache/LightInfo";
 import { SkyBoxInfo } from "../../helpers/asset-cache/SkyBoxInfo";
-import { ColorCache } from "../../helpers/asset-cache/color-cache";
-import { NodesInfo, type NodeRenderState } from "../../../../global-state/thunks/go-tree-thunks";
+import { NodesInfo } from "../../../../global-state/thunks/go-tree-thunks";
 import { selectGizmoNodes } from "../../../../global-state/slices/gizmo-go-tree-slice";
 import { GizmoOrbitCameraInfo } from "../../../../global-state/thunks/gizmo-orbit-camera-thunk";
 import { GizmoControl } from "./GizmoControl";
 import { Mat3, Mat4, Vec3 } from "@shot-engine/math";
+import { WebglMesh } from "../../helpers/resource-manager-helper/WebglMesh";
 
 export function SceneRenderer(){
     const nodes = useAppSelector(state => selectNodes(state));
@@ -26,6 +26,7 @@ export function SceneRenderer(){
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [webglRenderer, setWebglRenderer] = useState<WebglRenderer | null>(null);
     const [prepareAssetCount, setPrepareAssetCount] = useState(0);
+    const assetChanged = useAppSelector(state => state.assetCache.assetChanged);
 
     useEffect(() => {
         const webgl2 = getSceneWebglContext();
@@ -47,7 +48,6 @@ export function SceneRenderer(){
             
             AssetCache.getInstance().deleteUnused();
 
-            prepareColorTexture(componentArrs);
             prepareSkyBox(componentArrs);
             setPrepareAssetCount(state => state + 1);
         }
@@ -56,7 +56,7 @@ export function SceneRenderer(){
             controller1.abort();
             controller2.abort();
         }
-    }, [nodes, gizmoNodes]);
+    }, [nodes, gizmoNodes, assetChanged]);
 
     useEffect(() => {
         prepareLight(nodes);
@@ -69,7 +69,7 @@ export function SceneRenderer(){
 
         GlobalSceneNodeRenderer.getInstance().reset();
         const renderer = new SceneNodeRenderer(webglRenderer);
-        renderer.renderNodes(nodes, nodeRecord);
+        renderer.renderNodes(nodes);
 
         webglRenderer.renderSkyBox(
             GizmoOrbitCameraInfo.getInstance().viewMat4,
@@ -80,7 +80,7 @@ export function SceneRenderer(){
 
         webglRenderer.renderAxis(GizmoOrbitCameraInfo.getInstance().vpMat4);
 
-        renderer.renderNodes(gizmoNodes, nodeRecord);
+        renderer.renderNodes(gizmoNodes);
     },[
         camera, nodes, nodeRecord, gizmoNodes, webglRenderer, prepareAssetCount, nodeFocusedId
     ]);
@@ -97,11 +97,25 @@ export function SceneRenderer(){
         </div>
     );
 }
-type RenderNodeData = {
+export type RenderNodeData = {
     node: NodeState,
+    rendererComponent: MeshRenderer | SkinnedMeshRenderer,
+    jointMatrices: Float32Array,
+    meshAsset: MeshAsset,
+    primitive: MeshAsset["primitives"][0],
+    materialAsset: MaterialAsset,
     distanceToCam: number,
-    meshComponent: Mesh,
-    shadingComponent: Shading
+    transforms: {
+        modelMat4: Mat4,
+        mvpMat4: Mat4,
+        normalMat3: Mat3,
+        viewMat4: Mat4,
+        camPos: Vec3,
+        vpMat4: Mat4
+    },
+    gpuResource: {
+        webglMesh: WebglMesh
+    }
 }
 export class SceneNodeRenderer{
     private _webglRenderer: WebglRenderer;
@@ -112,108 +126,119 @@ export class SceneNodeRenderer{
         this._opaqueNodes = [];
         this._transparentNodes = [];
     }
-    renderNodes(
-        nodes: NodeState[],
-        nodeRecord: Record<string, NodeState>,
-    ){
-        this.pepareRenderNodes(nodes);
-        for(const node of this._opaqueNodes){
-            this.renderGo(node, NodesInfo.getInstance().nodeInfos, nodeRecord);
-        }
-        for(const node of this._transparentNodes){
-            this.renderGo(node, NodesInfo.getInstance().nodeInfos, nodeRecord);
-        }
-    }
     private pepareRenderNodes(nodes: NodeState[]){
         this._opaqueNodes = [];
         this._transparentNodes = [];
         const camPos = GizmoOrbitCameraInfo.getInstance().worldPos;
         for(const node of nodes){
-            const meshComponent = ComponentHelper.FindComponentByType(node.components, "Mesh");
-            if(!meshComponent) continue;
-            const shadingComponent = ComponentHelper.FindComponentByType(node.components, "Shading");
-            if(!shadingComponent) continue;
+            // get renderer component
+            let rendererComponent: MeshRenderer | SkinnedMeshRenderer | undefined
+                = ComponentHelper.FindComponentByType(node.components, "MeshRenderer");
+            if(!rendererComponent){
+                rendererComponent = ComponentHelper.FindComponentByType(node.components, "SkinnedMeshRenderer");
+            }
+            if(!rendererComponent) continue;
+
+            // get mesh + materials asset
+            const { meshRef, materialRefs } = rendererComponent;
+            if(!meshRef) continue;
+            const meshAsset = AssetCache.getInstance().getMeshAssetCache(meshRef);
+            if(!meshAsset) continue;
+            const webglMeshes = AssetCache.getInstance().getWebglMeshes(meshRef);
+            if(!webglMeshes) continue;
+            const materialAssets: MaterialAsset[] = [];
+            for(const materialRef of materialRefs){
+                if(!materialRef) continue;
+                const materialAsset = AssetCache.getInstance().getMaterialAssetCache(materialRef);
+                if(!materialAsset) continue;
+                materialAssets.push(materialAsset);
+            }
+
+            // parepe transform data
+            const modelMat4 = NodesInfo.getInstance().nodeInfos.get(node.id)?.worldMatrix;
+            if(!modelMat4) continue;
+            const mvpMat4 = this.createMVPMatrix(modelMat4);
+            const viewMat4 = GizmoOrbitCameraInfo.getInstance().viewMat4;
+            const normalMat3 = this.createNormalMatrix(modelMat4);
+            const vpMat4 = GizmoOrbitCameraInfo.getInstance().vpMat4;
+
+            // create joint matrices
+            let jointMatrices = new Float32Array();
+            if(rendererComponent.type === "SkinnedMeshRenderer"){
+                const { jointRefs } = rendererComponent;
+                jointMatrices = new Float32Array(jointRefs.length * 16);
+                let offset = 0;
+                const jointMat4 = new Mat4();
+                for(const jointRef of jointRefs){
+                    if(!jointRef) Mat4.Identity(jointMat4);
+                    else{
+                        const worldJoint = NodesInfo.getInstance().nodeInfos.get(jointRef)?.worldMatrix;
+                        if(!worldJoint) Mat4.Identity(jointMat4);
+                        else Mat4.Copy(jointMat4, worldJoint);
+                    }
+                    jointMatrices.set(jointMat4.values, offset);
+                    offset += 16;
+                }
+            }
+
+            // get distance to cam
             const nodeWordPos = NodesInfo.getInstance().getWorldPos(node.id);
             if(!nodeWordPos) continue;
-            const renderNodeData: RenderNodeData = {
-                node,
-                distanceToCam: Vec3.SquaredDistance(camPos, nodeWordPos),
-                meshComponent,
-                shadingComponent
+            const distanceToCam = Vec3.SquaredDistance(camPos, nodeWordPos);
+
+            // create RenderNodeData
+            const { primitives } = meshAsset;
+            for(
+                let i = 0;
+                i < primitives.length && i < materialAssets.length && i < webglMeshes.length;
+                i++
+            ){
+                const primitive = primitives[i];
+                const materialAsset = materialAssets[i];
+                const webglMesh = webglMeshes[i];
+                const renderNodeData: RenderNodeData = {
+                    node,
+                    rendererComponent,
+                    jointMatrices,
+                    meshAsset,
+                    primitive,
+                    materialAsset,
+                    distanceToCam,
+                    transforms: {
+                        modelMat4,
+                        mvpMat4,
+                        normalMat3,
+                        viewMat4,
+                        camPos,
+                        vpMat4
+                    },
+                    gpuResource: {
+                        webglMesh
+                    }
+                }
+                if(materialAsset.transparent === "blend") this._transparentNodes.push(renderNodeData);
+                else this._opaqueNodes.push(renderNodeData);
             }
-            if(!shadingComponent.transparent) this._opaqueNodes.push(renderNodeData);
-            else this._transparentNodes.push(renderNodeData);
         }
         this._opaqueNodes.sort((a, b) => a.distanceToCam - b.distanceToCam);
         this._transparentNodes.sort((a, b) => b.distanceToCam - a.distanceToCam);
     }
-    renderGo(
-        renderNode: RenderNodeData,
-        nodeRenderStates: Map<string, NodeRenderState>,
-        nodeRecord: Record<string, NodeState>,
-    ){
-        const { node: go, meshComponent, shadingComponent } = renderNode;
+    renderNodes(nodes: NodeState[]){
+        this.pepareRenderNodes(nodes);
+        for(const renderNodeData of this._opaqueNodes){
+            this.renderGo(renderNodeData);
+        }
+        for(const renderNodeData of this._transparentNodes){
+            this.renderGo(renderNodeData);
+        }
+    }
+    renderGo(renderNodeData: RenderNodeData){
+        this._webglRenderer.render(renderNodeData);
 
-        // model mat4
-        const nodeRenderState = nodeRenderStates.get(go.id);
-        let modelMat4 = nodeRenderState?.worldMatrix;
-        if(!modelMat4) throw "dont find modelMat4";
-
-        // skeleton
-        const skeletonComponent = ComponentHelper.FindComponentByType(go.components, "Skeleton");
-        const jointMatrices = this.createJointMatrices(
-            skeletonComponent?.rootJointId,
-            nodeRenderStates,
-            nodeRecord
-        );
-
-        const mvpMat4 = this.createMVPMatrix(modelMat4);
-        const viewMat4 = GizmoOrbitCameraInfo.getInstance().viewMat4;
-        const normalMat3 = this.createNormalMatrix(modelMat4);
-
-        this._webglRenderer.render(
-            shadingComponent,
-            meshComponent,
-            mvpMat4,
-            modelMat4,
-            viewMat4,
-            normalMat3,
-            GizmoOrbitCameraInfo.getInstance().worldPos,
-            GizmoOrbitCameraInfo.getInstance().vpMat4,
-            jointMatrices
-        );
-
-        const meshAsset = AssetCache.getInstance().getMeshAssetCache(meshComponent.meshRef);
-        GlobalSceneNodeRenderer.getInstance().nodeRenderInfos.set(go.id, {
+        const {node, meshAsset} = renderNodeData;
+        GlobalSceneNodeRenderer.getInstance().nodeRenderInfos.set(node.id, {
             meshAsset
         });
-
-        return { modelMat4 };
-    }
-    createJointMatrices(
-        rootJointId: string | undefined,
-        nodeRenderStates: Map<string, NodeRenderState>,
-        nodeRecord: Record<string, NodeState>,
-    ){
-        if(!rootJointId) return new Float32Array();
-        const jointMatrices: Float32Array[] = [];
-        function recur(jointId: string){
-            const jointNode = nodeRecord[jointId];
-            if(!jointNode) return;
-            const jointMatrix = nodeRenderStates.get(jointId)?.worldMatrix;
-            if(!jointMatrix) return;
-            jointMatrices.push(jointMatrix.values);
-            for(const child of jointNode.childs){
-                recur(child);
-            }
-        }
-        recur(rootJointId);
-        const result = new Float32Array(jointMatrices.length * 16);
-        for(let i = 0, offset = 0; i < jointMatrices.length; i++){
-            result.set(jointMatrices[i], offset);
-            offset += 16;
-        }
-        return result;
     }
     createMVPMatrix(modelMat4: Mat4){
         return Mat4.Multiply(new Mat4(), GizmoOrbitCameraInfo.getInstance().vpMat4, modelMat4); // P * V * M
@@ -247,30 +272,36 @@ async function prepareAsset(nodes: NodeState[], signal: AbortSignal){
     for(const componentArr of componentArrs){
         for(const component of componentArr){
             if(signal.aborted) break;
-            if(component.type === "Mesh"){
-                await AssetCache.getInstance().createAssetCache(component.meshRef, "mesh");
-            }
-            if(
-                component.type === "Shading" && 
-                component.shaderType === "pbr"
-            ){
-                if(component.diffuse.type === "image"){
-                    await AssetCache.getInstance().createAssetCache(component.diffuse.imageRef, "image");
+            if(component.type === "MeshRenderer" || component.type === "SkinnedMeshRenderer"){
+                if(component.meshRef){
+                    await AssetCache.getInstance().createAssetCache(component.meshRef, "mesh");
                 }
-                if(component.metallic.type === "image"){
-                    await AssetCache.getInstance().createAssetCache(component.metallic.imageRef, "image");
-                }
-                if(component.roughness.type === "image"){
-                    await AssetCache.getInstance().createAssetCache(component.roughness.imageRef, "image");
-                }
-                if(component.emissive.color.type === "image"){
-                    await AssetCache.getInstance().createAssetCache(component.emissive.color.imageRef, "image");
-                }
-                if(component.normal.type === "image"){
-                    await AssetCache.getInstance().createAssetCache(component.normal.imageRef, "image");
-                }
-                if(component.ao.type === "image"){
-                    await AssetCache.getInstance().createAssetCache(component.ao.imageRef, "image");
+                for(const materialRef of component.materialRefs){
+                    if(!materialRef) continue;
+                    const cacheItem = await AssetCache.getInstance().createAssetCache(materialRef, "material");
+                    if(!cacheItem) continue;
+                    const materialAsset = cacheItem.asset as MaterialAsset;
+                    if(materialAsset.matType === "pbr"){
+                        const {
+                            baseTextureRef, metallicRoughnessTextureRef, normalTextureRef,
+                            emissiveTextureRef, occlusionTextureRef
+                        } = materialAsset;
+                        if(baseTextureRef){
+                            await AssetCache.getInstance().createAssetCache(baseTextureRef, "image");
+                        }
+                        if(metallicRoughnessTextureRef){
+                            await AssetCache.getInstance().createAssetCache(metallicRoughnessTextureRef, "image");
+                        }
+                        if(normalTextureRef){
+                            await AssetCache.getInstance().createAssetCache(normalTextureRef, "image");
+                        }
+                        if(emissiveTextureRef){
+                            await AssetCache.getInstance().createAssetCache(emissiveTextureRef, "image");
+                        }
+                        if(occlusionTextureRef){
+                            await AssetCache.getInstance().createAssetCache(occlusionTextureRef, "image");
+                        }
+                    }
                 }
             }
             if(
@@ -284,20 +315,6 @@ async function prepareAsset(nodes: NodeState[], signal: AbortSignal){
     return {
         componentArrs
     };
-}
-function prepareColorTexture(componentArrs: Component[][]){
-    for(const componentArr of componentArrs){
-        for(const component of componentArr){
-            if(component.type === "Shading"){
-                if(component.shaderType === "phong" || component.shaderType === "pbr"){
-                    if(component.diffuse.type === "color"){
-                        ColorCache.getInstance().createColorTexture(component.diffuse.color);
-                    }
-                }
-            }
-        }
-    }
-    ColorCache.getInstance().deleteUnused();
 }
 function prepareLight(nodes: NodeState[]){
     LightInfo.getInstance().reset();

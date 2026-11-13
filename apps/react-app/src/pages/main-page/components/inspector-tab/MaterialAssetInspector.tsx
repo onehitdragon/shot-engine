@@ -1,15 +1,18 @@
 import { useImmer } from "use-immer";
 import type { MaterialAssetInspector } from "../../../../global-state/slices/inspector-slice";
-import { ImageSelection, RGBAValueRow, RGBValueRow, SaveButton, Selection, TextRow, ValueSliderRow } from "./components";
+import { ImageSelection, OneValueRow, RGBAValueRow, RGBValueRow, SaveButton, Selection, TextRow, ValueSliderRow } from "./components";
 import type { MaterialAsset, PbrMaterialAsset, SimpleMaterialAsset } from "@shot-engine/types";
 import { useState } from "react";
 import { Vec3, Vec4 } from "@shot-engine/math";
 import { ColorToVec3, ColorToVec4, Vec3ToColor, Vec4ToColor } from "./helper";
+import { useAppDispatch } from "../../../../global-state/hooks";
+import { emitAssetChanged } from "../../../../global-state/slices/asset-cache-slice";
 
 
 export function MaterialAssetInspector(props: { inspector: MaterialAssetInspector }) {
   const { assetInfo, materialAsset } = props.inspector;
   const [matType, setMatType] = useState(materialAsset.matType);
+  const dispatch = useAppDispatch();
 
   function getDefaultSimpleMaterialAsset(): SimpleMaterialAsset{
     if(materialAsset.matType === "simple") return materialAsset;
@@ -44,6 +47,7 @@ export function MaterialAssetInspector(props: { inspector: MaterialAssetInspecto
       await window.api.assetManager.saveMaterialAssetBinary(materialAsset, filePath);
       if(cancelled) return;
       await window.api.assetManager.rescan();
+      dispatch(emitAssetChanged());
     }
     return (<SaveButton label="Apply" handle={update}/>);
   }
@@ -280,9 +284,8 @@ function PbrMaterialAssetEditor(props: {
           })
         }}
       />
-      <ValueSliderRow label="Normal scale"
+      <OneValueRow label="Normal scale"
         value={assetState.normalScale}
-        range={[0, 1]}
         onChange={(value) => {
           setAssetState(state => {
             state.normalScale = value;

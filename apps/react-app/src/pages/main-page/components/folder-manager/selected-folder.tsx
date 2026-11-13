@@ -11,7 +11,7 @@ import { FolderOpenIcon as FolderEmptyIcon } from '@heroicons/react/24/outline';
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { useEffect, useRef, useState } from "react";
 import { showDialog } from "../../../../global-state/slices/app-confirm-dialog-slice";
-import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk, prefabFileCreatedThunk, sceneFileCreatedThunk, projectSettingFileCreatedThunk } from "../../../../global-state/thunks/folder-manager-thunks";
+import { folderCreatedThunk, entryDeletedThunk, fileImportedThunk, prefabFileCreatedThunk, sceneFileCreatedThunk, projectSettingFileCreatedThunk, materialFileCreatedThunk } from "../../../../global-state/thunks/folder-manager-thunks";
 import { inspectAssetThunk } from "../../../../global-state/thunks/inspector-thunks";
 import type { AssetManager, AssetType } from "@shot-engine/types";
 import { getBaseName } from "../../helpers/utils/utils";
@@ -237,6 +237,7 @@ function ButtonBar(props: ButtonBarProps){
             <ul className='flex-1 flex justify-end items-center'>
                 <CreateSceneButton selectedDirectory={selectedDirectory}/>
                 <CreatePrefabButton selectedDirectory={selectedDirectory}/>
+                <CreateMaterialButton selectedDirectory={selectedDirectory}/>
                 <CreateProjectSettingButton selectedDirectory={selectedDirectory}/>
             </ul>
         </div>
@@ -317,6 +318,34 @@ function CreateSceneButton(props: { selectedDirectory: FolderManager.DirectorySt
         :
         <EntryNameInput
             extension=".scene"
+            children={selectedDirectory.children.map(e => getBaseName(e))}
+            create={create}
+            close={close}
+            className="mr-1"
+        />
+    );
+}
+function CreateMaterialButton(props: { selectedDirectory: FolderManager.DirectoryState }){
+    const { selectedDirectory } = props;
+    const [enteringName, setEnteringName] = useState(false);
+    const dispatch = useAppDispatch();
+    const create = async (name: string) => {
+        dispatch(materialFileCreatedThunk({ parentPath: selectedDirectory.path, name }));
+    }
+    const close = () => {
+        setEnteringName(false);
+    }
+
+    return (
+        !enteringName ?
+        <button className='size-8 hover:cursor-pointer hover:opacity-50 transition-opacity flex items-center'
+            onClick={() => { setEnteringName(true); }}>
+            <LifebuoyIcon className='size-4 text-pink-500'/>
+            <span className='text-xs text-white select-none'>+</span>
+        </button>
+        :
+        <EntryNameInput
+            extension=".mat"
             children={selectedDirectory.children.map(e => getBaseName(e))}
             create={create}
             close={close}

@@ -11,7 +11,9 @@ export type ImageAsset = {
 }
 export type GLTypeAndNormalized = {
     type: number, // WebGL enum value
-    normalized: boolean
+    normalized: boolean,
+    itemSize: number, // in byte
+    count: number,
 }
 export type MeshAsset = {
     primitives: {
@@ -28,10 +30,25 @@ export type MeshAsset = {
         },
         indices: Uint8Array, // raw buffer
         indexType: number, // WebGL enum value
+        indexCount: number,
         drawMode: number, // WebGL enum value
         aabb: AABB
     }[],
     invBindPoseMatrices: Float32Array // only valid for skined mesh
+}
+export class MeshAssetHelper{
+    public static getIndicesTypedArray(indices: Uint8Array, indexType: number){
+        if(indexType === 5121){
+            return indices;
+        }
+        else if(indexType === 5123){
+            return new Uint16Array(indices.buffer);
+        }
+        else if(indexType === 5125){
+            return new Uint32Array(indices.buffer);
+        }
+        return indices;
+    }
 }
 export type BaseMaterialAsset = {
     culling: "none" | "back" | "front",
@@ -49,7 +66,7 @@ export type PbrMaterialAsset = BaseMaterialAsset & {
     metallicFactor: number, // 0 -> 1
     roughnessFactor: number, // 0 -> 1
     metallicRoughnessTextureRef?: string, // g-roughness b-metalness
-    normalScale: number, // 0 -> 1
+    normalScale: number, // any value
     normalTextureRef?: string,
     emissitveFactor: Vec3,
     emissiveTextureRef?: string,

@@ -44,31 +44,32 @@ uniform int u_pointLightSize;
 uniform SpotLight u_spotLights[NUM_LIGHTS];
 uniform int u_spotLightSize;
 
-uniform bool u_hasNormalMap;
+uniform sampler2D u_baseMap; // base
+uniform vec4 u_baseFactor;
+uniform sampler2D u_metallicRoughnessMap;
+uniform float u_roughnessFactor; // 0...1
+uniform float u_metallicFactor; // 0...1
 uniform sampler2D u_normalMap;
-uniform bool u_hasAoMap;
-uniform sampler2D u_aoMap;
-
-uniform sampler2D u_baseColorSampler; // rgb
-uniform float u_metallic; // 0...1
-uniform bool u_hasMetallicMap;
-uniform sampler2D u_metallicMap;
-uniform float u_perceptualRoughness; // 0...1
-uniform bool u_hasRoughnessMap;
-uniform sampler2D u_roughnessMap;
-uniform float u_reflectance; // 0...1
-uniform vec3 u_emissive; // rgb
-uniform float u_emissiveIntensity;
-uniform bool u_hasEmissiveMap;
+uniform float u_normalScale;
 uniform sampler2D u_emissiveMap;
+uniform vec3 u_emissiveFactor;
+uniform sampler2D u_aoMap;
+uniform float u_aoStrength;
+
+uniform float u_reflectance; // 0...1
 
 uniform bool u_hasIBL;
 uniform samplerCube u_irradianceMap;
 uniform samplerCube u_prefilterMap;
 uniform sampler2D u_brdfLUT;
 
+const int TRANSPARENT_OPAQUE = 0;
+const int TRANSPARENT_MASK = 1;
+const int TRANSPARENT_BLEND = 2;
+uniform int u_transparentMode;
+uniform float u_alphaCutoff;
+
 in vec3 v_WorldPos;
-in vec3 v_WorldNormal;
 in vec2 v_TextCoord;
 in mat3 v_WorldTBN;
 
@@ -142,39 +143,24 @@ float directionalShadow(int i, vec3 N, vec3 L){
     return shadow;
 }
 
+vec2 getRoughnessAndMetalness(){
+    // g roughness b metallic in gltf
+    return texture(u_metallicRoughnessMap, v_TextCoord).gb * vec2(u_roughnessFactor, u_metallicFactor);
+}
 vec3 getWorldNormal(){
-    if(u_hasNormalMap){
-        vec3 normal = texture(u_normalMap, v_TextCoord).rgb;
-        normal = normal * 2.0 - 1.0;
-        normal.z = sqrt(max(1.0 - dot(normal.xy, normal.xy), 0.0));
-        normal = normalize(v_WorldTBN * normal);
-        return normal;
-    }
-    return normalize(v_WorldNormal);
-}
-float getMetallic(){
-    if(u_hasMetallicMap){
-        return texture(u_metallicMap, v_TextCoord).b; // b metallic in gltf
-    }
-    return u_metallic;
-}
-float getRoughness(){
-    if(u_hasRoughnessMap){
-        return texture(u_roughnessMap, v_TextCoord).g; // g roughness in gltf
-    }
-    return u_perceptualRoughness;
+    vec3 normal = texture(u_normalMap, v_TextCoord).rgb;
+    normal = normal * 2.0 - 1.0;
+    normal.xy = normal.xy * u_normalScale;
+    normal.z = sqrt(max(1.0 - dot(normal.xy, normal.xy), 0.0));
+    normal = normalize(v_WorldTBN * normal);
+    return normal;
 }
 vec3 getEmissive(){
-    if(u_hasEmissiveMap){
-        return texture(u_emissiveMap, v_TextCoord).rgb * u_emissiveIntensity;
-    }
-    return u_emissive * u_emissiveIntensity;
+    return texture(u_emissiveMap, v_TextCoord).rgb * u_emissiveFactor;
 }
 float getAo(){
-    if(u_hasAoMap){
-        return texture(u_aoMap, v_TextCoord).r; // r in gltf
-    }
-    return 1.0;
+    float aoValue = texture(u_aoMap, v_TextCoord).r;
+    return mix(1.0, aoValue, u_aoStrength); // 1.0 receive full indirect/ambient lighting
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness){
@@ -254,9 +240,21 @@ vec3 ambient(
 void main(){
     vec3 N = getWorldNormal();
     vec3 V = normalize(u_CamWorldPos - v_WorldPos);
-    vec4 baseColor = texture(u_baseColorSampler, v_TextCoord);
-    float metallic = getMetallic();
-    float roughness = getRoughness();
+    vec4 baseColor = texture(u_baseMap, v_TextCoord) * u_baseFactor;
+    vec2 roughnessAndMetalness = getRoughnessAndMetalness();
+    float roughness = roughnessAndMetalness.x;
+    float metallic = roughnessAndMetalness.y;
+
+    // check alpha
+    if(u_transparentMode == TRANSPARENT_OPAQUE){
+        baseColor.a = 1.0;
+    }
+    else if(u_transparentMode == TRANSPARENT_MASK){
+        if(baseColor.a < u_alphaCutoff){
+            discard;
+        }
+        baseColor.a = 1.0;
+    }
 
     vec3 diffuseColor = (1.0 - metallic) * baseColor.rgb;
     vec3 F0 = 0.16 * u_reflectance * u_reflectance * (1.0 - metallic) + baseColor.rgb * metallic;

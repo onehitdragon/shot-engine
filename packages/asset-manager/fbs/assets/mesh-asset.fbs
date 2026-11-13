@@ -5,6 +5,8 @@ namespace FBSAsset;
 table GLTypeAndNormalized{
   type: int;
   normalized: bool;
+  item_size: int;
+  count: int;
 }
 
 table PrimitiveAttribute{
@@ -26,6 +28,7 @@ table Primitive{
   attribute: PrimitiveAttribute;
   indices: [ubyte];
   index_type: int;
+  index_count: int;
   draw_mode: int;
   aabb: AABB;
 }

@@ -133,17 +133,10 @@ function createGizmoTool(){
         editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
-        type: "Mesh",
+        type: "MeshRenderer",
         id: gizmoUuidv4(),
-        meshRef: "cylinder-engine.mesh"
-      },
-      {
-        type: "Shading",
-        id: gizmoUuidv4(),
-        shaderType: "gizmo",
-        culling: "none",
-        transparent: false,
-        color: Vec3.FromValues(1, 0, 0)
+        meshRef: "cylinder-engine.mesh",
+        materialRefs: ["red-simple-material-engine.mat"]
       }
     ],
     childs: []
@@ -161,18 +154,11 @@ function createGizmoTool(){
         editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
-        type: "Mesh",
+        type: "MeshRenderer",
         id: gizmoUuidv4(),
-        meshRef: "cone-engine.mesh"
+        meshRef: "cone-engine.mesh",
+        materialRefs: ["red-simple-material-engine.mat"]
       },
-      {
-        type: "Shading",
-        id: gizmoUuidv4(),
-        shaderType: "gizmo",
-        culling: "none",
-        transparent: false,
-        color: Vec3.FromValues(1, 0, 0)
-      }
     ],
     childs: []
   }
@@ -204,18 +190,11 @@ function createGizmoTool(){
         editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
-        type: "Mesh",
+        type: "MeshRenderer",
         id: gizmoUuidv4(),
-        meshRef: "cylinder-engine.mesh"
+        meshRef: "cylinder-engine.mesh",
+        materialRefs: ["green-simple-material-engine.mat"]
       },
-      {
-        type: "Shading",
-        id: gizmoUuidv4(),
-        shaderType: "gizmo",
-        culling: "none",
-        transparent: false,
-        color: Vec3.FromValues(0, 1, 0)
-      }
     ],
     childs: []
   }
@@ -232,18 +211,11 @@ function createGizmoTool(){
         editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
-        type: "Mesh",
+        type: "MeshRenderer",
         id: gizmoUuidv4(),
-        meshRef: "cone-engine.mesh"
+        meshRef: "cone-engine.mesh",
+        materialRefs: ["green-simple-material-engine.mat"]
       },
-      {
-        type: "Shading",
-        id: gizmoUuidv4(),
-        shaderType: "gizmo",
-        culling: "none",
-        transparent: false,
-        color: Vec3.FromValues(0, 1, 0)
-      }
     ],
     childs: []
   }
@@ -275,18 +247,11 @@ function createGizmoTool(){
         editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
-        type: "Mesh",
+        type: "MeshRenderer",
         id: gizmoUuidv4(),
-        meshRef: "cylinder-engine.mesh"
+        meshRef: "cylinder-engine.mesh",
+        materialRefs: ["blue-simple-material-engine.mat"]
       },
-      {
-        type: "Shading",
-        id: gizmoUuidv4(),
-        shaderType: "gizmo",
-        culling: "none",
-        transparent: false,
-        color: Vec3.FromValues(0, 0, 1)
-      }
     ],
     childs: []
   }
@@ -303,18 +268,11 @@ function createGizmoTool(){
         editor: { euler: Vec3.FromValues(0, 0, 0) }
       },
       {
-        type: "Mesh",
+        type: "MeshRenderer",
         id: gizmoUuidv4(),
-        meshRef: "cone-engine.mesh"
+        meshRef: "cone-engine.mesh",
+        materialRefs: ["blue-simple-material-engine.mat"]
       },
-      {
-        type: "Shading",
-        id: gizmoUuidv4(),
-        shaderType: "gizmo",
-        culling: "none",
-        transparent: false,
-        color: Vec3.FromValues(0, 0, 1)
-      }
     ],
     childs: []
   }

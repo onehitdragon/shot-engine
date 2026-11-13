@@ -1,12 +1,11 @@
-import type { AssetManager, Camera, Component, Light, MeshRenderer, PointLight, Skeleton, SkinnedMeshRenderer, SkyBox, SpotLight, Transform, UILayout } from "@shot-engine/types";
+import type { AssetManager, Camera, Component, Light, MeshRenderer, PointLight, SkinnedMeshRenderer, SkyBox, SpotLight, Transform, UILayout } from "@shot-engine/types";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../global-state/hooks";
 import { selectComponents } from "../../../../global-state/slices/inspector-components-slice";
 import { cloneDeep } from "lodash";
 import { componentUpdatedThunk } from "../../../../global-state/thunks/inspector-components-thunks";
-import { ThreeValueRow, RGBValueRow, CheckBox, OneValueRow, Selection, TextRow, TextRowErr, TextOrStringSelection, MeshSelection, AssetSelectionList, GameObjectSelectionList } from "./components";
+import { ThreeValueRow, RGBValueRow, CheckBox, OneValueRow, Selection, TextOrStringSelection, MeshSelection, AssetSelectionList, GameObjectSelectionList } from "./components";
 import { openContextMenu } from "../../../../global-state/slices/context-menu-slice";
-import { selectNodeRecord } from "../../../../global-state/slices/go-tree-slice";
 import { ColorToVec3, ObjectToVec3, Vec3ToColor, Vec3ToObject } from "./helper";
 import { Quat } from "@shot-engine/math";
 
@@ -37,9 +36,6 @@ export function ComponentsInspector(){
                     }
                     else if(component.type === "SkyBox"){
                         return <SkyBoxSection key={component.id} skyBox={component}/>
-                    }
-                    else if(component.type === "Skeleton"){
-                        return <SkeletonSection key={component.id} skeleton={component}/>
                     }
                     else if(component.type === "UILayout"){
                         return <UILayout key={component.id} uiLayout={component}/>
@@ -94,10 +90,37 @@ function TransformSection(props: { transform: Transform }){
 }
 function MeshRenderer(props: { meshRenderer: MeshRenderer }){
     const { meshRenderer } = props;
+    const dispatch = useAppDispatch();
+    const meshRendererClone = cloneDeep(meshRenderer);
+    const update = () => {
+        dispatch(componentUpdatedThunk({ component: meshRendererClone }));
+    }
     
     return (
         <div className="flex flex-col gap-2">
             <Header label="Mesh Renderer" component={meshRenderer}/>
+            <MeshSelection label="Mesh"
+                uuidRef={meshRenderer.meshRef}
+                onChange={(value) => {
+                    meshRendererClone.meshRef = value;
+                    update();
+                }}
+            />
+            <AssetSelectionList label="Materials" type="material"
+                uuidRefs={meshRenderer.materialRefs}
+                onItemChange={(index, value) => {
+                    meshRendererClone.materialRefs[index] = value;
+                    update();
+                }}
+                onItemAdd={() => {
+                    meshRendererClone.materialRefs.push(undefined);
+                    update();
+                }}
+                onItemDelete={(index) => {
+                    meshRendererClone.materialRefs.splice(index, 1);
+                    update();
+                }}
+            />
         </div>
     );
 }
@@ -387,22 +410,6 @@ function SkyBoxSection(props: { skyBox: SkyBox }){
                     update();
                 }}
             />
-        </div>
-    );
-}
-function SkeletonSection(props: { skeleton: Skeleton }){
-    const { skeleton } = props;
-    const nodeRecord = useAppSelector(selectNodeRecord);
-    const rootJoint = nodeRecord[skeleton.rootJointId];
-
-    return (
-        <div className="flex flex-col">
-            <Header label="Skeleton" component={skeleton}/>
-            {
-                rootJoint ? 
-                <TextRow label="root joint" content={`${rootJoint.name} (${skeleton.rootJointId})`}/>:
-                <TextRowErr label="root joint" content={`None (${skeleton.rootJointId})`}/>
-            }
         </div>
     );
 }
