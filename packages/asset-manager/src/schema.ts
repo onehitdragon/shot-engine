@@ -10,8 +10,9 @@ export const defaultImageAsset: AssetProperty.Image = {
     flipY: false,
     sRGB: true,
     generateMipmaps: true,
-    wrapMode: "REPEAT",
-    filterMode: "BILINEAR"
+    wrapModeS: "REPEAT",
+    wrapModeT: "REPEAT",
+    filterMode: "LINEAR"
 };
 export const defaultMaterialAsset: AssetProperty.Material = {
     type: "material"

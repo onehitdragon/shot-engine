@@ -26,9 +26,11 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
             return {
                 type: "image",
                 imageType: "NormalMap",
+                sRGB: false,
                 flipY: false,
-                wrapMode: "REPEAT",
-                filterMode: "BILINEAR",
+                wrapModeS: "REPEAT",
+                wrapModeT: "REPEAT",
+                filterMode: "LINEAR",
                 generateMipmaps: true,
             };
         }
@@ -36,8 +38,9 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
             type: "image",
             imageType: "Texture",
             flipY: false,
-            wrapMode: "REPEAT",
-            filterMode: "BILINEAR",
+            wrapModeS: "REPEAT",
+            wrapModeT: "REPEAT",
+            filterMode: "LINEAR",
             generateMipmaps: true,
             sRGB: true,
         };
@@ -111,58 +114,64 @@ function AssetImage(props: { inspector: ImageAssetInspector }){
 }
 function TextureModifier(props: {
     imageAsset: ImageAsset,
-    textureProperty: AssetProperty.Texture,
-    onChange: (textureProperty: AssetProperty.Texture) => void
+    textureProperty: AssetProperty.Image,
+    onChange: (textureProperty: AssetProperty.Image) => void
 }){
     const { imageAsset, textureProperty, onChange } = props;
     const texturePropertyClone = cloneDeep(textureProperty);
 
     return(
         <>
-            <Selection
-                label="Wrap mode"
-                value={textureProperty.wrapMode}
+            <Selection label="Wrap mode S"
+                value={textureProperty.wrapModeS}
                 options={[
                     { label: "REPEAT", value: "REPEAT" },
                     { label: "CLAMP", value: "CLAMP" },
                     { label: "MIRROR", value: "MIRROR" },
                 ]}
                 onChange={(value) => {
-                    texturePropertyClone.wrapMode = value;
+                    texturePropertyClone.wrapModeS = value;
                     onChange(texturePropertyClone);
                 }}
             />
-            <Selection
-                label="Filter mode"
+            <Selection label="Wrap mode T"
+                value={textureProperty.wrapModeT}
+                options={[
+                    { label: "REPEAT", value: "REPEAT" },
+                    { label: "CLAMP", value: "CLAMP" },
+                    { label: "MIRROR", value: "MIRROR" },
+                ]}
+                onChange={(value) => {
+                    texturePropertyClone.wrapModeT = value;
+                    onChange(texturePropertyClone);
+                }}
+            />
+            <Selection label="Filter mode"
                 value={textureProperty.filterMode}
                 options={[
                     { label: "NONE", value: "NONE" },
-                    { label: "BILINEAR", value: "BILINEAR" },
-                    { label: "TRILINEAR", value: "TRILINEAR" },
+                    { label: "LINEAR", value: "LINEAR" },
                 ]}
                 onChange={(value) => {
                     texturePropertyClone.filterMode = value;
                     onChange(texturePropertyClone);
                 }}
             />
-            <CheckBox
-                label="Flip Y"
+            <CheckBox label="Flip Y"
                 value={textureProperty.flipY}
                 onChange={(value) => {
                     texturePropertyClone.flipY = value;
                     onChange(texturePropertyClone);
                 }}
             />
-            <CheckBox
-                label="Generate mipmaps"
+            <CheckBox label="Generate mipmaps"
                 value={textureProperty.generateMipmaps}
                 onChange={(value) => {
                     texturePropertyClone.generateMipmaps = value;
                     onChange(texturePropertyClone);
                 }}
             />
-            <CheckBox
-                label="sRGB"
+            <CheckBox label="sRGB"
                 value={textureProperty.sRGB}
                 onChange={(value) => {
                     texturePropertyClone.sRGB = value;
@@ -177,50 +186,57 @@ function TextureModifier(props: {
 }
 function NormalMapModifier(props: {
     imageAsset: ImageAsset,
-    textureProperty: AssetProperty.NormalMap,
-    onChange: (textureProperty: AssetProperty.NormalMap) => void
+    textureProperty: AssetProperty.Image,
+    onChange: (textureProperty: AssetProperty.Image) => void
 }){
     const { textureProperty, onChange } = props;
     const texturePropertyClone = cloneDeep(textureProperty);
 
     return(
         <>
-            <Selection
-                label="Wrap mode"
-                value={textureProperty.wrapMode}
+            <Selection label="Wrap mode S"
+                value={textureProperty.wrapModeS}
                 options={[
                     { label: "REPEAT", value: "REPEAT" },
                     { label: "CLAMP", value: "CLAMP" },
                     { label: "MIRROR", value: "MIRROR" },
                 ]}
                 onChange={(value) => {
-                    texturePropertyClone.wrapMode = value;
+                    texturePropertyClone.wrapModeS = value;
                     onChange(texturePropertyClone);
                 }}
             />
-            <Selection
-                label="Filter mode"
+            <Selection label="Wrap mode T"
+                value={textureProperty.wrapModeT}
+                options={[
+                    { label: "REPEAT", value: "REPEAT" },
+                    { label: "CLAMP", value: "CLAMP" },
+                    { label: "MIRROR", value: "MIRROR" },
+                ]}
+                onChange={(value) => {
+                    texturePropertyClone.wrapModeT = value;
+                    onChange(texturePropertyClone);
+                }}
+            />
+            <Selection label="Filter mode"
                 value={textureProperty.filterMode}
                 options={[
                     { label: "NONE", value: "NONE" },
-                    { label: "BILINEAR", value: "BILINEAR" },
-                    { label: "TRILINEAR", value: "TRILINEAR" },
+                    { label: "LINEAR", value: "LINEAR" },
                 ]}
                 onChange={(value) => {
                     texturePropertyClone.filterMode = value;
                     onChange(texturePropertyClone);
                 }}
             />
-            <CheckBox
-                label="Flip Y"
+            <CheckBox label="Flip Y"
                 value={textureProperty.flipY}
                 onChange={(value) => {
                     texturePropertyClone.flipY = value;
                     onChange(texturePropertyClone);
                 }}
             />
-            <CheckBox
-                label="Generate mipmaps"
+            <CheckBox label="Generate mipmaps"
                 value={textureProperty.generateMipmaps}
                 onChange={(value) => {
                     texturePropertyClone.generateMipmaps = value;

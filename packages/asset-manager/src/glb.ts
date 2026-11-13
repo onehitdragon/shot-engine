@@ -1,4 +1,4 @@
-import { NodeIO, Node, Texture, Mesh, Accessor, Material, vec4, vec3, GLTF, Primitive, Skin } from '@gltf-transform/core';
+import { NodeIO, Node, Texture, Mesh, Material, vec4, vec3, GLTF, Primitive, Skin, TextureInfo } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { normals, unweld, tangents, weld } from "@gltf-transform/functions";
 import { generateTangents } from 'mikktspace';
@@ -20,6 +20,7 @@ type GLBMesh = {
 type GLBImage = {
     name: string,
     raw: Uint8Array<ArrayBufferLike>,
+    property: ShotEngineType.AssetProperty.Image
 }
 type GLBMaterial = {
     name: string,
@@ -84,13 +85,35 @@ export async function readGLBFile(filePath: string){
         iTexName++;
         return name;
     }
-    const tryCreateGLBImageAsset = async (texture?: Texture | null) => {
+    const tryCreateGLBImageAsset = async (
+        texture: Texture | null, info: TextureInfo | null, isNormal: boolean, sRGB: boolean
+    ) => {
         if(!texture) return;
         const assetId = texture.getExtras()["id"] as string;
         if(glb.imageAssets.has(assetId)) return assetId;
+        const createProperty = () => {
+            const property: ShotEngineType.AssetProperty.Image = {
+                type: "image",
+                imageType: isNormal ? "NormalMap" : "Texture",
+                flipY: false,
+                sRGB,
+                generateMipmaps: true,
+                wrapModeS: "REPEAT",
+                wrapModeT: "REPEAT",
+                filterMode: "LINEAR"
+            }
+            if(!info) return property;
+            property.wrapModeS = getWrapMode(info.getWrapS());
+            property.wrapModeT = getWrapMode(info.getWrapT());
+            const magFilter = info.getMagFilter();
+            if(magFilter && magFilter === 9728) property.filterMode = "NONE";
+            if(magFilter && magFilter === 9729) property.filterMode = "LINEAR";
+            return property;
+        }
         glb.imageAssets.set(assetId, {
             name: getTextureName(texture),
-            raw: await getImage(texture)
+            raw: await getImage(texture),
+            property: createProperty()
         });
         return assetId;
     }
@@ -102,24 +125,29 @@ export async function readGLBFile(filePath: string){
             alphaCutoff: material.getAlphaCutoff(),
             baseFactor: getVec4(material.getBaseColorFactor()),
             baseTextureRef: await tryCreateGLBImageAsset(
-                material.getBaseColorTexture()
+                material.getBaseColorTexture(),
+                material.getBaseColorTextureInfo(), false, true
             ),
             roughnessFactor: material.getRoughnessFactor(),
             metallicFactor: material.getMetallicFactor(),
             metallicRoughnessTextureRef: await tryCreateGLBImageAsset(
-                material.getMetallicRoughnessTexture()
+                material.getMetallicRoughnessTexture(),
+                material.getMetallicRoughnessTextureInfo(), false, false
             ),
             normalScale: material.getNormalScale(),
             normalTextureRef: await tryCreateGLBImageAsset(
-                material.getNormalTexture()
+                material.getNormalTexture(),
+                material.getNormalTextureInfo(), true, false
             ),
             emissitveFactor: getVec3(material.getEmissiveFactor()),
             emissiveTextureRef: await tryCreateGLBImageAsset(
-                material.getEmissiveTexture()
+                material.getEmissiveTexture(),
+                material.getEmissiveTextureInfo(), false, true
             ),
             occlusionStrength: material.getOcclusionStrength(),
             occlusionTextureRef: await tryCreateGLBImageAsset(
-                material.getOcclusionTexture()
+                material.getOcclusionTexture(),
+                material.getOcclusionTextureInfo(), false, false
             ),
         }
         return materialAsset;
@@ -340,6 +368,15 @@ function getTransparent(alphaMode: GLTF.MaterialAlphaMode): ShotEngineType.BaseM
     if(alphaMode === "MASK") return "mask";
     if(alphaMode === "BLEND") return "blend";
     return "opaque";
+}
+function getWrapMode(wrapMode: GLTF.TextureWrapMode): ShotEngineType.AssetProperty.Image["wrapModeS"]{
+    if(wrapMode === 33071){
+        return "CLAMP";
+    }
+    if(wrapMode === 33648){
+        return "MIRROR";
+    }
+    return "REPEAT";
 }
 function getIndices(primitive: Primitive){
     const accessor = primitive.getIndices();

@@ -164,21 +164,16 @@ export namespace AssetProperty{
         type: "other"
     }
 
-    export type TextureBase = {
+    export type Image = {
         type: "image",
+        imageType: "Texture" | "NormalMap"
+        sRGB: boolean,
         flipY: boolean,
         generateMipmaps: boolean,
-        wrapMode: "REPEAT" | "MIRROR" | "CLAMP",
-        filterMode: "NONE" | "BILINEAR" | "TRILINEAR",
+        wrapModeS: "REPEAT" | "MIRROR" | "CLAMP",
+        wrapModeT: "REPEAT" | "MIRROR" | "CLAMP",
+        filterMode: "NONE" | "LINEAR",
     }
-    export type Texture = TextureBase & {
-        imageType: "Texture",
-        sRGB: boolean
-    }
-    export type NormalMap = TextureBase & {
-        imageType: "NormalMap"
-    }
-    export type Image = Texture | NormalMap;
 
     export type Mesh = {
         type: "mesh"

@@ -1,5 +1,4 @@
 import type { AssetProperty, ImageAsset } from "@shot-engine/types";
-import type { Assets } from "../../../../engine-zod";
 import { KTXTranscoder } from "@shot-engine/ktx-tool/transcoder";
 
 export class WebglTexture{
@@ -36,8 +35,8 @@ export class WebglTexture{
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, transcodeInfos.length - 1);
         
         // other
-        const { wrapMode, filterMode, generateMipmaps } = property;
-        instance.setWrapMode(wrapMode);
+        const { wrapModeS, wrapModeT, filterMode, generateMipmaps } = property;
+        instance.setWrapMode(wrapModeS, wrapModeT);
         instance.setFilterMode(generateMipmaps, filterMode);
         gl.bindTexture(gl.TEXTURE_2D, null);
         return instance;
@@ -97,7 +96,7 @@ export class WebglTexture{
 
         gl.bindTexture(gl.TEXTURE_2D, webglTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, colorData);
-        instance.setWrapMode("REPEAT");
+        instance.setWrapMode("REPEAT", "REPEAT");
         instance.setFilterMode(false, "NONE");
         gl.bindTexture(gl.TEXTURE_2D, null);
 
@@ -107,30 +106,35 @@ export class WebglTexture{
         const gl = this._gl;
         gl.deleteTexture(this._webglTexture);
     }
-    private setWrapMode(wrapMode: Assets.Image["wrapMode"]){
+    private setWrapMode(wrapModeS: AssetProperty.Image["wrapModeS"], wrapModeT: AssetProperty.Image["wrapModeT"]){
         const gl = this._gl;
-        if(wrapMode === "REPEAT"){
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-        }
-        else if(wrapMode === "CLAMP"){
+        if(wrapModeS === "CLAMP"){
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        }
+        if(wrapModeS === "MIRROR"){
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+        }
+        if(wrapModeS === "REPEAT"){
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        }
+        if(wrapModeT === "CLAMP"){
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         }
-        else if(wrapMode === "MIRROR"){
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+        if(wrapModeT === "MIRROR"){
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
         }
-        else throw `dont support ${wrapMode}`
+        if(wrapModeT === "REPEAT"){
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        }
     }
-    private setFilterMode(generateMipmaps: boolean, filterMode: Assets.Image["filterMode"]){
+    private setFilterMode(generateMipmaps: boolean, filterMode: AssetProperty.Image["filterMode"]){
         const gl = this._gl;
         if(!generateMipmaps){
             if(filterMode === "NONE"){
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
             }
-            else if(filterMode === "BILINEAR" || filterMode === "TRILINEAR"){
+            else if(filterMode === "LINEAR"){
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             }
@@ -141,7 +145,7 @@ export class WebglTexture{
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
             }
-            else if(filterMode === "BILINEAR" || filterMode === "TRILINEAR"){
+            else if(filterMode === "LINEAR"){
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             }

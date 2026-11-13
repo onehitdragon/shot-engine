@@ -223,13 +223,22 @@ export function tool(){
             }
             await rescan();
 
-            // link assets
+            // helper
             const glbIdToFileId = (glbId?: string) => {
                 if(!glbId) return glbId;
                 const filePath = glbIdToPath.get(glbId);
                 if(!filePath) return;
                 return query().getFileIdFromPath(filePath);
             }
+
+            // update properties
+            for(const [glbId, glbImage] of imageAssets){
+                const fileId = glbIdToFileId(glbId);
+                if(!fileId) continue;
+                await query().updateAssetPropertyByUuid(fileId, JSON.stringify(glbImage.property));
+            }
+
+            // link assets
             for(const [_, glbMat] of materialAssets){
                 const { materialAsset } = glbMat;
                 if(materialAsset.matType === "pbr"){
